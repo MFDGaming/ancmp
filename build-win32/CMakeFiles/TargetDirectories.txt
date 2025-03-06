@@ -1,0 +1,3 @@
+C:/Users/Alexander/ancmp/build-win32/CMakeFiles/ancmp.dir
+C:/Users/Alexander/ancmp/build-win32/CMakeFiles/edit_cache.dir
+C:/Users/Alexander/ancmp/build-win32/CMakeFiles/rebuild_cache.dir
