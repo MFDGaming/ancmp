@@ -68,3 +68,7 @@ int android_fflush(FILE *stream) {
 int android_setvbuf(FILE *stream, char *buf, int mode, size_t size) {
     return setvbuf(get_fp(stream), buf, mode, size);
 }
+
+int android_getc(FILE *stream) {
+    return getc(get_fp(stream));
+}

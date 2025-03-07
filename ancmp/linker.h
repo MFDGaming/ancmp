@@ -232,6 +232,6 @@ typedef long unsigned int *_Unwind_Ptr;
 _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 #elif defined(ANDROID_X86_LINKER) || defined(ANDROID_SH_LINKER)
 int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *), void *);
+#endif
 
 void android_linker_init();
-#endif

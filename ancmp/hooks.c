@@ -272,6 +272,10 @@ static hook_t math_hooks[] = {
         .addr = android_sqrtf
     },
     {
+        .name = "atanf",
+        .addr = android_atanf
+    },
+    {
         .name = (char *)NULL,
         .addr = NULL
     }
@@ -365,6 +369,10 @@ static hook_t hooks[] = {
     {
         .name = "wmemcpy",
         .addr = wmemcpy
+    },
+    {
+        .name = "memcpy",
+        .addr = memcpy
     },
     {
         .name = "wmemmove",
@@ -563,6 +571,18 @@ static hook_t hooks[] = {
     {
         .name = "fgetpos",
         .addr = android_fgetpos
+    },
+    {
+        .name = "fputs",
+        .addr = android_fputs
+    },
+    {
+        .name = "inet_ntoa",
+        .addr = inet_ntoa
+    },
+    {
+        .name = "inet_addr",
+        .addr = inet_addr
     },
     {
         .name = "fsetpos",
@@ -767,6 +787,14 @@ static hook_t hooks[] = {
     {
         .name = "open",
         .addr = android_open
+    },
+    {
+        .name = "atoi",
+        .addr = atoi
+    },
+    {
+        .name = "getc",
+        .addr = android_getc
     },
     {
         .name = (char *)NULL,

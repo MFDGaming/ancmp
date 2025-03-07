@@ -69,3 +69,5 @@ int android_fseek(FILE *stream, long offset, int whence);
 int android_fflush(FILE *stream);
 
 int android_setvbuf(FILE *stream, char *buf, int mode, size_t size);
+
+int android_getc(FILE *stream);
