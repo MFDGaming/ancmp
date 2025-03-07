@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <dlfcn.h>
+#include "android_dlfcn.h"
 #include <sys/stat.h>
 
 #include <pthread.h>
@@ -41,6 +41,8 @@
 #include "hooks.h"
 #ifndef _WIN32
 #include <sys/mman.h>
+#else
+#include <windows.h>
 #endif
 #include "posix_funcs.h"
 

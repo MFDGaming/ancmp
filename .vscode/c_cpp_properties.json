@@ -4,7 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/MinGW/include/**"
+                "C:/MinGW64/x86_64-w64-mingw32/include/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -13,7 +13,7 @@
                 "ANDROID_X86_LINKER",
                 "LINKER_DEBUG=0"
             ],
-            "compilerPath": "C:\\MinGW\\bin\\gcc.exe",
+            "compilerPath": "C:\\MinGW64\\bin\\gcc.exe",
             "cStandard": "c11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "windows-gcc-x86"

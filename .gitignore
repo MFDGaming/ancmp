@@ -2,3 +2,4 @@ build
 build-posix
 build-win32
 *.exe
+settings.json
