@@ -931,9 +931,9 @@ int android_listen(int sockfd, int backlog) {
 #ifdef _WIN32
 int android_close(int fd) {
     if (is_socket(fd)) {
-        closesocket(fd);
+        return closesocket(fd);
     } else {
-        close(fd);
+        return close(fd);
     }
 }
 

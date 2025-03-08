@@ -88,12 +88,81 @@ int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writef
     return select(nfds, native_preadfds, native_pwritefds, native_pexceptfds, timeout);
 }
 
+int android_gethostname(char *name, size_t size) {
+    if (GetComputerNameEx(ComputerNameDnsHostname, name, (DWORD *)&size)) {
+        return 0;
+    }
+    return -1;
+}
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
 #define android_sysconf sysconf
 #define android_select select
+#define android_gethostname gethostname
 #endif
+
+typedef struct {
+    char    *h_name;
+    char    **h_aliases;
+    int     h_addrtype;
+    int     h_length;
+    char    **h_addr_list;
+} android_hostent_t;
+
+static char h_name[256];
+static char h_addr_list_storage[35][16];
+static char h_aliases_storage[35][256];
+static char *h_addr_list[35];
+static char *h_aliases[35];
+
+static android_hostent_t android_host = {
+    .h_name = h_name,
+    .h_addr_list = h_addr_list,
+    .h_aliases = h_aliases,
+    .h_length = 4,
+    .h_addrtype = ANDROID_AF_INET
+};
+
+android_hostent_t *android_gethostbyname(const char *name) {
+    struct addrinfo *info;
+    
+    if(getaddrinfo(name, NULL, NULL, &info) == 0) {
+        int i = 0;
+        struct addrinfo *original_info = info;
+        for (i = 0; (i < 34) && (info != NULL); (++i) && (info = info->ai_next)) {
+            for (;;) {
+                if (info == NULL) {
+                    break;
+                }
+                if (info->ai_family == AF_INET) {
+                    break;
+                }
+                info = info->ai_next;
+            }
+            if (info == NULL) {
+                break;
+            }
+
+            if (info->ai_canonname) {
+                size_t cnl = strlen(info->ai_canonname) + 1;
+                memcpy(h_aliases_storage[i], info->ai_canonname, cnl <= 256 ? cnl : 256);
+                h_aliases_storage[i][255] = '\0';
+            } else {
+                h_aliases_storage[i][0] = '\0';
+            }
+            h_aliases[i] = h_aliases_storage[i];
+
+            memcpy(h_addr_list_storage[i], info->ai_addr, info->ai_addrlen);
+            h_addr_list[i] = h_addr_list_storage[i];
+        }
+        freeaddrinfo(original_info);
+        h_addr_list[i] = NULL;
+        h_aliases[i] = NULL;
+        return &android_host;
+    }
+    return NULL;
+}
 
 int android_usleep(unsigned long usec) {
 #ifdef _WIN32
@@ -110,6 +179,7 @@ int android_usleep(unsigned long usec) {
 void __cxa_finalize(void * d) {}
 int __cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) {
     //return atexit((void *)func);
+    return 0;
 }
 
 void __stack_chk_fail() {
@@ -690,7 +760,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "gethostname",
-        .addr = gethostname
+        .addr = android_gethostname
     },
     {
         .name = "listen",
@@ -738,7 +808,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "gethostbyname",
-        .addr = gethostbyname
+        .addr = android_gethostbyname
     },
     {
         .name = "getsockname",

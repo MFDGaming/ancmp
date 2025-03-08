@@ -92,6 +92,7 @@ static int socket_abstract_client(const char *name, int type)
     //}
 //
     //return s;
+    return -1;
 }
 
 void debugger_signal_handler(int n)

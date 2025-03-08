@@ -299,13 +299,15 @@ int android_pthread_create(android_pthread_t *thread, android_pthread_attr_t con
     if (attr && *((void **)attr)) {
         real_attr = *((void **)attr);
     }
-    pthread_create((pthread_t *)thread, real_attr, start_routine, arg);
+    return pthread_create((pthread_t *)thread, real_attr, start_routine, arg);
 }
 
-void *android_pthread_getspecific(android_pthread_key_t key) {}
+void *android_pthread_getspecific(android_pthread_key_t key) {
+    return android_pthread_getspecific(key);
+}
  
 int android_pthread_join(android_pthread_t thid, void ** ret_val) {
-    pthread_join(*((pthread_t *)(&thid)), ret_val);
+    return pthread_join(*((pthread_t *)(&thid)), ret_val);
 }
  
 int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_function)(void *)) {
