@@ -1009,7 +1009,7 @@ static int load_segments(int fd, void *header, soinfo *si) {
                 extra_base = memmap_alloc((void *)tmp, extra_len, 1);
 #else
                 extra_base = mmap((void *)tmp, extra_len,
-                                  PFLAGS_TO_PROT(phdr->p_flags),
+                                  PFLAGS_TO_PROT(phdr->p_flags) | PROT_WRITE,
                                   MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
                                   -1, 0);
 #endif
@@ -1678,6 +1678,7 @@ static void call_constructors(soinfo *si)
     if (strcmp(si->name, "libc.so") == 0) {
         return;
     }
+
     if (si->flags & FLAG_EXE) {
         TRACE("[ %5d Calling preinit_array @ 0x%08x [%d] for '%s' ]\n",
               pid, (unsigned)si->preinit_array, si->preinit_array_count,
@@ -2089,7 +2090,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
 #ifndef _WIN32
         mprotect((void *)si->wrprotect_start,
                  si->wrprotect_end - si->wrprotect_start,
-                 PROT_READ | PROT_EXEC);
+                 PROT_READ | PROT_WRITE | PROT_EXEC);
 #endif
     }
 #endif

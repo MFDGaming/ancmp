@@ -109,7 +109,7 @@ int android_usleep(unsigned long usec) {
 
 void __cxa_finalize(void * d) {}
 int __cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) {
-    return atexit((void *)func);
+    //return atexit((void *)func);
 }
 
 void __stack_chk_fail() {
