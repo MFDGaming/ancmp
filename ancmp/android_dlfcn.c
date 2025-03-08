@@ -109,7 +109,7 @@ void *android_dlsym(void *handle, const char *symbol)
     if(likely(sym != 0)) {
         bind = ELF32_ST_BIND(sym->st_info);
 
-        if(likely((bind == STB_GLOBAL) && (sym->st_shndx != 0))) {
+        if(likely((bind == STB_GLOBAL || bind == STB_WEAK) && (sym->st_shndx != 0))) {
             unsigned ret = sym->st_value + found->base;
             pthread_mutex_unlock(&dl_lock);
             return (void*)ret;
@@ -125,7 +125,7 @@ err:
     return 0;
 }
 
-int android_dladdr(void *addr, Dl_info *info)
+int android_dladdr(void *addr, android_Dl_info *info)
 {
     int ret = 0;
 
@@ -135,7 +135,7 @@ int android_dladdr(void *addr, Dl_info *info)
     soinfo *si = find_containing_library(addr);
 
     if(si) {
-        memset(info, 0, sizeof(Dl_info));
+        memset(info, 0, sizeof(android_Dl_info));
 
         info->dli_fname = si->name;
         info->dli_fbase = (void*)si->base;

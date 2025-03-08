@@ -36,13 +36,13 @@ typedef struct {
                                lower than addr */
     void       *dli_saddr;  /* Exact address of symbol named
                                in dli_sname */
-} Dl_info;
+} android_Dl_info;
 
 extern void*        android_dlopen(const char*  filename, int flag);
 extern int          android_dlclose(void*  handle);
 extern const char*  android_dlerror(void);
 extern void*        android_dlsym(void*  handle, const char*  symbol);
-extern int          android_dladdr(void* addr, Dl_info *info);
+extern int          android_dladdr(void* addr, android_Dl_info *info);
 
 enum {
   ANDROID_RTLD_NOW  = 0,
