@@ -53,79 +53,83 @@ void notify_gdb_of_libraries();
         ret = (cond); \
     } while (ret < 0 && errno == EINTR)
 
-
+#if 0
 static int socket_abstract_client(const char *name, int type)
 {
-    //struct sockaddr_un addr;
-    //size_t namelen;
-    //socklen_t alen;
-    //int s, err;
-//
-    //namelen  = strlen(name);
-//
-    //// Test with length +1 for the *initial* '\0'.
-    //if ((namelen + 1) > sizeof(addr.sun_path)) {
-    //    errno = EINVAL;
-    //    return -1;
-    //}
-//
-    ///* This is used for abstract socket namespace, we need
-    // * an initial '\0' at the start of the Unix socket path.
-    // *
-    // * Note: The path in this case is *not* supposed to be
-    // * '\0'-terminated. ("man 7 unix" for the gory details.)
-    // */
-    //memset (&addr, 0, sizeof addr);
-    //addr.sun_family = AF_LOCAL;
-    //addr.sun_path[0] = 0;
-    //memcpy(addr.sun_path + 1, name, namelen);
-//
-    //alen = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
-//
-    //s = socket(AF_LOCAL, type, 0);
-    //if(s < 0) return -1;
-//
-    //RETRY_ON_EINTR(err,connect(s, (struct sockaddr *) &addr, alen));
-    //if (err < 0) {
-    //    close(s);
-    //    s = -1;
-    //}
-//
-    //return s;
-    return -1;
+    struct sockaddr_un addr;
+    size_t namelen;
+    socklen_t alen;
+    int s, err;
+
+    namelen  = strlen(name);
+
+    // Test with length +1 for the *initial* '\0'.
+    if ((namelen + 1) > sizeof(addr.sun_path)) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* This is used for abstract socket namespace, we need
+     * an initial '\0' at the start of the Unix socket path.
+     *
+     * Note: The path in this case is *not* supposed to be
+     * '\0'-terminated. ("man 7 unix" for the gory details.)
+     */
+    memset (&addr, 0, sizeof addr);
+    addr.sun_family = AF_LOCAL;
+    addr.sun_path[0] = 0;
+    memcpy(addr.sun_path + 1, name, namelen);
+
+    alen = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
+
+    s = socket(AF_LOCAL, type, 0);
+    if(s < 0) return -1;
+
+    RETRY_ON_EINTR(err,connect(s, (struct sockaddr *) &addr, alen));
+    if (err < 0) {
+        close(s);
+        s = -1;
+    }
+
+    return s;
 }
+#endif
 
 void debugger_signal_handler(int n)
 {
-    //unsigned tid;
-    //int s;
+#if 0
+    unsigned tid;
+    int s;
 
-    ///* avoid picking up GC interrupts */
-    //signal(SIGUSR1, SIG_IGN);
+    /* avoid picking up GC interrupts */
+    signal(SIGUSR1, SIG_IGN);
 
-    //tid = gettid();
-    //s = socket_abstract_client("android:debuggerd", SOCK_STREAM);
+    notify_gdb_of_libraries();
 
-    //if(s >= 0) {
-    //    /* debugger knows our pid from the credentials on the
-    //     * local socket but we need to tell it our tid.  It
-    //     * is paranoid and will verify that we are giving a tid
-    //     * that's actually in our process
-    //     */
-    //    int  ret;
+    tid = gettid();
+    s = socket_abstract_client("android:debuggerd", SOCK_STREAM);
 
-    //    RETRY_ON_EINTR(ret, write(s, &tid, sizeof(unsigned)));
-    //    if (ret == sizeof(unsigned)) {
-    //        /* if the write failed, there is no point to read on
-    //         * the file descriptor. */
-    //        RETRY_ON_EINTR(ret, read(s, &tid, 1));
-    //        notify_gdb_of_libraries();
-    //    }
-    //    close(s);
-    //}
+    if(s >= 0) {
+        /* debugger knows our pid from the credentials on the
+         * local socket but we need to tell it our tid.  It
+         * is paranoid and will verify that we are giving a tid
+         * that's actually in our process
+         */
+        int  ret;
 
-    ///* remove our net so we fault for real when we return */
-    //signal(n, SIG_IGN);
+        RETRY_ON_EINTR(ret, write(s, &tid, sizeof(unsigned)));
+        if (ret == sizeof(unsigned)) {
+            /* if the write failed, there is no point to read on
+             * the file descriptor. */
+            RETRY_ON_EINTR(ret, read(s, &tid, 1));
+            notify_gdb_of_libraries();
+        }
+        close(s);
+    }
+
+    /* remove our net so we fault for real when we return */
+    signal(n, SIG_IGN);
+#endif
 }
 
 void debugger_init()
