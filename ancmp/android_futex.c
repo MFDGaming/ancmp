@@ -4,47 +4,29 @@
 
 #include <windows.h>
 
-typedef long NTSTATUS;
-
-// NTAPI function pointers
-typedef NTSTATUS (NTAPI *NtWaitForKeyedEvent_t)(HANDLE, PVOID, BOOLEAN, PLARGE_INTEGER);
-typedef NTSTATUS (NTAPI *NtReleaseKeyedEvent_t)(HANDLE, PVOID, BOOLEAN, PLARGE_INTEGER);
-
-static NtWaitForKeyedEvent_t NtWaitForKeyedEvent;
-static NtReleaseKeyedEvent_t NtReleaseKeyedEvent;
-
-static void futex_init() {
-    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
-    NtWaitForKeyedEvent = (NtWaitForKeyedEvent_t)GetProcAddress(ntdll, "NtWaitForKeyedEvent");
-    NtReleaseKeyedEvent = (NtReleaseKeyedEvent_t)GetProcAddress(ntdll, "NtReleaseKeyedEvent");
-}
-
-static void timespec_to_largeint(const struct timespec *timeout, LARGE_INTEGER *li) {
-    if (timeout) {
-        li->QuadPart = -(timeout->tv_sec * 10000000LL + timeout->tv_nsec / 100LL);
-    }
-}
-
 int android_futex_wake_ex(volatile void *ftx, int pshared, int val) {
-    if (!NtReleaseKeyedEvent) futex_init();
-    
-    for (int i = 0; i < val; i++) {
-        NTSTATUS status = NtReleaseKeyedEvent(pshared ? GetCurrentProcess() : NULL, (PVOID)ftx, FALSE, NULL);
-        if (status != 0) return -1;
+    if (val == 1) {
+        WakeByAddressSingle((PVOID)ftx);
+    } else if (val > 1) {
+        WakeByAddressAll((PVOID)ftx);
     }
-    return 0;
+    return val;
 }
 
 int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct timespec *timeout) {
-    if (!NtWaitForKeyedEvent) futex_init();
-    
-    LARGE_INTEGER li_timeout, *pli = NULL;
+    DWORD timeout_ms = INFINITE;
     if (timeout) {
-        timespec_to_largeint(timeout, &li_timeout);
-        pli = &li_timeout;
+        timeout_ms = (DWORD)(timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000);
     }
-    
-    return NtWaitForKeyedEvent(pshared ? GetCurrentProcess() : NULL, (PVOID)ftx, FALSE, pli) == 0 ? 0 : -1;
+
+    int current_val = val;
+    if (!WaitOnAddress((PVOID)ftx, &current_val, sizeof(int), timeout_ms)) {
+        if (GetLastError() == ERROR_TIMEOUT) {
+            return -1;
+        }
+        return -1;
+    }
+    return 0;
 }
 
 int android_futex_wait(volatile void *ftx, int val, const struct timespec *timeout) {

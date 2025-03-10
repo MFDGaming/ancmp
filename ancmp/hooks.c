@@ -63,6 +63,29 @@ int android_pipe(int fds[2]) {
     return 0;
 }
 
+int android_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    union {
+        struct sockaddr_in ipv4;
+        struct sockaddr_in6 ipv6;
+    } local_addr;
+    size_t len = sizeof(local_addr);
+    if (getsockname(sockfd, (struct sockaddr *)&local_addr, &len) == 0) {
+        local_addr.ipv4.sin_family = af_to_android(local_addr.ipv4.sin_family);
+        if (local_addr.ipv4.sin_family == ANDROID_AF_INET) {
+            memcpy(addr, &local_addr.ipv4, (*addrlen < sizeof(struct sockaddr_in)) ? *addrlen : sizeof(struct sockaddr_in));
+            *addrlen = sizeof(struct sockaddr_in);
+        } else if (local_addr.ipv4.sin_family == ANDROID_AF_INET6) {
+            memcpy(addr, &local_addr.ipv6, (*addrlen < sizeof(struct sockaddr_in6)) ? *addrlen : sizeof(struct sockaddr_in6));
+            *addrlen = sizeof(struct sockaddr_in6);
+        } else {
+            return -1;
+        }
+        return 0;
+        
+    }
+    return -1;
+}
+
 long android_sysconf(int name) {
     if (name == 0x0027) {
         return 4096;
@@ -94,12 +117,49 @@ int android_gethostname(char *name, size_t size) {
     }
     return -1;
 }
+
+char *android_inet_ntoa(uint32_t addr) {
+    struct in_addr real_addr;
+    memcpy(&real_addr, &addr, sizeof(uint32_t));
+    return inet_ntoa(real_addr);
+}
+
+uint32_t android_inet_addr(char *addr) {
+    return inet_addr(addr);
+}
+
+int android_gettimeofday(struct timeval *tp, struct timezone *tzp) {
+	FILETIME	file_time;
+	SYSTEMTIME	system_time;
+	ULARGE_INTEGER ularge;
+
+	GetSystemTime(&system_time);
+	SystemTimeToFileTime(&system_time, &file_time);
+	ularge.LowPart = file_time.dwLowDateTime;
+	ularge.HighPart = file_time.dwHighDateTime;
+
+	tp->tv_sec = (long) ((ularge.QuadPart - 116444736000000000ULL) / 10000000L);
+	tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+
+	return 0;
+}
+
+void android_div(div_t *ret, int numerator, int denominator) {
+    ret->quot = numerator/denominator;
+    ret->rem = numerator%denominator;
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
 #define android_sysconf sysconf
 #define android_select select
 #define android_gethostname gethostname
+#define android_getsockname getsockname
+#define android_gettimeofday gettimeofday
+#define android_div div
+#define android_inet_ntoa inet_ntoa
+#define android_inet_addr inet_addr
 #endif
 
 typedef struct {
@@ -125,6 +185,7 @@ static android_hostent_t android_host = {
 };
 
 android_hostent_t *android_gethostbyname(const char *name) {
+    puts("android_gethostbyname");
     struct addrinfo *info;
     
     if(getaddrinfo(name, NULL, NULL, &info) == 0) {
@@ -418,7 +479,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "div",
-        .addr = div
+        .addr = android_div
     },
     {
         .name = "memchr",
@@ -648,11 +709,11 @@ static hook_t hooks[] = {
     },
     {
         .name = "inet_ntoa",
-        .addr = inet_ntoa
+        .addr = android_inet_ntoa
     },
     {
         .name = "inet_addr",
-        .addr = inet_addr
+        .addr = android_inet_addr
     },
     {
         .name = "fsetpos",
@@ -716,7 +777,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "gettimeofday",
-        .addr = gettimeofday
+        .addr = android_gettimeofday
     },
     {
         .name = "fstat",
@@ -812,7 +873,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "getsockname",
-        .addr = getsockname
+        .addr = android_getsockname
     },
     {
         .name = "shutdown",
