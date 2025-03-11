@@ -103,3 +103,10 @@ int android_fstat(int fd, android_stat_t *statbuf) {
     native_to_android(&tmp, statbuf);
     return ret;
 }
+
+int android_stat(const char *pathname, android_stat_t *statbuf) {
+    struct stat tmp;
+    int ret = stat(pathname, &tmp);
+    native_to_android(&tmp, statbuf);
+    return ret;
+}

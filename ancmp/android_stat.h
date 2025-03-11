@@ -40,8 +40,8 @@ typedef struct {
     unsigned int        st_mode;
     unsigned int        st_nlink;
 
-    unsigned long       st_uid;
-    unsigned long       st_gid;
+    unsigned int       st_uid;
+    unsigned int       st_gid;
 
     unsigned long long  st_rdev;
     unsigned char       __pad3[4];
@@ -65,3 +65,5 @@ typedef struct {
 int s_to_native(int mode);
 
 int android_fstat(int fd, android_stat_t *statbuf);
+
+int android_stat(const char *pathname, android_stat_t *statbuf);

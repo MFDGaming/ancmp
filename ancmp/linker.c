@@ -876,7 +876,6 @@ alloc_mem_region(soinfo *si)
 #else
     if (base == MAP_FAILED) {
 #endif
-        puts("FAILL");
         DL_ERR("%5d mmap of library '%s' failed: %d (%s)\n",
               pid, si->name,
               errno, strerror(errno));
@@ -956,7 +955,6 @@ static int load_segments(int fd, void *header, soinfo *si) {
                 goto fail;
             }
             if (pread(fd, pbase, len, phdr->p_offset & (~PAGE_MASK)) == -1) {
-                puts("PREAD FAILED");
                 goto fail;
             }
 

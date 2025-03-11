@@ -209,44 +209,6 @@ int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
     return 0;
 }
 
-#ifdef _WIN32
-#define CLOCK_REALTIME 0
-#define CLOCK_MONOTONIC 1
-
-typedef int clockid_t;
-
-int clock_gettime(clockid_t clk_id, struct timespec *tp) {
-    static LARGE_INTEGER freq;
-    LARGE_INTEGER now;
-    
-    if (!freq.QuadPart) {
-        QueryPerformanceFrequency(&freq);
-    }
-
-    if (clk_id == CLOCK_REALTIME) {
-        FILETIME ft;
-        ULARGE_INTEGER time;
-        GetSystemTimeAsFileTime(&ft);
-        time.LowPart = ft.dwLowDateTime;
-        time.HighPart = ft.dwHighDateTime;
-        
-        // Convert FILETIME (100-ns intervals since 1601) to timespec
-        time.QuadPart -= 116444736000000000ULL; // Convert to Unix epoch (1970)
-        tp->tv_sec = time.QuadPart / 10000000ULL;
-        tp->tv_nsec = (time.QuadPart % 10000000ULL) * 100;
-        
-    } else if (clk_id == CLOCK_MONOTONIC) {
-        QueryPerformanceCounter(&now);
-        tp->tv_sec = now.QuadPart / freq.QuadPart;
-        tp->tv_nsec = (now.QuadPart % freq.QuadPart) * 1000000000LL / freq.QuadPart;
-    } else {
-        return -1; // Unsupported clock type
-    }
-    
-    return 0;
-}
-#endif
-
 static int
 __timespec_to_absolute(struct timespec*  ts, const struct timespec*  abstime, clockid_t  clock)
 {
@@ -478,4 +440,28 @@ android_pthread_t android_pthread_self(void) {
 
 int android_pthread_setspecific(android_pthread_key_t key, const void *value) {
     return pthread_setspecific((pthread_key_t)key, value);
+}
+
+int android_pthread_key_delete(android_pthread_key_t key) {
+    return pthread_key_delete((pthread_key_t)key);
+}
+
+int android_pthread_once(android_pthread_once_t *once_control, void (*init_routine)(void)) {
+    return pthread_once((pthread_once_t *)once_control, init_routine);
+}
+
+int android_pthread_equal(android_pthread_t t1, android_pthread_t t2) {
+    return pthread_equal((pthread_t)t1, (pthread_t)t2);
+}
+
+int android_pthread_cond_signal(android_pthread_cond_t *cond) {
+    return android_pthread_cond_pulse(cond, 1);
+}
+
+int android_pthread_detach(android_pthread_t thread) {
+    return pthread_detach((pthread_t)thread);
+}
+
+int android_pthread_setname_np(android_pthread_t thread, const char *name) {
+    return pthread_setname_np((pthread_t)thread, name);
 }

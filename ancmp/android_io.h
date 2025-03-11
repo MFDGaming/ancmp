@@ -2,6 +2,8 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <wchar.h>
+#include <wctype.h>
 
 typedef off_t android_fpos_t;
 
@@ -71,3 +73,21 @@ int android_fflush(FILE *stream);
 int android_setvbuf(FILE *stream, char *buf, int mode, size_t size);
 
 int android_getc(FILE *stream);
+
+int android_fprintf(FILE *stream, const char *restrict format, ...);
+
+int android_fscanf(FILE *stream, const char *restrict format, ...);
+
+char *android_fgets(char *s, int n, FILE *stream);
+
+int android_fputc(int c, FILE *stream);
+
+wint_t android_putwc(wchar_t wc, FILE *stream);
+
+wint_t android_ungetwc(wint_t wc, FILE *stream);
+
+wint_t android_getwc(FILE *stream);
+
+int android_ferror(FILE *stream);
+
+int android_feof(FILE *stream);

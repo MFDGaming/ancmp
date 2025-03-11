@@ -17,7 +17,7 @@
 #include "android_pthread.h"
 #include "android_math.h"
 #include "android_io.h"
-#include "android_tolower.h"
+#include "android_ctypes.h"
 #include "android_stat.h"
 #include "android_dirent.h"
 #include "android_socket.h"
@@ -25,6 +25,8 @@
 #include "android_fcntl.h"
 #include "android_ioctl.h"
 #include "android_mmap.h"
+#include "android_dlfcn.h"
+#include "linker.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #ifdef _WIN32
@@ -34,14 +36,20 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include <netdb.h>
+#include <poll.h>
+#include <sys/time.h>
+#include <sys/timeb.h>
+#include <sys/uio.h>
 #endif
+#include "posix_funcs.h"
+#include <pthread.h>
 
 typedef struct {
     char *name;
     void *addr;
 } hook_t;
 
-void *__stack_chk_guard = NULL;
+void *android_stack_chk_guard = NULL;
 
 #ifdef _WIN32
 
@@ -149,6 +157,115 @@ void android_div(div_t *ret, int numerator, int denominator) {
     ret->rem = numerator%denominator;
 }
 
+
+static uint64_t seed48[3];
+
+static const uint64_t multiplier = 0x5DEECE66D;
+static const uint64_t addend = 0xB;
+static const uint64_t mask = (1ULL << 48) - 1;
+
+void android_srand48(long seedval) {
+    seed48[0] = (seedval ^ multiplier) & mask;
+    seed48[1] = 0x330E;
+    seed48[2] = 0x0;
+}
+
+long android_lrand48() {
+    seed48[0] = (multiplier * seed48[0] + addend) & mask;
+    return (long)(seed48[0] >> 16) & 0x7FFFFFFF;
+}
+
+FLOAT_ABI_FIX double android_drand48() {
+    return (double)android_lrand48() / (1ULL << 31);
+}
+
+int android_nanosleep(const struct timespec *ts, struct timespec *rem){
+    HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    if(!timer)
+        return -1;
+
+    time_t sec = ts->tv_sec + ts->tv_nsec / 1000000000L;
+    long nsec = ts->tv_nsec % 1000000000L;
+
+    LARGE_INTEGER delay;
+    delay.QuadPart = -(sec * 1000000000L + nsec) / 100;
+    BOOL ok = SetWaitableTimer(timer, &delay, 0, NULL, NULL, FALSE) &&
+              WaitForSingleObject(timer, INFINITE) == WAIT_OBJECT_0;
+
+    CloseHandle(timer);
+
+    if(!ok)
+      return -1;
+
+    return 0;
+}
+
+long android_syscall(long number, ...) {
+    puts("android_syscall");
+    return -1;
+}
+
+typedef struct {
+    void  *iov_base;    /* Starting address */
+    size_t iov_len;     /* Number of bytes to transfer */
+} android_iovec_t;
+
+long android_writev(int fd, const android_iovec_t *iov, int iovcnt) {
+    int cnt = 0;
+    for (int i = 0; i < iovcnt; ++i) {
+        if (android_write(fd, iov[i].iov_base, iov[i].iov_len) == -1) {
+            return -1;
+        }
+        cnt += iov[i].iov_len;
+    }
+    return cnt;
+}
+
+typedef struct {
+    int fd;
+    short events;
+    short revents;
+} android_pollfd_t;
+
+typedef unsigned int  android_nfds_t;
+
+int android_poll(android_pollfd_t *fds, android_nfds_t nfds, long timeout) {
+    puts("android_poll");
+    return -1;
+}
+
+int android_sigaction(int signum, void *act, void *oldact) {
+    puts("android_sigaction");
+    return -1;
+}
+
+int android_sched_yield() {
+    puts("android_sched_yield");
+    return -1;
+}
+
+struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
+    struct tm *res = localtime(timep);
+    if (res) {
+        memcpy(result, res, sizeof(struct tm));
+        return result;
+    }
+    return NULL;
+}
+
+int android_fsync(int fd) {
+    FlushFileBuffers((HANDLE)_get_osfhandle(fd));
+}
+
+int android_fdatasync(int fd) {
+    FlushFileBuffers((HANDLE)_get_osfhandle(fd));
+}
+
+int android_geteuid() {
+    puts("android_geteuid");
+    return 0;
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
@@ -160,6 +277,18 @@ void android_div(div_t *ret, int numerator, int denominator) {
 #define android_div div
 #define android_inet_ntoa inet_ntoa
 #define android_inet_addr inet_addr
+#define android_lrand48 lrand48
+#define android_srand48 srand48
+#define android_nanosleep nanosleep
+#define android_syscall syscall
+#define android_writev writev
+#define android_poll poll
+#define android_sigaction sigaction
+#define android_sched_yield sched_yield
+#define android_localtime_r localtime_r
+#define android_fsync fsync
+#define android_fdatasync fdatasync
+#define android_geteuid geteuid
 #endif
 
 typedef struct {
@@ -185,7 +314,6 @@ static android_hostent_t android_host = {
 };
 
 android_hostent_t *android_gethostbyname(const char *name) {
-    puts("android_gethostbyname");
     struct addrinfo *info;
     
     if(getaddrinfo(name, NULL, NULL, &info) == 0) {
@@ -237,17 +365,29 @@ int android_usleep(unsigned long usec) {
 #endif
 }
 
-void __cxa_finalize(void * d) {}
-int __cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) {
+FLOAT_ABI_FIX double android_strtod(const char *nptr, char **endptr) {
+    return strtod(nptr, endptr);
+}
+
+void android_cxa_finalize(void * d) {}
+int android_cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) {
     //return atexit((void *)func);
     return 0;
 }
 
-void __stack_chk_fail() {
+void android_stack_chk_fail() {
     puts("__stack_chk_fail");
 }
 
-void __cxa_pure_virtual() {}
+void android_cxa_pure_virtual() {}
+
+size_t android_strlen_chk(const char *s, size_t s_len) {
+    size_t ret = strlen(s);
+    if (ret >= s_len) {
+        abort();
+    }
+    return ret;
+}
 
 int __isinff(float x) {
     return isinf(x);
@@ -264,6 +404,11 @@ int __isfinite(double x) {
 int *android_errno() {
     int *ret = &errno;
     return ret;
+}
+
+void android_assert2(const char* __file, int __line, const char* __function, const char* __msg) {
+    printf("Assertion failed: %s\nFile: %s\nLine: %d\nFunction: %s\n", __msg, __file, __line, __function);
+    abort();
 }
 
 static hook_t pthread_hooks[] = {
@@ -360,6 +505,30 @@ static hook_t pthread_hooks[] = {
         .addr = android_pthread_setspecific
     },
     {
+        .name = "pthread_key_delete",
+        .addr = android_pthread_key_delete
+    },
+    {
+        .name = "pthread_once",
+        .addr = android_pthread_once
+    },
+    {
+        .name = "pthread_equal",
+        .addr = android_pthread_equal
+    },
+    {
+        .name = "pthread_cond_signal",
+        .addr = android_pthread_cond_signal
+    },
+    {
+        .name = "pthread_detach",
+        .addr = android_pthread_detach
+    },
+    {
+        .name = "pthread_setname_np",
+        .addr = android_pthread_setname_np
+    },
+    {
         .name = (char *)NULL,
         .addr = NULL
     }
@@ -407,6 +576,62 @@ static hook_t math_hooks[] = {
         .addr = android_atanf
     },
     {
+        .name = "fmod",
+        .addr = android_fmod
+    },
+    {
+        .name = "floor",
+        .addr = android_floor
+    },
+    {
+        .name = "ceil",
+        .addr = android_ceil
+    },
+    {
+        .name = "sin",
+        .addr = android_sin
+    },
+    {
+        .name = "cos",
+        .addr = android_cos
+    },
+    {
+        .name = "sqrt",
+        .addr = android_sqrt
+    },
+    {
+        .name = "pow",
+        .addr = android_pow
+    },
+    {
+        .name = "atan2",
+        .addr = android_atan2
+    },
+    {
+        .name = "atan",
+        .addr = android_atan
+    },
+    {
+        .name = "modff",
+        .addr = android_modff
+    },
+    {
+        .name = "modf",
+        .addr = android_modf
+    },
+    {
+        .name = "ldexp",
+        .addr = android_ldexp
+    },
+    {
+        .name = "ldexpf",
+        .addr = android_ldexpf
+    },
+    {
+        .name = "tanf",
+        .addr = android_tanf
+    },
+    {
         .name = (char *)NULL,
         .addr = NULL
     }
@@ -415,27 +640,27 @@ static hook_t math_hooks[] = {
 static hook_t hooks[] = {
     {
         .name = "__cxa_finalize",
-        .addr = __cxa_finalize
+        .addr = android_cxa_finalize
     },
     {
         .name = "__cxa_atexit",
-        .addr = __cxa_atexit
+        .addr = android_cxa_atexit
     },
     {
         .name = "__cxa_pure_virtual",
-        .addr = __cxa_pure_virtual
+        .addr = android_cxa_pure_virtual
     },
     {
         .name = "__stack_chk_fail",
-        .addr = __stack_chk_fail
+        .addr = android_stack_chk_fail
     },
     {
         .name = "__stack_chk_guard",
-        .addr = &__stack_chk_guard
+        .addr = &android_stack_chk_guard
     },
     {
-        .name = "ldexp",
-        .addr = ldexp
+        .name = "__strlen_chk",
+        .addr = android_strlen_chk
     },
     {
         .name = "__isnanf",
@@ -764,6 +989,10 @@ static hook_t hooks[] = {
         .addr = &android_tolower_tab
     },
     {
+        .name = "_ctype_",
+        .addr = &android_ctype
+    },
+    {
         .name = "vsnprintf",
         .addr = vsnprintf
     },
@@ -927,6 +1156,257 @@ static hook_t hooks[] = {
         .name = "getc",
         .addr = android_getc
     },
+    {
+        .name = "__assert2",
+        .addr = android_assert2
+    },
+    {
+        .name = "fprintf",
+        .addr = android_fprintf
+    },
+    {
+        .name = "fscanf",
+        .addr = android_fscanf
+    },
+    {
+        .name = "fgets",
+        .addr = android_fgets
+    },
+    {
+        .name = "calloc",
+        .addr = calloc
+    },
+    {
+        .name = "strpbrk",
+        .addr = strpbrk
+    },
+    {
+        .name = "lrand48",
+        .addr = android_lrand48
+    },
+    {
+        .name = "srand48",
+        .addr = android_srand48
+    },
+    {
+        .name = "ftime",
+        .addr = ftime
+    },
+    {
+        .name = "gmtime",
+        .addr = gmtime
+    },
+    {
+        .name = "getpid",
+        .addr = getpid
+    },
+    {
+        .name = "nanosleep",
+        .addr = android_nanosleep
+    },
+    {
+        .name = "syscall",
+        .addr = android_syscall
+    },
+    {
+        .name = "strtod",
+        .addr = android_strtod
+    },
+    {
+        .name = "wmemchr",
+        .addr = wmemchr
+    },
+    {
+        .name = "vsprintf",
+        .addr = vsprintf
+    },
+    {
+        .name = "wmemcmp",
+        .addr = wmemcmp
+    },
+    {
+        .name = "fputc",
+        .addr = android_fputc
+    },
+    {
+        .name = "wctype",
+        .addr = wctype
+    },
+    {
+        .name = "iswctype",
+        .addr = iswctype
+    },
+    {
+        .name = "wctob",
+        .addr = wctob
+    },
+    {
+        .name = "btowc",
+        .addr = btowc
+    },
+    {
+        .name = "wcrtomb",
+        .addr = wcrtomb
+    },
+    {
+        .name = "mbrtowc",
+        .addr = mbrtowc
+    },
+    {
+        .name = "strcoll",
+        .addr = strcoll
+    },
+    {
+        .name = "strxfrm",
+        .addr = strxfrm
+    },
+    {
+        .name = "wcscoll",
+        .addr = wcscoll
+    },
+    {
+        .name = "wcsxfrm",
+        .addr = wcsxfrm
+    },
+    {
+        .name = "strftime",
+        .addr = strftime
+    },
+    {
+        .name = "wcsftime",
+        .addr = wcsftime
+    },
+    {
+        .name = "wcsftime",
+        .addr = wcsftime
+    },
+    {
+        .name = "putwc",
+        .addr = android_putwc
+    },
+    {
+        .name = "ungetwc",
+        .addr = android_ungetwc
+    },
+    {
+        .name = "getwc",
+        .addr = android_getwc
+    },
+    {
+        .name = "fdopen",
+        .addr = fdopen
+    },
+    {
+        .name = "writev",
+        .addr = android_writev
+    },
+    {
+        .name = "poll",
+        .addr = android_poll
+    },
+    {
+        .name = "strtol",
+        .addr = strtol
+    },
+    {
+        .name = "ferror",
+        .addr = android_ferror
+    },
+    {
+        .name = "feof",
+        .addr = android_feof
+    },
+    {
+        .name = "raise",
+        .addr = raise
+    },
+    {
+        .name = "rmdir",
+        .addr = rmdir
+    },
+    {
+        .name = "stat",
+        .addr = android_stat
+    },
+    {
+        .name = "sigaction",
+        .addr = android_sigaction
+    },
+    {
+        .name = "perror",
+        .addr = perror
+    },
+    {
+        .name = "sched_yield",
+        .addr = android_sched_yield
+    },
+    {
+        .name = "localtime_r",
+        .addr = android_localtime_r
+    },
+    {
+        .name = "pread",
+        .addr = pread
+    },
+    {
+        .name = "strrchr",
+        .addr = strrchr
+    },
+    {
+        .name = "fsync",
+        .addr = android_fsync
+    },
+    {
+        .name = "fdatasync",
+        .addr = android_fdatasync
+    },
+    {
+        .name = "unlink",
+        .addr = unlink
+    },
+    {
+        .name = "getenv",
+        .addr = getenv
+    },
+    {
+        .name = "geteuid",
+        .addr = android_geteuid
+    },
+    {
+        .name = "clock_gettime",
+        .addr = clock_gettime
+    },
+    {
+        .name = "dlopen",
+        .addr = android_dlopen
+    },
+    {
+        .name = "dlclose",
+        .addr = android_dlclose
+    },
+    {
+        .name = "dlsym",
+        .addr = android_dlsym
+    },
+    {
+        .name = "dladdr",
+        .addr = android_dladdr
+    },
+    {
+        .name = "dlerror",
+        .addr = android_dlerror
+    },
+#ifdef ANDROID_ARM_LINKER
+    {
+        .name = "dl_iterate_phdr",
+        .addr = android_dl_unwind_find_exidx
+    },
+#else
+    {
+        .name = "dl_iterate_phdr",
+        .addr = android_dl_iterate_phdr
+    },
+#endif
     {
         .name = (char *)NULL,
         .addr = NULL

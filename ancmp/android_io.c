@@ -1,5 +1,6 @@
 #include "android_io.h"
 #include <stdlib.h>
+#include <stdarg.h>
 
 // stdin, stdout, stderr
 android_file_t android_sf[3];
@@ -71,4 +72,44 @@ int android_setvbuf(FILE *stream, char *buf, int mode, size_t size) {
 
 int android_getc(FILE *stream) {
     return getc(get_fp(stream));
+}
+
+int android_fprintf(FILE *stream, const char *restrict format, ...) {
+    va_list args;
+    va_start(args, format);
+    return vfprintf(get_fp(stream), format, args);
+}
+
+int android_fscanf(FILE *stream, const char *restrict format, ...) {
+    va_list args;
+    va_start(args, format);
+    return vfscanf(get_fp(stream), format, args);
+}
+
+char *android_fgets(char *s, int n, FILE *stream) {
+    return fgets(s, n, get_fp(stream));
+}
+
+int android_fputc(int c, FILE *stream) {
+    return fputc(c, get_fp(stream));
+}
+
+wint_t android_putwc(wchar_t wc, FILE *stream) {
+    return putwc(wc, get_fp(stream));
+}
+
+wint_t android_ungetwc(wint_t wc, FILE *stream) {
+	return ungetc(wc, get_fp(stream));
+}
+
+wint_t android_getwc(FILE *stream) {
+    return getwc(get_fp(stream));
+}
+
+int android_ferror(FILE *stream) {
+    return ferror(get_fp(stream));
+}
+
+int android_feof(FILE *stream) {
+    return feof(get_fp(stream));
 }
