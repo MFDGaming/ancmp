@@ -37,6 +37,7 @@
 
 #include <pthread.h>
 
+#include "android_futex.h"
 #include "android_auxvec.h"
 #include "hooks.h"
 #ifndef _WIN32
@@ -2164,6 +2165,10 @@ void android_linker_init() {
 #ifdef _WIN32
     if(!memmap_init(1024*1024*100, 4096)) {
         puts("meminit failed");
+        exit(1);
+    }
+    if(!android_futex_init()) {
+        puts("android_futex_init failed");
         exit(1);
     }
     WSADATA wsaData;
