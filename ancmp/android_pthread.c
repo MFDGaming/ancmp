@@ -5,6 +5,7 @@
 #include "android_futex.h"
 #include <limits.h>
 #include <stdatomic.h>
+#include "posix_funcs.h"
 
 #define DEFAULT_STACKSIZE (1024 * 1024)
 #define PAGE_SIZE 4096
@@ -265,7 +266,8 @@ int android_pthread_create(android_pthread_t *thread, android_pthread_attr_t con
 }
 
 void *android_pthread_getspecific(android_pthread_key_t key) {
-    return pthread_getspecific(key);
+    pthread_key_t _key = (pthread_key_t)key;
+    return pthread_getspecific(_key);
 }
  
 int android_pthread_join(android_pthread_t thid, void ** ret_val) {
@@ -451,7 +453,9 @@ int android_pthread_once(android_pthread_once_t *once_control, void (*init_routi
 }
 
 int android_pthread_equal(android_pthread_t t1, android_pthread_t t2) {
-    return pthread_equal((pthread_t)t1, (pthread_t)t2);
+    pthread_t _t1 = *(pthread_t *)&t1;
+    pthread_t _t2 = *(pthread_t *)&t2;
+    return pthread_equal(_t1, _t2);
 }
 
 int android_pthread_cond_signal(android_pthread_cond_t *cond) {
@@ -459,9 +463,9 @@ int android_pthread_cond_signal(android_pthread_cond_t *cond) {
 }
 
 int android_pthread_detach(android_pthread_t thread) {
-    return pthread_detach((pthread_t)thread);
+    return pthread_detach(*(pthread_t *)&thread);
 }
 
 int android_pthread_setname_np(android_pthread_t thread, const char *name) {
-    return pthread_setname_np((pthread_t)thread, name);
+    return pthread_setname_np(*(pthread_t *)&thread, name);
 }

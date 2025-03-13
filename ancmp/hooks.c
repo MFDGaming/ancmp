@@ -29,6 +29,7 @@
 #include "linker.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/timeb.h>
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
@@ -38,7 +39,6 @@
 #include <netdb.h>
 #include <poll.h>
 #include <sys/time.h>
-#include <sys/timeb.h>
 #include <sys/uio.h>
 #endif
 #include "posix_funcs.h"

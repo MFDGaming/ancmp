@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
+#include <time.h>
 
 #ifdef _WIN32
 #define CLOCK_REALTIME 0
