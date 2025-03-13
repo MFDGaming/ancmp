@@ -265,7 +265,7 @@ int android_pthread_create(android_pthread_t *thread, android_pthread_attr_t con
 }
 
 void *android_pthread_getspecific(android_pthread_key_t key) {
-    return android_pthread_getspecific(key);
+    return pthread_getspecific(key);
 }
  
 int android_pthread_join(android_pthread_t thid, void ** ret_val) {

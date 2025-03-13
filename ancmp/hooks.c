@@ -76,7 +76,7 @@ int android_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
         struct sockaddr_in ipv4;
         struct sockaddr_in6 ipv6;
     } local_addr;
-    size_t len = sizeof(local_addr);
+    int len = sizeof(local_addr);
     if (getsockname(sockfd, (struct sockaddr *)&local_addr, &len) == 0) {
         local_addr.ipv4.sin_family = af_to_android(local_addr.ipv4.sin_family);
         if (local_addr.ipv4.sin_family == ANDROID_AF_INET) {
@@ -254,11 +254,17 @@ struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
 }
 
 int android_fsync(int fd) {
-    FlushFileBuffers((HANDLE)_get_osfhandle(fd));
+    if (FlushFileBuffers((HANDLE)_get_osfhandle(fd))) {
+        return 0;
+    }
+    return -1;
 }
 
 int android_fdatasync(int fd) {
-    FlushFileBuffers((HANDLE)_get_osfhandle(fd));
+    if (FlushFileBuffers((HANDLE)_get_osfhandle(fd))) {
+        return 0;
+    }
+    return -1;
 }
 
 int android_geteuid() {
@@ -319,7 +325,7 @@ android_hostent_t *android_gethostbyname(const char *name) {
     if(getaddrinfo(name, NULL, NULL, &info) == 0) {
         int i = 0;
         struct addrinfo *original_info = info;
-        for (i = 0; (i < 34) && (info != NULL); (++i) && (info = info->ai_next)) {
+        for (i = 0; (i < 34) && (info != NULL); (++i), (info = info->ai_next)) {
             for (;;) {
                 if (info == NULL) {
                     break;

@@ -581,29 +581,13 @@ static const char *sopaths[] = {
 
 static int _open_lib(const char *name)
 {
-#ifndef _WIN32
     int fd;
-    struct stat filestat;
+    //struct stat filestat;
 
     //if ((stat(name, &filestat) >= 0) && S_ISREG(filestat.st_mode)) {
         if ((fd = open(name, O_RDONLY)) >= 0)
             return fd;
     //}
-#else
-    HANDLE hFile = CreateFile(
-        name,
-        GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL
-    );
-    if (hFile == INVALID_HANDLE_VALUE) {
-        return -1;
-    }
-    return _open_osfhandle((intptr_t)hFile, _O_RDWR);
-#endif
 
     return -1;
 }
