@@ -195,6 +195,24 @@ static void remove_soinfo_from_debug_map(soinfo * info)
 
 void notify_gdb_of_load(soinfo * info)
 {
+#if 0
+    printf("symbol count: %lu\n", info->nchain);
+    for (unsigned n = 0; n < info->nchain; n++) {
+        Elf32_Sym *sym = &info->symtab[n];
+        const char *symbol_name = info->strtab + sym->st_name; // Get the symbol name
+        unsigned symbol_value = sym->st_value + info->base;    // Get the symbol value (address)
+        unsigned symbol_size = sym->st_size;                   // Get the symbol size
+    
+        if (ELF32_ST_BIND(sym->st_info) == STB_WEAK || ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
+            if(SymAddSymbol(hProcess, info->base, symbol_name, symbol_value, symbol_size, 0)) {
+                SymRefreshModuleList(hProcess);
+            } else {
+                //printf("Failed symbol -> name: %s, addr: %p, size: %lu, err: %d\n", symbol_name, symbol_value, symbol_size, GetLastError());
+            }
+        }
+    }
+    puts("loaded");
+#endif
     if (info->flags & FLAG_EXE) {
         // GDB already knows about the main executable
         return;
@@ -2149,10 +2167,6 @@ void android_linker_init() {
 #ifdef _WIN32
     if(!memmap_init(1024*1024*100, 4096)) {
         puts("meminit failed");
-        exit(1);
-    }
-    if(!android_futex_init()) {
-        puts("android_futex_init failed");
         exit(1);
     }
     WSADATA wsaData;
