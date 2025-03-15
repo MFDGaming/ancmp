@@ -1,6 +1,7 @@
 #include "android_io.h"
 #include <stdlib.h>
 #include <stdarg.h>
+#include <errno.h>
 
 // stdin, stdout, stderr
 android_file_t android_sf[3];
