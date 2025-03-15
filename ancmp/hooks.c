@@ -44,6 +44,7 @@
 #endif
 #include "posix_funcs.h"
 #include <pthread.h>
+#include "android_cxa.h"
 
 typedef struct {
     char *name;
@@ -388,17 +389,9 @@ FLOAT_ABI_FIX double android_strtod(const char *nptr, char **endptr) {
     return strtod(nptr, endptr);
 }
 
-void android_cxa_finalize(void * d) {}
-int android_cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) {
-    //return atexit((void *)func);
-    return 0;
-}
-
 void android_stack_chk_fail() {
     puts("__stack_chk_fail");
 }
-
-void android_cxa_pure_virtual() {}
 
 size_t android_strlen_chk(const char *s, size_t s_len) {
     size_t ret = strlen(s);
@@ -981,7 +974,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "fopen",
-        .addr = fopen
+        .addr = android_fopen
     },
     {
         .name = "fclose",
@@ -1313,7 +1306,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "fdopen",
-        .addr = fdopen
+        .addr = android_fdopen
     },
     {
         .name = "writev",

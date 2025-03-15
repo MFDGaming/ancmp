@@ -47,8 +47,6 @@
 #endif
 #include "posix_funcs.h"
 
-#include <stdatomic.h>
-
 /* special private C library header - see Android.mk */
 #include "bionic_tls.h"
 

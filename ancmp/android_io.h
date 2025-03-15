@@ -46,48 +46,57 @@ typedef	struct {
 	android_fpos_t	_offset;	/* current lseek offset */
 } android_file_t;
 
+typedef struct {
+    android_file_t afile;
+    FILE *file;
+} custom_file_t;
+
 extern android_file_t android_sf[];
 
-int android_fclose(FILE *stream);
+custom_file_t *android_fopen(const char *filename, const char *mode);
 
-int android_putc(int c, FILE *stream);
+custom_file_t *android_fdopen(int fd, const char *mode);
 
-int android_fputs(const char *s, FILE *stream);
+int android_fclose(custom_file_t *stream);
 
-int android_ungetc(int c, FILE *stream);
+int android_putc(int c, custom_file_t *stream);
 
-size_t android_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+int android_fputs(const char *s, custom_file_t *stream);
 
-size_t android_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+int android_ungetc(int c, custom_file_t *stream);
 
-long android_ftell(FILE *stream);
+size_t android_fread(void *ptr, size_t size, size_t nmemb, custom_file_t *stream);
 
-int android_fgetpos(FILE *stream, android_fpos_t *pos);
+size_t android_fwrite(const void *ptr, size_t size, size_t nmemb, custom_file_t *stream);
 
-int android_fsetpos(FILE *stream, const android_fpos_t *pos);
+long android_ftell(custom_file_t *stream);
 
-int android_fseek(FILE *stream, long offset, int whence);
+int android_fgetpos(custom_file_t *stream, android_fpos_t *pos);
 
-int android_fflush(FILE *stream);
+int android_fsetpos(custom_file_t *stream, const android_fpos_t *pos);
 
-int android_setvbuf(FILE *stream, char *buf, int mode, size_t size);
+int android_fseek(custom_file_t *stream, long offset, int whence);
 
-int android_getc(FILE *stream);
+int android_fflush(custom_file_t *stream);
 
-int android_fprintf(FILE *stream, const char *restrict format, ...);
+int android_setvbuf(custom_file_t *stream, char *buf, int mode, size_t size);
 
-int android_fscanf(FILE *stream, const char *restrict format, ...);
+int android_getc(custom_file_t *stream);
 
-char *android_fgets(char *s, int n, FILE *stream);
+int android_fprintf(custom_file_t *stream, const char *restrict format, ...);
 
-int android_fputc(int c, FILE *stream);
+int android_fscanf(custom_file_t *stream, const char *restrict format, ...);
 
-wint_t android_putwc(wchar_t wc, FILE *stream);
+char *android_fgets(char *s, int n, custom_file_t *stream);
 
-wint_t android_ungetwc(wint_t wc, FILE *stream);
+int android_fputc(int c, custom_file_t *stream);
 
-wint_t android_getwc(FILE *stream);
+wint_t android_putwc(wchar_t wc, custom_file_t *stream);
 
-int android_ferror(FILE *stream);
+wint_t android_ungetwc(wint_t wc, custom_file_t *stream);
 
-int android_feof(FILE *stream);
+wint_t android_getwc(custom_file_t *stream);
+
+int android_ferror(custom_file_t *stream);
+
+int android_feof(custom_file_t *stream);

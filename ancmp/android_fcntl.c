@@ -103,6 +103,11 @@ int android_open(const char *pathname, int flags, ...) {
     } else {
         fd = open(pathname, real_flags);
     }
+    if (fd != -1) {
+        printf("\x1b[32mSuccessfully ran open() for %s\x1b[0m\n", pathname);
+    } else {
+        printf("\x1b[31mFailed to run open() for %s due to %d\x1b[0m\n", pathname, errno);
+    }
 
     return fd;
 }
