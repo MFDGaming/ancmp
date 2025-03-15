@@ -7,6 +7,9 @@
 android_file_t android_sf[3];
 
 static FILE *get_fp(custom_file_t *stream) {
+    if (stream == NULL) {
+        return NULL;
+    }
     if (stream == (custom_file_t *)(&android_sf[0])) {
         return stdin;
     }
@@ -41,6 +44,7 @@ custom_file_t *android_fdopen(int fd, const char *mode) {
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));
         if (cfile == NULL) {
+            fclose(file);
             return NULL;
         }
         cfile->file = file;
@@ -71,7 +75,7 @@ int android_fputs(const char *s, custom_file_t *stream) {
 }
 
 int android_ungetc(int c, custom_file_t *stream) {
-    return putc(c, get_fp(stream));
+    return ungetc(c, get_fp(stream));
 }
 
 size_t android_fread(void *ptr, size_t size, size_t nmemb, custom_file_t *stream) {
@@ -89,13 +93,13 @@ long android_ftell(custom_file_t *stream) {
 int android_fgetpos(custom_file_t *stream, android_fpos_t *pos) {
     fpos_t tmp;
     int ret = fgetpos(get_fp(stream), &tmp);
-    *pos = *((android_fpos_t *)(&tmp));
+    *pos = (android_fpos_t)(tmp & 0xffffffff);
     return ret;
 }
 
 int android_fsetpos(custom_file_t *stream, const android_fpos_t *pos) {
-    long long tmp = *pos;
-    return fsetpos(get_fp(stream), (fpos_t *)&tmp);
+    fpos_t tmp = (fpos_t)((*pos) & 0xffffffff);
+    return fsetpos(get_fp(stream), &tmp);
 }
 
 int android_fseek(custom_file_t *stream, long offset, int whence) {
@@ -139,7 +143,7 @@ wint_t android_putwc(wchar_t wc, custom_file_t *stream) {
 }
 
 wint_t android_ungetwc(wint_t wc, custom_file_t *stream) {
-	return ungetc(wc, get_fp(stream));
+	return ungetwc(wc, get_fp(stream));
 }
 
 wint_t android_getwc(custom_file_t *stream) {
