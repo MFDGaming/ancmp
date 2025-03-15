@@ -2259,13 +2259,13 @@ unsigned __linker_init(unsigned **elfdata)
         /* extract information passed from the kernel */
     while(vecs[0] != 0){
         switch(vecs[0]){
-        case AT_PHDR:
+        case ANDROID_AT_PHDR:
             si->phdr = (Elf32_Phdr*) vecs[1];
             break;
-        case AT_PHNUM:
+        case ANDROID_AT_PHNUM:
             si->phnum = (int) vecs[1];
             break;
-        case AT_ENTRY:
+        case ANDROID_AT_ENTRY:
             si->entry = vecs[1];
             break;
         }

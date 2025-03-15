@@ -1289,10 +1289,6 @@ static hook_t hooks[] = {
         .addr = wcsftime
     },
     {
-        .name = "wcsftime",
-        .addr = wcsftime
-    },
-    {
         .name = "putwc",
         .addr = android_putwc
     },
