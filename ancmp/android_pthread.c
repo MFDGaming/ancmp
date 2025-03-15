@@ -128,11 +128,11 @@ static __inline__ void android_normal_lock(android_pthread_mutex_t *mutex) {
             android_futex_wait_ex(&mutex->value, shared, shared|2, 0);
         }
     }
-    atomic_thread_fence(__ATOMIC_SEQ_CST);
+    ANDROID_MEMBAR_FULL();
 }
 
 static __inline__ void android_normal_unlock(android_pthread_mutex_t *mutex) {
-    atomic_thread_fence(__ATOMIC_SEQ_CST);
+    ANDROID_MEMBAR_FULL();
 
     int  shared = mutex->value & ANDROID_MUTEX_SHARED_MASK;
     
@@ -172,7 +172,7 @@ int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
 
     if (mtype == ANDROID_MUTEX_TYPE_NORMAL) {
         if (android_atomic_cmpxchg(shared|0, shared|1, &mutex->value) == 0) {
-            atomic_thread_fence(__ATOMIC_SEQ_CST);
+            ANDROID_MEMBAR_FULL();
             return 0;
         }
 
@@ -452,10 +452,8 @@ int android_pthread_once(android_pthread_once_t *once_control, void (*init_routi
     return pthread_once((pthread_once_t *)once_control, init_routine);
 }
 
-int android_pthread_equal(android_pthread_t t1, android_pthread_t t2) {
-    pthread_t _t1 = *(pthread_t *)&t1;
-    pthread_t _t2 = *(pthread_t *)&t2;
-    return pthread_equal(_t1, _t2);
+int android_pthread_equal(android_pthread_t one, android_pthread_t two) {
+    return (one == two ? 1 : 0);
 }
 
 int android_pthread_cond_signal(android_pthread_cond_t *cond) {
@@ -463,9 +461,14 @@ int android_pthread_cond_signal(android_pthread_cond_t *cond) {
 }
 
 int android_pthread_detach(android_pthread_t thread) {
-    return pthread_detach(*(pthread_t *)&thread);
+    pthread_t _thread = *(pthread_t *)&thread;
+    return pthread_detach(_thread);
 }
-
 int android_pthread_setname_np(android_pthread_t thread, const char *name) {
-    return pthread_setname_np(*(pthread_t *)&thread, name);
+#ifndef _WIN32
+    pthread_t _thread = *(pthread_t *)&thread;
+    return pthread_setname_np(_thread, name);
+#else
+    return 0;
+#endif
 }

@@ -3,7 +3,7 @@
 
 static void native_to_android(struct stat *from, android_stat_t *to) {
     to->st_dev = from->st_dev;
-    to->st_mode = from->st_mode;
+    to->st_mode = s_to_native(from->st_mode);
     to->st_nlink = from->st_nlink;
     to->st_uid = from->st_uid;
     to->st_gid = from->st_gid;

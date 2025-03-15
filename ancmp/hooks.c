@@ -33,6 +33,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #else
 #include <unistd.h>
 #include <sys/select.h>
@@ -296,6 +297,14 @@ int android_geteuid() {
 #define android_fdatasync fdatasync
 #define android_geteuid geteuid
 #endif
+#ifdef _WIN32
+#if (_WIN32_WINNT >= 0x0501)
+#define HAS_GETADDRINFO
+#endif
+#else
+#define HAS_GETADDRINFO
+#endif
+
 
 typedef struct {
     char    *h_name;
@@ -319,6 +328,7 @@ static android_hostent_t android_host = {
     .h_addrtype = ANDROID_AF_INET
 };
 
+#ifdef HAS_GETADDRINFO
 android_hostent_t *android_gethostbyname(const char *name) {
     struct addrinfo *info;
     
@@ -358,6 +368,9 @@ android_hostent_t *android_gethostbyname(const char *name) {
     }
     return NULL;
 }
+#else
+#define android_gethostbyname gethostbyname
+#endif
 
 int android_usleep(unsigned long usec) {
 #ifdef _WIN32

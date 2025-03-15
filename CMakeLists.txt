@@ -18,5 +18,5 @@ target_link_libraries(ancmp Threads::Threads m)
 target_compile_definitions(ancmp PRIVATE ANDROID_X86_LINKER LINKER_DEBUG=0)
 
 if (WIN32)
-    target_link_libraries(ancmp ws2_32)
+    target_link_libraries(ancmp ws2_32 Synchronization)
 endif()
