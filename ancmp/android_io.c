@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <string.h>
 
 // stdin, stdout, stderr
 android_file_t android_sf[3];
@@ -93,12 +94,13 @@ long android_ftell(custom_file_t *stream) {
 int android_fgetpos(custom_file_t *stream, android_fpos_t *pos) {
     fpos_t tmp;
     int ret = fgetpos(get_fp(stream), &tmp);
-    *pos = (android_fpos_t)(tmp & 0xffffffff);
+    memcpy(&pos, &tmp, (sizeof(fpos_t) > sizeof(android_fpos_t)) ? sizeof(android_fpos_t) : sizeof(fpos_t));
     return ret;
 }
 
 int android_fsetpos(custom_file_t *stream, const android_fpos_t *pos) {
-    fpos_t tmp = (fpos_t)((*pos) & 0xffffffff);
+    fpos_t tmp;
+    memcpy(&tmp, &pos, (sizeof(fpos_t) > sizeof(android_fpos_t)) ? sizeof(android_fpos_t) : sizeof(fpos_t));
     return fsetpos(get_fp(stream), &tmp);
 }
 

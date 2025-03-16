@@ -16,34 +16,36 @@
 #include "android_dlfcn.h"
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "linker.h"
 #include "linker_format.h"
-#include <string.h>
+#include "android_elf.h"
 
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
-#define DL_SUCCESS                    0
-#define DL_ERR_CANNOT_LOAD_LIBRARY    1
-#define DL_ERR_INVALID_LIBRARY_HANDLE 2
-#define DL_ERR_BAD_SYMBOL_NAME        3
-#define DL_ERR_SYMBOL_NOT_FOUND       4
-#define DL_ERR_SYMBOL_NOT_GLOBAL      5
+#define ANDROID_DL_SUCCESS                    0
+#define ANDROID_DL_ERR_CANNOT_LOAD_LIBRARY    1
+#define ANDROID_DL_ERR_INVALID_LIBRARY_HANDLE 2
+#define ANDROID_DL_ERR_BAD_SYMBOL_NAME        3
+#define ANDROID_DL_ERR_SYMBOL_NOT_FOUND       4
+#define ANDROID_DL_ERR_SYMBOL_NOT_GLOBAL      5
 
 static char dl_err_buf[1024];
 static const char *dl_err_str;
 
 static const char *dl_errors[] = {
-    [DL_ERR_CANNOT_LOAD_LIBRARY] = "Cannot load library",
-    [DL_ERR_INVALID_LIBRARY_HANDLE] = "Invalid library handle",
-    [DL_ERR_BAD_SYMBOL_NAME] = "Invalid symbol name",
-    [DL_ERR_SYMBOL_NOT_FOUND] = "Symbol not found",
-    [DL_ERR_SYMBOL_NOT_GLOBAL] = "Symbol is not global",
+    [ANDROID_DL_ERR_CANNOT_LOAD_LIBRARY] = "Cannot load library",
+    [ANDROID_DL_ERR_INVALID_LIBRARY_HANDLE] = "Invalid library handle",
+    [ANDROID_DL_ERR_BAD_SYMBOL_NAME] = "Invalid symbol name",
+    [ANDROID_DL_ERR_SYMBOL_NOT_FOUND] = "Symbol not found",
+    [ANDROID_DL_ERR_SYMBOL_NOT_GLOBAL] = "Symbol is not global",
 };
 
 #define likely(expr)   __builtin_expect (expr, 1)
 #define unlikely(expr) __builtin_expect (expr, 0)
 
-static pthread_mutex_t dl_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t dl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void set_dlerror(int err)
 {
@@ -59,8 +61,9 @@ void *android_dlopen(const char *filename, int flag)
     pthread_mutex_lock(&dl_lock);
     ret = find_library(filename);
     if (unlikely(ret == NULL)) {
-        set_dlerror(DL_ERR_CANNOT_LOAD_LIBRARY);
+        set_dlerror(ANDROID_DL_ERR_CANNOT_LOAD_LIBRARY);
     } else {
+        call_constructors_recursive(ret);
         ret->refcount++;
     }
     pthread_mutex_unlock(&dl_lock);
@@ -83,11 +86,11 @@ void *android_dlsym(void *handle, const char *symbol)
     pthread_mutex_lock(&dl_lock);
 
     if(unlikely(handle == 0)) { 
-        set_dlerror(DL_ERR_INVALID_LIBRARY_HANDLE);
+        set_dlerror(ANDROID_DL_ERR_INVALID_LIBRARY_HANDLE);
         goto err;
     }
     if(unlikely(symbol == 0)) {
-        set_dlerror(DL_ERR_BAD_SYMBOL_NAME);
+        set_dlerror(ANDROID_DL_ERR_BAD_SYMBOL_NAME);
         goto err;
     }
 
@@ -115,17 +118,17 @@ void *android_dlsym(void *handle, const char *symbol)
             return (void*)ret;
         }
 
-        set_dlerror(DL_ERR_SYMBOL_NOT_GLOBAL);
+        set_dlerror(ANDROID_DL_ERR_SYMBOL_NOT_GLOBAL);
     }
     else
-        set_dlerror(DL_ERR_SYMBOL_NOT_FOUND);
+        set_dlerror(ANDROID_DL_ERR_SYMBOL_NOT_FOUND);
 
 err:
     pthread_mutex_unlock(&dl_lock);
     return 0;
 }
 
-int android_dladdr(void *addr, android_Dl_info *info)
+int android_dladdr(const void *addr, android_Dl_info *info)
 {
     int ret = 0;
 
@@ -175,14 +178,7 @@ int android_dlclose(void *handle)
 //                     0123456 78901234 567890 12345678 9012345 6789012345678901
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
-
-#elif defined(ANDROID_SH_LINKER)
-//                     0000000 00011111 111112 22222222 2333333 3333444444444455
-//                     0123456 78901234 567890 12345678 9012345 6789012345678901
-#define ANDROID_LIBDL_STRTAB \
-                      "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
-
-#else /* !defined(ANDROID_ARM_LINKER) && !defined(ANDROID_X86_LINKER) */
+#else
 #error Unsupported architecture. Only ARM and x86 are presently supported.
 #endif
 
@@ -226,12 +222,6 @@ static Elf32_Sym libdl_symtab[] = {
       .st_shndx = 1,
     },
 #elif defined(ANDROID_X86_LINKER)
-    { .st_name = 36,
-      .st_value = (Elf32_Addr) &android_dl_iterate_phdr,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
-    },
-#elif defined(ANDROID_SH_LINKER)
     { .st_name = 36,
       .st_value = (Elf32_Addr) &android_dl_iterate_phdr,
       .st_info = STB_GLOBAL << 4,

@@ -25,8 +25,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef _LINKER_FORMAT_H
-#define _LINKER_FORMAT_H
+#pragma once
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -37,5 +36,3 @@
 /* issues (it uses malloc()/free()) and increases code size  */
 
 int format_buffer(char *buffer, size_t bufsize, const char *format, ...);
-
-#endif /* _LINKER_FORMAT_H */

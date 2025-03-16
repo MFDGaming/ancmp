@@ -26,8 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _LINKER_DEBUG_H_
-#define _LINKER_DEBUG_H_
+#pragma once
 
 #include <stdio.h>
 
@@ -151,5 +150,3 @@ extern unsigned bitmask[];
         DEBUG("\t\tphdr->p_flags  = 0x%08x\n", (unsigned)((phdr)->p_flags));  \
         DEBUG("\t\tphdr->p_align  = 0x%08x\n", (unsigned)((phdr)->p_align));  \
     } while (0)
-
-#endif /* _LINKER_DEBUG_H_ */

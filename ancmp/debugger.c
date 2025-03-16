@@ -31,27 +31,39 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <signal.h>
-#ifndef _WIN32
-#include <sys/mman.h>
-#endif
+
 #include <errno.h>
-#include <stddef.h>
 
 #include "linker.h"
 
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#include <sys/un.h>
-#endif
+extern int tgkill(int tgid, int tid, int sig);
 
 void notify_gdb_of_libraries();
+
+#define DEBUGGER_SOCKET_NAME "android:debuggerd"
+
+typedef enum {
+    // dump a crash
+    DEBUGGER_ACTION_CRASH,
+    // dump a tombstone file
+    DEBUGGER_ACTION_DUMP_TOMBSTONE,
+    // dump a backtrace only back to the socket
+    DEBUGGER_ACTION_DUMP_BACKTRACE,
+} debugger_action_t;
+
+/* message sent over the socket */
+typedef struct {
+    debugger_action_t action;
+    pid_t tid;
+} debugger_msg_t;
 
 #define  RETRY_ON_EINTR(ret,cond) \
     do { \
         ret = (cond); \
     } while (ret < 0 && errno == EINTR)
+
+// see man(2) prctl, specifically the section about PR_GET_NAME
+#define MAX_TASK_NAME_LEN (16)
 
 #if 0
 static int socket_abstract_client(const char *name, int type)
@@ -93,54 +105,135 @@ static int socket_abstract_client(const char *name, int type)
 
     return s;
 }
-#endif
 
-void debugger_signal_handler(int n)
+#include "linker_format.h"
+#include <../libc/private/logd.h>
+
+/*
+ * Writes a summary of the signal to the log file.
+ *
+ * We could be here as a result of native heap corruption, or while a
+ * mutex is being held, so we don't want to use any libc functions that
+ * could allocate memory or hold a lock.
+ */
+static void logSignalSummary(int signum, const siginfo_t* info)
 {
-#if 0
+    char buffer[128];
+    char threadname[MAX_TASK_NAME_LEN + 1]; // one more for termination
+
+    char* signame;
+    switch (signum) {
+        case SIGILL:    signame = "SIGILL";     break;
+        case SIGABRT:   signame = "SIGABRT";    break;
+        case SIGBUS:    signame = "SIGBUS";     break;
+        case SIGFPE:    signame = "SIGFPE";     break;
+        case SIGSEGV:   signame = "SIGSEGV";    break;
+        case SIGSTKFLT: signame = "SIGSTKFLT";  break;
+        case SIGPIPE:   signame = "SIGPIPE";    break;
+        default:        signame = "???";        break;
+    }
+
+    if (prctl(PR_GET_NAME, (unsigned long)threadname, 0, 0, 0) != 0) {
+        strcpy(threadname, "<name unknown>");
+    } else {
+        // short names are null terminated by prctl, but the manpage
+        // implies that 16 byte names are not.
+        threadname[MAX_TASK_NAME_LEN] = 0;
+    }
+    format_buffer(buffer, sizeof(buffer),
+        "Fatal signal %d (%s) at 0x%08x (code=%d), thread %d (%s)",
+        signum, signame, info->si_addr, info->si_code, gettid(), threadname);
+
+    __libc_android_log_write(ANDROID_LOG_FATAL, "libc", buffer);
+}
+
+/*
+ * Catches fatal signals so we can ask debuggerd to ptrace us before
+ * we crash.
+ */
+void debugger_signal_handler(int n, siginfo_t* info, void* unused)
+{
+    char msgbuf[128];
     unsigned tid;
     int s;
 
-    /* avoid picking up GC interrupts */
-    signal(SIGUSR1, SIG_IGN);
-
-    notify_gdb_of_libraries();
+    logSignalSummary(n, info);
 
     tid = gettid();
-    s = socket_abstract_client("android:debuggerd", SOCK_STREAM);
+    s = socket_abstract_client(DEBUGGER_SOCKET_NAME, SOCK_STREAM);
 
-    if(s >= 0) {
+    if (s >= 0) {
         /* debugger knows our pid from the credentials on the
          * local socket but we need to tell it our tid.  It
          * is paranoid and will verify that we are giving a tid
          * that's actually in our process
          */
         int  ret;
-
-        RETRY_ON_EINTR(ret, write(s, &tid, sizeof(unsigned)));
-        if (ret == sizeof(unsigned)) {
+        debugger_msg_t msg;
+        msg.action = DEBUGGER_ACTION_CRASH;
+        msg.tid = tid;
+        RETRY_ON_EINTR(ret, write(s, &msg, sizeof(msg)));
+        if (ret == sizeof(msg)) {
             /* if the write failed, there is no point to read on
              * the file descriptor. */
             RETRY_ON_EINTR(ret, read(s, &tid, 1));
+            int savedErrno = errno;
             notify_gdb_of_libraries();
+            errno = savedErrno;
         }
+
+        if (ret < 0) {
+            /* read or write failed -- broken connection? */
+            format_buffer(msgbuf, sizeof(msgbuf),
+                "Failed while talking to debuggerd: %s", strerror(errno));
+            __libc_android_log_write(ANDROID_LOG_FATAL, "libc", msgbuf);
+        }
+
         close(s);
+    } else {
+        /* socket failed; maybe process ran out of fds */
+        format_buffer(msgbuf, sizeof(msgbuf),
+            "Unable to open connection to debuggerd: %s", strerror(errno));
+        __libc_android_log_write(ANDROID_LOG_FATAL, "libc", msgbuf);
     }
 
     /* remove our net so we fault for real when we return */
-    signal(n, SIG_IGN);
-#endif
-}
+    signal(n, SIG_DFL);
 
+    /*
+     * These signals are not re-thrown when we resume.  This means that
+     * crashing due to (say) SIGPIPE doesn't work the way you'd expect it
+     * to.  We work around this by throwing them manually.  We don't want
+     * to do this for *all* signals because it'll screw up the address for
+     * faults like SIGSEGV.
+     */
+    switch (n) {
+        case SIGABRT:
+        case SIGFPE:
+        case SIGPIPE:
+        case SIGSTKFLT:
+            (void) tgkill(getpid(), gettid(), n);
+            break;
+        default:    // SIGILL, SIGBUS, SIGSEGV
+            break;
+    }
+}
+#endif
 void debugger_init()
 {
-    signal(SIGILL, debugger_signal_handler);
-    signal(SIGABRT, debugger_signal_handler);
-    signal(SIGFPE, debugger_signal_handler);
-    signal(SIGSEGV, debugger_signal_handler);
-#ifndef _WIN32
-    signal(SIGBUS, debugger_signal_handler);
-    signal(SIGSTKFLT, debugger_signal_handler);
-    signal(SIGPIPE, debugger_signal_handler);
+#if 0
+    struct sigaction act;
+    memset(&act, 0, sizeof(act));
+    //act.sa_sigaction = debugger_signal_handler;
+    act.sa_flags = SA_RESTART | SA_SIGINFO;
+    sigemptyset(&act.sa_mask);
+
+    sigaction(SIGILL, &act, NULL);
+    sigaction(SIGABRT, &act, NULL);
+    sigaction(SIGBUS, &act, NULL);
+    sigaction(SIGFPE, &act, NULL);
+    sigaction(SIGSEGV, &act, NULL);
+    sigaction(SIGSTKFLT, &act, NULL);
+    sigaction(SIGPIPE, &act, NULL);
 #endif
 }

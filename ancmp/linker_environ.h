@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2010 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,32 +27,25 @@
  */
 #pragma once
 
-#include <sys/cdefs.h>
+/* Call this function before anything else. 'vecs' must be the pointer
+ * to the environment block in the ELF data block. The function returns
+ * the start of the aux vectors after the env block.
+ */
+extern unsigned*   linker_env_init(unsigned* vecs);
 
-typedef struct {
-    const char *dli_fname;  /* Pathname of shared object that
-                               contains address */
-    void       *dli_fbase;  /* Address at which shared object
-                               is loaded */
-    const char *dli_sname;  /* Name of nearest symbol with address
-                               lower than addr */
-    void       *dli_saddr;  /* Exact address of symbol named
-                               in dli_sname */
-} android_Dl_info;
+/* Unset a given environment variable. In case the variable is defined
+ * multiple times, unset all instances. This modifies the environment
+ * block, so any pointer returned by linker_env_get() after this call
+ * might become invalid */
+extern void        linker_env_unset(const char* name);
 
-extern void*        android_dlopen(const char*  filename, int flag);
-extern int          android_dlclose(void*  handle);
-extern const char*  android_dlerror(void);
-extern void*        android_dlsym(void*  handle, const char*  symbol);
-extern int          android_dladdr(const void* addr, android_Dl_info *info);
 
-enum {
-  ANDROID_RTLD_NOW  = 0,
-  ANDROID_RTLD_LAZY = 1,
+/* Returns the value of environment variable 'name' if defined and not
+ * empty, or NULL otherwise. Note that the returned pointer may become
+ * invalid if linker_env_unset() or linker_env_secure() are called
+ * after this function. */
+extern const char* linker_env_get(const char* name);
 
-  ANDROID_RTLD_LOCAL  = 0,
-  ANDROID_RTLD_GLOBAL = 2,
-};
-
-#define ANDROID_RTLD_DEFAULT  ((void*) 0xffffffff)
-#define ANDROID_RTLD_NEXT     ((void*) 0xfffffffe)
+/* Remove unsecure environment variables. This should be used when
+ * running setuid programs. */
+extern void        linker_env_secure(void);

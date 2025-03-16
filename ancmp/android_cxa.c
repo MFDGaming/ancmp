@@ -41,12 +41,21 @@ enum {
 CRITICAL_SECTION lock;
 LONG lock_inited = 0;
 #else
-static android_pthread_mutex_t lock =
-#ifdef ANDROID_PTHREAD_RECURSIVE_MUTEX_INITIALIZER
+static pthread_mutex_t lock =
+
+#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER
+
 PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 #else
+
+#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
 PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#else
+PTHREAD_MUTEX_INITIALIZER;
 #endif
+
+#endif
+
 #endif
 
 static android_exit_function_list_t initial;
