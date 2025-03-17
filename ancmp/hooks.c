@@ -27,6 +27,7 @@
 #include "android_mmap.h"
 #include "android_dlfcn.h"
 #include "linker.h"
+#include "android_sysconf.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/timeb.h>
@@ -45,6 +46,7 @@
 #include "posix_funcs.h"
 #include <pthread.h>
 #include "android_cxa.h"
+#include "android_strcasecmp.h"
 
 typedef struct {
     char *name;
@@ -56,10 +58,12 @@ void *android_stack_chk_guard = NULL;
 #ifdef _WIN32
 
 int android_mkdir(const char *pathname, mode_t mode) {
+    puts("android_mkdir");
     return mkdir(pathname);
 }
 
 int android_pipe(int fds[2]) {
+    puts("android_pipe");
     HANDLE handles[2];
     if (!CreatePipe(&handles[0], &handles[1], NULL, 0)) {
         return -1;
@@ -74,6 +78,7 @@ int android_pipe(int fds[2]) {
 }
 
 int android_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    puts("android_getsockname");
     union {
         struct sockaddr_in ipv4;
         struct sockaddr_in6 ipv6;
@@ -96,14 +101,8 @@ int android_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     return -1;
 }
 
-long android_sysconf(int name) {
-    if (name == 0x0027) {
-        return 4096;
-    }
-    return -1;
-}
-
 int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writefds, android_fd_set_t *exceptfds, struct timeval *timeout) {
+    puts("android_select");
     fd_set native_readfds, native_writefds, native_exceptfds;
     fd_set *native_preadfds = NULL, *native_pwritefds = NULL, *native_pexceptfds = NULL;
     if (readfds) {
@@ -122,6 +121,7 @@ int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writef
 }
 
 int android_gethostname(char *name, size_t size) {
+    puts("android_gethostname");
     if (GetComputerNameEx(ComputerNameDnsHostname, name, (DWORD *)&size)) {
         return 0;
     }
@@ -129,12 +129,14 @@ int android_gethostname(char *name, size_t size) {
 }
 
 char *android_inet_ntoa(uint32_t addr) {
+    puts("android_inet_ntoa");
     struct in_addr real_addr;
     memcpy(&real_addr, &addr, sizeof(uint32_t));
     return inet_ntoa(real_addr);
 }
 
 uint32_t android_inet_addr(char *addr) {
+    puts("android_inet_addr");
     return inet_addr(addr);
 }
 
@@ -155,6 +157,7 @@ int android_gettimeofday(struct timeval *tp, struct timezone *tzp) {
 }
 
 void android_div(div_t *ret, int numerator, int denominator) {
+    puts("android_div");
     ret->quot = numerator/denominator;
     ret->rem = numerator%denominator;
 }
@@ -167,21 +170,25 @@ static const uint64_t addend = 0xB;
 static const uint64_t mask = (1ULL << 48) - 1;
 
 void android_srand48(long seedval) {
+    puts("android_srand48");
     seed48[0] = (seedval ^ multiplier) & mask;
     seed48[1] = 0x330E;
     seed48[2] = 0x0;
 }
 
 long android_lrand48() {
+    puts("android_lrand48");
     seed48[0] = (multiplier * seed48[0] + addend) & mask;
     return (long)(seed48[0] >> 16) & 0x7FFFFFFF;
 }
 
 FLOAT_ABI_FIX double android_drand48() {
+    puts("android_drand48");
     return (double)android_lrand48() / (1ULL << 31);
 }
 
 int android_nanosleep(const struct timespec *ts, struct timespec *rem){
+    puts("android_nanosleep");
     HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if(!timer)
         return -1;
@@ -213,6 +220,7 @@ typedef struct {
 } android_iovec_t;
 
 long android_writev(int fd, const android_iovec_t *iov, int iovcnt) {
+    puts("android_writev");
     int cnt = 0;
     for (int i = 0; i < iovcnt; ++i) {
         if (android_write(fd, iov[i].iov_base, iov[i].iov_len) == -1) {
@@ -247,6 +255,7 @@ int android_sched_yield() {
 }
 
 struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
+    puts("android_localtime_r");
     struct tm *res = localtime(timep);
     if (res) {
         memcpy(result, res, sizeof(struct tm));
@@ -256,6 +265,7 @@ struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
 }
 
 int android_fsync(int fd) {
+    puts("android_fsync");
     if (FlushFileBuffers((HANDLE)_get_osfhandle(fd))) {
         return 0;
     }
@@ -263,6 +273,7 @@ int android_fsync(int fd) {
 }
 
 int android_fdatasync(int fd) {
+    puts("android_fdatasync");
     if (FlushFileBuffers((HANDLE)_get_osfhandle(fd))) {
         return 0;
     }
@@ -277,7 +288,6 @@ int android_geteuid() {
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
-#define android_sysconf sysconf
 #define android_select select
 #define android_gethostname gethostname
 #define android_getsockname getsockname
@@ -414,6 +424,7 @@ int __isfinite(double x) {
 }
 
 int *android_errno() {
+    puts("android_errno");
     int *ret = &errno;
     return ret;
 }
@@ -821,9 +832,8 @@ static hook_t hooks[] = {
     },
     {
         .name = "strcasecmp",
-        .addr = strcasecmp
+        .addr = android_strcasecmp
     },
-    
     {
         .name = "strcat",
         .addr = strcat
@@ -850,7 +860,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "strncasecmp",
-        .addr = strncasecmp
+        .addr = android_strncasecmp
     },
     {
         .name = "strncpy",
