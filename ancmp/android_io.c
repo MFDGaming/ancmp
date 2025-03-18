@@ -33,10 +33,10 @@ custom_file_t *android_fopen(const char *filename, const char *mode) {
         cfile->file = file;
         cfile->afile._file = (short)fileno(file);
         cfile->afile._flags = 0;
-        printf("\x1b[32mSuccessfully opened %s\x1b[0m\n", filename);
+        //printf("\x1b[32mSuccessfully opened %s\x1b[0m\n", filename);
         return cfile;
     }
-    printf("\x1b[31mFailed to open %s due to %d\x1b[0m\n", filename, errno);
+    //printf("\x1b[31mFailed to open %s due to %d\x1b[0m\n", filename, errno);
     return NULL;
 }
 
@@ -51,10 +51,10 @@ custom_file_t *android_fdopen(int fd, const char *mode) {
         cfile->file = file;
         cfile->afile._file = (short)fileno(file);
         cfile->afile._flags = 0;
-        printf("\x1b[32mSuccessfully opened %d\x1b[0m\n", fd);
+        //printf("\x1b[32mSuccessfully opened %d\x1b[0m\n", fd);
         return cfile;
     }
-    printf("\x1b[31mFailed to open %d due to %d\x1b[0m\n", fd, errno);
+    //printf("\x1b[31mFailed to open %d due to %d\x1b[0m\n", fd, errno);
     return NULL;
 }
 

@@ -223,10 +223,11 @@ long android_writev(int fd, const android_iovec_t *iov, int iovcnt) {
     puts("android_writev");
     int cnt = 0;
     for (int i = 0; i < iovcnt; ++i) {
-        if (android_write(fd, iov[i].iov_base, iov[i].iov_len) == -1) {
+        long len = android_write(fd, iov[i].iov_base, iov[i].iov_len);
+        if (len == -1) {
             return -1;
         }
-        cnt += iov[i].iov_len;
+        cnt += len;
     }
     return cnt;
 }
@@ -266,18 +267,30 @@ struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
 
 int android_fsync(int fd) {
     puts("android_fsync");
-    if (FlushFileBuffers((HANDLE)_get_osfhandle(fd))) {
-        return 0;
+    HANDLE hFile = (HANDLE)_get_osfhandle(fd);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        puts("android_fsync failed");
+        return -1;
     }
-    return -1;
+    if (!FlushFileBuffers(hFile)) {
+        puts("android_fsync failed");
+        return -1;
+    }
+    return 0;
 }
 
 int android_fdatasync(int fd) {
     puts("android_fdatasync");
-    if (FlushFileBuffers((HANDLE)_get_osfhandle(fd))) {
-        return 0;
+    HANDLE hFile = (HANDLE)_get_osfhandle(fd);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        puts("android_fdatasync failed");
+        return -1;
     }
-    return -1;
+    if (!FlushFileBuffers(hFile)) {
+        puts("android_fdatasync failed");
+        return -1;
+    }
+    return 0;
 }
 
 int android_geteuid() {
@@ -315,7 +328,6 @@ int android_geteuid() {
 #else
 #define HAS_GETADDRINFO
 #endif
-
 
 typedef struct {
     char    *h_name;

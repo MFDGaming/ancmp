@@ -25,6 +25,7 @@ static int check_nonblocksock(SOCKET sock) {
 }
 
 int android_fcntl(int fd, int op, ...) {
+    puts("android_fcntl");
     int ret = 0;
     int is_s = is_socket(fd);
     va_list args;
@@ -66,66 +67,72 @@ int android_fcntl(int fd, int op, ...) {
         }
     } else if (op == ANDROID_F_SETLK || op == ANDROID_F_SETLKW || op == ANDROID_F_GETLK) {
         android_flock_t *flock = va_arg(args, android_flock_t *);
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        if (handle == INVALID_HANDLE_VALUE) {
+        HANDLE hFile = (HANDLE)_get_osfhandle(fd);
+        if (hFile == INVALID_HANDLE_VALUE) {
             va_end(args);
             return -1;
         }
-        LARGE_INTEGER len = {.QuadPart = flock->l_len};
+        LARGE_INTEGER len;
         LARGE_INTEGER start;
-        long cur_pos = lseek(fd, 0, SEEK_CUR);
         if (flock->l_whence == SEEK_SET) {
             start.QuadPart = flock->l_start;
         } else if (flock->l_whence == SEEK_CUR) {
-            if (cur_pos == -1) {
+            LARGE_INTEGER dist = {.QuadPart = 0};
+            LARGE_INTEGER cur_pos;
+            if (!SetFilePointerEx(hFile, dist, &cur_pos, FILE_CURRENT)) {
                 va_end(args);
                 return -1;
             }
-            start.QuadPart = flock->l_start + cur_pos;
+            start.QuadPart = cur_pos.QuadPart + flock->l_start;
         } else if (flock->l_whence == SEEK_END) {
-            if (cur_pos == -1) {
+            LARGE_INTEGER file_size;
+            if(!GetFileSizeEx(hFile, &file_size)) {
                 va_end(args);
                 return -1;
             }
-            long end = lseek(fd, 0, SEEK_END);
-            if (end == -1) {
-                lseek(fd, cur_pos, SEEK_SET);
-                va_end(args);
-                return -1;
-            }
-            lseek(fd, cur_pos, SEEK_SET);
-            start.QuadPart = end - flock->l_start;
+            start.QuadPart = file_size.QuadPart - flock->l_start;
         } else {
             va_end(args);
             return -1;
         }
-        OVERLAPPED ov = {
-            .Offset = start.LowPart,
-            .OffsetHigh = start.HighPart
-        };
+        OVERLAPPED ov;
+        ZeroMemory(&ov, sizeof(OVERLAPPED));
+        ov.Offset = start.LowPart;
+        ov.OffsetHigh = start.HighPart;
+        len.QuadPart = flock->l_len;
         if (op != ANDROID_F_GETLK) {
             if (flock->l_type == ANDROID_F_RDLCK || flock->l_type == ANDROID_F_WRLCK) {
-                if (!LockFileEx(handle, (op == ANDROID_F_SETLKW) ? 0 : LOCKFILE_FAIL_IMMEDIATELY, 0, len.LowPart, len.HighPart, &ov)) {
-                    va_end(args);
-                    return -1;
+                DWORD flags = (flock->l_type == ANDROID_F_WRLCK) ? LOCKFILE_EXCLUSIVE_LOCK : 0;
+                if (op == ANDROID_F_SETLKW) {
+                    if (!LockFileEx(hFile, flags, 0, len.LowPart, len.HighPart, &ov)) {
+                        va_end(args);
+                        return -1;
+                    }
+                } else {
+                    if (!LockFileEx(hFile, flags | LOCKFILE_FAIL_IMMEDIATELY, 0, len.LowPart, len.HighPart, &ov)) {
+                        va_end(args);
+                        return -1;
+                    }
                 }
             } else if (flock->l_type == ANDROID_F_UNLCK) {
-                if (!UnlockFileEx(handle, 0, len.LowPart, len.HighPart, &ov)) {
+                if (!UnlockFileEx(hFile, 0, len.LowPart, len.HighPart, &ov)) {
                     va_end(args);
                     return -1;
                 }
             }
         } else {
-            if (!LockFileEx(handle, LOCKFILE_FAIL_IMMEDIATELY, 0, len.LowPart, len.HighPart, &ov)) {
-                if (!(flock->l_type == ANDROID_F_RDLCK || flock->l_type == ANDROID_F_WRLCK)) {
-                    flock->l_type = ANDROID_F_WRLCK;
-                }
-            } else {
-                UnlockFileEx(handle, 0, len.LowPart, len.HighPart, &ov);
+            DWORD flags = (flock->l_type == ANDROID_F_WRLCK) ? LOCKFILE_EXCLUSIVE_LOCK : 0;
+            if (LockFileEx(hFile, flags | LOCKFILE_FAIL_IMMEDIATELY, 0, len.LowPart, len.HighPart, &ov)) {
+                UnlockFile(hFile, start.LowPart, start.HighPart, len.LowPart, len.HighPart);
                 flock->l_type = ANDROID_F_UNLCK;
+            } else {
+                if (!(flock->l_type == ANDROID_F_RDLCK || flock->l_type == ANDROID_F_WRLCK)) {
+                    flock->l_type = ANDROID_F_RDLCK;
+                }
             }
         }
     }
+    puts("fcntl success");
     va_end(args);
     return ret;
 }
@@ -164,13 +171,15 @@ int android_open(const char *pathname, int flags, ...) {
     } else {
         fd = open(pathname, real_flags);
     }
-    if (fd != -1) {
+    /*if (fd != -1) {
         printf("\x1b[32mSuccessfully ran open() for %s\x1b[0m\n", pathname);
     } else {
         printf("\x1b[31mFailed to run open() for %s due to %d\x1b[0m\n", pathname, errno);
-    }
+    }*/
 
     return fd;
 }
+
+#else
 
 #endif

@@ -64,6 +64,8 @@ typedef struct {
 
 int s_to_native(int mode);
 
+int s_to_android(int mode);
+
 int android_fstat(int fd, android_stat_t *statbuf);
 
 int android_stat(const char *pathname, android_stat_t *statbuf);
