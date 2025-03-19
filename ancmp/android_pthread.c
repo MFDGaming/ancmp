@@ -112,7 +112,42 @@ int android_pthread_key_delete(android_pthread_key_t key) {
 }
 
 int android_pthread_once(android_pthread_once_t *once_control, void (*init_routine)(void)) {
-    return pthread_once((pthread_once_t *)once_control, init_routine);
+    volatile android_pthread_once_t *ocptr = once_control;
+    android_pthread_once_t value;
+#define ONCE_INITIALIZING           (1 << 0)
+#define ONCE_COMPLETED              (1 << 1)
+    if ((*ocptr & ONCE_COMPLETED) != 0) {
+        ANDROID_MEMBAR_FULL();
+        return 0;
+    }
+    for (;;) {
+        int32_t  oldval, newval;
+
+        do {
+            oldval = *ocptr;
+            if ((oldval & ONCE_COMPLETED) != 0)
+                break;
+
+            newval = oldval | ONCE_INITIALIZING;
+        } while (android_atomic_cmpxchg(oldval, newval, ocptr) != 0);
+
+        if ((oldval & ONCE_COMPLETED) != 0) {
+            ANDROID_MEMBAR_FULL();
+            return 0;
+        }
+
+        if ((oldval & ONCE_INITIALIZING) == 0) {
+            break;
+        }
+        android_futex_wait_ex(ocptr, 0, oldval, NULL);
+    }
+    (*init_routine)();
+    ANDROID_MEMBAR_FULL();
+    *ocptr = ONCE_COMPLETED;
+
+    android_futex_wake_ex(ocptr, 0, INT_MAX);
+
+    return 0;
 }
 
 int android_pthread_equal(android_pthread_t one, android_pthread_t two) {
@@ -123,11 +158,7 @@ int android_pthread_detach(android_pthread_t thread) {
     pthread_t _thread = *(pthread_t *)&thread;
     return pthread_detach(_thread);
 }
+
 int android_pthread_setname_np(android_pthread_t thread, const char *name) {
-#ifndef _WIN32
-    pthread_t _thread = *(pthread_t *)&thread;
-    return pthread_setname_np(_thread, name);
-#else
     return 0;
-#endif
 }
