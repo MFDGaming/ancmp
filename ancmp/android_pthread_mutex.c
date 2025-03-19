@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #endif
+#include "android_errno.h"
 
 void android_normal_lock(android_pthread_mutex_t *mutex, int shared) {
     const int unlocked           = shared | ANDROID_MUTEX_STATE_BITS_UNLOCKED;
@@ -34,10 +35,10 @@ void android_normal_unlock(android_pthread_mutex_t *mutex, int shared) {
 
 int android_recursive_increment(android_pthread_mutex_t *mutex, int mvalue, int mtype) {
     if (mtype == ANDROID_MUTEX_TYPE_BITS_ERRORCHECK) {
-        return EDEADLK;
+        return ANDROID_EDEADLK;
     }
     if (ANDROID_MUTEX_COUNTER_BITS_WILL_OVERFLOW(mvalue)) {
-        return EAGAIN;
+        return ANDROID_EAGAIN;
     }
     for (;;) {
         int newval = mvalue + ANDROID_MUTEX_COUNTER_BITS_ONE;
@@ -51,7 +52,7 @@ int android_recursive_increment(android_pthread_mutex_t *mutex, int mvalue, int 
 int android_pthread_mutex_init(android_pthread_mutex_t *mutex, const android_pthread_mutexattr_t *attr) {
     int value = 0;
     if (mutex == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     if (attr == NULL) {
         mutex->value = ANDROID_MUTEX_TYPE_BITS_NORMAL;
@@ -71,7 +72,7 @@ int android_pthread_mutex_init(android_pthread_mutex_t *mutex, const android_pth
         value |= ANDROID_MUTEX_TYPE_BITS_ERRORCHECK;
         break;
     default:
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     mutex->value = value;
     return 0;
@@ -90,7 +91,7 @@ int android_pthread_mutex_destroy(android_pthread_mutex_t *mutex) {
 int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
     int mvalue, mtype, tid, oldv, shared;
     if (mutex == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     mvalue = mutex->value;
     mtype  = (mvalue & ANDROID_MUTEX_TYPE_MASK);
@@ -102,7 +103,7 @@ int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
             ANDROID_MEMBAR_FULL();
             return 0;
         }
-        return EBUSY;
+        return ANDROID_EBUSY;
     }
 #ifdef _WIN32
     tid = GetCurrentThreadId();
@@ -118,13 +119,13 @@ int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
         ANDROID_MEMBAR_FULL();
         return 0;
     }
-    return EBUSY;
+    return ANDROID_EBUSY;
 }
 
 int android_pthread_mutex_lock(android_pthread_mutex_t *mutex) {
     int mvalue, mtype, tid, new_lock_type, shared;
     if (mutex == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     mvalue = mutex->value;
     mtype = (mvalue & ANDROID_MUTEX_TYPE_MASK);
@@ -178,7 +179,7 @@ int android_pthread_mutex_unlock(android_pthread_mutex_t *mutex) {
     int mvalue, mtype, tid, oldv, shared;
 
     if (mutex == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     mvalue = mutex->value;
     mtype  = (mvalue & ANDROID_MUTEX_TYPE_MASK);
@@ -193,7 +194,7 @@ int android_pthread_mutex_unlock(android_pthread_mutex_t *mutex) {
     tid = syscall(SYS_gettid);
 #endif
     if (tid != ANDROID_MUTEX_OWNER_FROM_BITS(mvalue)) {
-        return EPERM;
+        return ANDROID_EPERM;
     }
 
     if (!ANDROID_MUTEX_COUNTER_BITS_IS_ZERO(mvalue)) {
@@ -219,7 +220,7 @@ int android_pthread_mutexattr_init(android_pthread_mutexattr_t *attr) {
         *attr = ANDROID_PTHREAD_MUTEX_DEFAULT;
         return 0;
     } else {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
 }
 
@@ -228,7 +229,7 @@ int android_pthread_mutexattr_destroy(android_pthread_mutexattr_t *attr) {
         *attr = -1;
         return 0;
     } else {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
 }
 
@@ -241,7 +242,7 @@ int android_pthread_mutexattr_gettype(const android_pthread_mutexattr_t *attr, i
             return 0;
         }
     }
-    return EINVAL;
+    return ANDROID_EINVAL;
 }
 
 int android_pthread_mutexattr_settype(android_pthread_mutexattr_t *attr, int type) {
@@ -250,12 +251,12 @@ int android_pthread_mutexattr_settype(android_pthread_mutexattr_t *attr, int typ
         *attr = (*attr & ~ANDROID_MUTEXATTR_TYPE_MASK) | type;
         return 0;
     }
-    return EINVAL;
+    return ANDROID_EINVAL;
 }
 
 int android_pthread_mutexattr_getpshared(const android_pthread_mutexattr_t *attr, int *pshared) {
     if (!attr || !pshared)
-        return EINVAL;
+        return ANDROID_EINVAL;
     *pshared = (*attr & ANDROID_MUTEXATTR_SHARED_MASK) ? ANDROID_PTHREAD_PROCESS_SHARED
                                                : ANDROID_PTHREAD_PROCESS_PRIVATE;
     return 0;
@@ -263,7 +264,7 @@ int android_pthread_mutexattr_getpshared(const android_pthread_mutexattr_t *attr
 
 int android_pthread_mutexattr_setpshared(android_pthread_mutexattr_t *attr, int pshared) {
     if (!attr)
-        return EINVAL;
+        return ANDROID_EINVAL;
     switch (pshared) {
     case ANDROID_PTHREAD_PROCESS_PRIVATE:
         *attr &= ~ANDROID_MUTEXATTR_SHARED_MASK;
@@ -272,5 +273,5 @@ int android_pthread_mutexattr_setpshared(android_pthread_mutexattr_t *attr, int 
         *attr |= ANDROID_MUTEXATTR_SHARED_MASK;
         return 0;
     }
-    return EINVAL;
+    return ANDROID_EINVAL;
 }

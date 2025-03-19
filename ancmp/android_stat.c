@@ -5,7 +5,6 @@
 
 static void native_to_android(struct stat *from, android_stat_t *to) {
     to->st_dev = from->st_dev;
-    to->st_mode = s_to_android(from->st_mode);
     to->st_nlink = from->st_nlink;
     to->st_uid = from->st_uid;
     to->st_gid = from->st_gid;
@@ -14,6 +13,28 @@ static void native_to_android(struct stat *from, android_stat_t *to) {
     to->st_ino = from->st_ino;
     to->__st_ino = from->st_ino;
 #ifdef _WIN32
+    to->st_mode = 0;
+    if (from->st_mode & _S_IFMT) {
+        to->st_mode |= ANDROID_S_IFMT;
+    }
+    if (from->st_mode & _S_IFDIR) {
+        to->st_mode |= ANDROID_S_IFDIR;
+    }
+    if (from->st_mode & _S_IFCHR) {
+        to->st_mode |= ANDROID_S_IFCHR;
+    }
+    if (from->st_mode & _S_IFREG) {
+        to->st_mode |= ANDROID_S_IFREG;
+    }
+    if (from->st_mode & _S_IREAD) {
+        to->st_mode |= ANDROID_S_IRUSR;
+    }
+    if (from->st_mode & _S_IWRITE) {
+        to->st_mode |= ANDROID_S_IWUSR;
+    }
+    if (from->st_mode & _S_IEXEC) {
+        to->st_mode |= ANDROID_S_IXUSR;
+    }
     to->_st_atime = from->st_atime;
     to->_st_mtime = from->st_mtime;
     to->_st_ctime = from->st_mtime;
@@ -23,6 +44,7 @@ static void native_to_android(struct stat *from, android_stat_t *to) {
     to->st_blksize = 4096;
     to->st_blocks = (from->st_size / 512) + ((from->st_size % 512) ? 1 : 0);
 #else
+    to->st_mode = s_to_android(from->st_mode);
     to->_st_atime = from->st_atim.tv_sec;
     to->_st_mtime = from->st_mtim.tv_sec;
     to->_st_ctime = from->st_mtim.tv_sec;
@@ -33,7 +55,7 @@ static void native_to_android(struct stat *from, android_stat_t *to) {
     to->st_blocks = from->st_blocks;
 #endif
 }
-
+#ifndef _WIN32
 int s_to_android(int mode) {
     int real_mode = 0;
 #ifdef S_IFMT
@@ -163,6 +185,7 @@ int s_to_native(int mode) {
 #endif
     return real_mode;
 }
+#endif
 
 int android_fstat(int fd, android_stat_t *statbuf) {
     struct stat tmp;

@@ -27,8 +27,6 @@
  */
 #pragma once
 
-#include <sys/cdefs.h>
-
 typedef struct {
     const char *dli_fname;  /* Pathname of shared object that
                                contains address */

@@ -7,6 +7,7 @@
 #include "android_futex.h"
 #include "android_atomic.h"
 #include "posix_funcs.h"
+#include "android_errno.h"
 
 int android_timespec_to_absolute(struct timespec *ts, const struct timespec *abstime, clockid_t clock) {
     clock_gettime(clock, ts);
@@ -25,7 +26,7 @@ int android_timespec_to_absolute(struct timespec *ts, const struct timespec *abs
 int android_pthread_cond_pulse(android_pthread_cond_t *cond, int counter) {
     long flags;
     if (cond == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     flags = (cond->value & ~ANDROID_COND_COUNTER_MASK);
     for (;;) {
@@ -47,8 +48,8 @@ int android_pthread_cond_timedwait_relative(android_pthread_cond_t *cond, androi
     android_pthread_mutex_unlock(mutex);
     status = android_futex_wait_ex(&cond->value, ANDROID_COND_IS_SHARED(cond), oldvalue, reltime);
     android_pthread_mutex_lock(mutex);
-    if (status == (-ETIMEDOUT)) {
-        return ETIMEDOUT;
+    if (status == (-ANDROID_ETIMEDOUT)) {
+        return ANDROID_ETIMEDOUT;
     }
     return 0;
 }
@@ -58,7 +59,7 @@ int android_pthread_cond_timedwait2(android_pthread_cond_t *cond, android_pthrea
     struct timespec * tsp;
     if (abstime != NULL) {
         if (android_timespec_to_absolute(&ts, abstime, clock) < 0) {
-            return ETIMEDOUT;
+            return ANDROID_ETIMEDOUT;
         }
         tsp = &ts;
     } else {
@@ -69,7 +70,7 @@ int android_pthread_cond_timedwait2(android_pthread_cond_t *cond, android_pthrea
 
 int android_pthread_cond_init(android_pthread_cond_t *cond, const android_pthread_condattr_t *attr) {
     if (cond == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     cond->value = 0;
     if (attr != NULL && *attr == ANDROID_PTHREAD_PROCESS_SHARED) {
@@ -80,7 +81,7 @@ int android_pthread_cond_init(android_pthread_cond_t *cond, const android_pthrea
 
 int android_pthread_cond_destroy(android_pthread_cond_t *cond) {
     if (cond == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     cond->value = 0xdeadc04d;
     return 0;
@@ -104,7 +105,7 @@ int android_pthread_cond_wait(android_pthread_cond_t *cond, android_pthread_mute
 
 int android_pthread_condattr_init(android_pthread_condattr_t *attr) {
     if (attr == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     *attr = ANDROID_PTHREAD_PROCESS_PRIVATE;
     return 0;
@@ -112,7 +113,7 @@ int android_pthread_condattr_init(android_pthread_condattr_t *attr) {
 
 int android_pthread_condattr_destroy(android_pthread_condattr_t *attr) {
     if (attr == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     *attr = 0xdeada11d;
     return 0;
@@ -120,7 +121,7 @@ int android_pthread_condattr_destroy(android_pthread_condattr_t *attr) {
 
 int android_pthread_condattr_getpshared(const android_pthread_condattr_t *attr, int *pshared) {
     if (attr == NULL || pshared == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     *pshared = *attr;
     return 0;
@@ -128,11 +129,11 @@ int android_pthread_condattr_getpshared(const android_pthread_condattr_t *attr, 
 
 int android_pthread_condattr_setpshared(android_pthread_condattr_t *attr, int pshared) {
     if (attr == NULL) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     if (pshared != ANDROID_PTHREAD_PROCESS_SHARED &&
         pshared != ANDROID_PTHREAD_PROCESS_PRIVATE) {
-        return EINVAL;
+        return ANDROID_EINVAL;
     }
     *attr = pshared;
     return 0;

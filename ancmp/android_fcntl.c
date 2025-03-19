@@ -123,7 +123,7 @@ int android_fcntl(int fd, int op, ...) {
         } else {
             DWORD flags = (flock->l_type == ANDROID_F_WRLCK) ? LOCKFILE_EXCLUSIVE_LOCK : 0;
             if (LockFileEx(hFile, flags | LOCKFILE_FAIL_IMMEDIATELY, 0, len.LowPart, len.HighPart, &ov)) {
-                UnlockFile(hFile, start.LowPart, start.HighPart, len.LowPart, len.HighPart);
+                UnlockFileEx(hFile, 0, len.LowPart, len.HighPart, &ov);
                 flock->l_type = ANDROID_F_UNLCK;
             } else {
                 if (!(flock->l_type == ANDROID_F_RDLCK || flock->l_type == ANDROID_F_WRLCK)) {
@@ -165,21 +165,26 @@ int android_open(const char *pathname, int flags, ...) {
     va_start(args, flags);
     
     int fd;
-    if (real_flags & O_CREAT) {
+    if (flags & ANDROID_O_CREAT) {
         unsigned short mode = va_arg(args, int);
-        fd = open(pathname, real_flags, s_to_native(mode));
+        unsigned short real_mode = 0;
+        if (mode & ANDROID_S_IRUSR) {
+            real_mode |= _S_IREAD;
+        }
+        if (mode & ANDROID_S_IWUSR) {
+            real_mode |= _S_IWRITE;
+        }
+        fd = _open(pathname, real_flags, real_mode);
     } else {
-        fd = open(pathname, real_flags);
+        fd = _open(pathname, real_flags);
     }
-    /*if (fd != -1) {
+    if (fd != -1) {
         printf("\x1b[32mSuccessfully ran open() for %s\x1b[0m\n", pathname);
     } else {
         printf("\x1b[31mFailed to run open() for %s due to %d\x1b[0m\n", pathname, errno);
-    }*/
+    }
 
     return fd;
 }
-
-#else
 
 #endif

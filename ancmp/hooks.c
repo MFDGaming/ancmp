@@ -47,6 +47,7 @@
 #include <pthread.h>
 #include "android_cxa.h"
 #include "android_strcasecmp.h"
+#include "android_errno.h"
 
 typedef struct {
     char *name;
@@ -298,6 +299,10 @@ int android_geteuid() {
     return 0;
 }
 
+int android_getpid() {
+    return GetCurrentProcessId();
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
@@ -320,6 +325,7 @@ int android_geteuid() {
 #define android_fsync fsync
 #define android_fdatasync fdatasync
 #define android_geteuid geteuid
+#define android_getpid getpid
 #endif
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0501)
@@ -433,12 +439,6 @@ int __isfinitef(float x) {
  
 int __isfinite(double x) {
     return isfinite(x);
-}
-
-int *android_errno() {
-    puts("android_errno");
-    int *ret = &errno;
-    return ret;
 }
 
 void android_assert2(const char* __file, int __line, const char* __function, const char* __msg) {
@@ -1232,7 +1232,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "getpid",
-        .addr = getpid
+        .addr = android_getpid
     },
     {
         .name = "nanosleep",

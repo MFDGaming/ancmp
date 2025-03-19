@@ -54,6 +54,7 @@
 #include "android_elf_exec.h"
 #include "posix_funcs.h"
 #include "hooks.h"
+#include "android_futex.h"
 
 #define ALLOW_SYMBOLS_FROM_MAIN 1
 #define SO_MAX 128
@@ -2089,6 +2090,10 @@ void android_linker_init() {
 #ifdef _WIN32
     if(!memmap_init(1024*1024*100, 4096)) {
         puts("meminit failed");
+        exit(1);
+    }
+    if (!android_futex_init()) {
+        puts("android_futex_init failed");
         exit(1);
     }
     WSADATA wsaData;

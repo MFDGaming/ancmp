@@ -38,8 +38,8 @@ enum {
 };
 
 #ifdef _WIN32
-CRITICAL_SECTION lock;
-LONG lock_inited = 0;
+static CRITICAL_SECTION lock;
+static LONG lock_inited = 0;
 #else
 static pthread_mutex_t lock =
 

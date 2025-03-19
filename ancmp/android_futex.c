@@ -5,16 +5,131 @@
 #include <windows.h>
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 
-int android_futex_wake_ex(volatile void *ftx, int pshared, int val) {
-    if (val == INT_MAX) {
-        WakeByAddressAll((PVOID)ftx);
+typedef struct android_futex_lock {
+    volatile void *addr;
+    HANDLE semaphore;
+    struct android_futex_lock *next;
+    struct android_futex_lock *prev;
+    volatile long ref_count;
+} android_futex_lock_t;
+
+static HANDLE android_futex_mtx = NULL;
+static android_futex_lock_t *futex_locks_first = NULL;
+static android_futex_lock_t *futex_locks_last = NULL;
+
+android_futex_lock_t *android_futex_append_key(volatile void *addr) {
+    android_futex_lock_t *current_lock = (android_futex_lock_t *)malloc(sizeof(android_futex_lock_t));
+    if (current_lock == NULL) {
+        return NULL;
+    }
+    current_lock->semaphore = CreateSemaphore(NULL, INT_MAX - 1, INT_MAX - 1, NULL);
+    if (current_lock->semaphore == INVALID_HANDLE_VALUE) {
+        free(current_lock);
+        return NULL;
+    }
+    current_lock->addr = addr;
+    current_lock->next = NULL;
+    current_lock->ref_count = 0;
+    if (futex_locks_first == NULL) {
+        futex_locks_first = futex_locks_last = current_lock;
+        current_lock->prev = NULL;
     } else {
-        for (int i = 0; i < val; ++i) {
-            WakeByAddressSingle((PVOID)ftx);
+        futex_locks_last->next = current_lock;
+        current_lock->prev = futex_locks_last;
+        futex_locks_last = current_lock;
+    }
+    return current_lock;
+}
+
+android_futex_lock_t *android_futex_get_lock(volatile void *addr, BOOL create, BOOL do_inc) {
+    WaitForSingleObject(android_futex_mtx, INFINITE);
+    for (android_futex_lock_t *current_lock = futex_locks_first; current_lock != NULL; current_lock = current_lock->next) {
+        if (current_lock->addr == addr) {
+            if (do_inc) {
+                InterlockedIncrement(&current_lock->ref_count);
+            }
+            ReleaseMutex(android_futex_mtx);
+            return current_lock;
         }
     }
-    return val;
+    android_futex_lock_t *current_lock = NULL;
+    if (create) {
+        current_lock = android_futex_append_key(addr);
+        if (current_lock && do_inc) {
+            InterlockedIncrement(&current_lock->ref_count);
+        }
+    }
+    ReleaseMutex(android_futex_mtx);
+    return current_lock;
+}
+
+void android_futex_cleanup_lock(android_futex_lock_t *lock, BOOL do_dec) {
+    WaitForSingleObject(android_futex_mtx, INFINITE);
+    if (lock != NULL) {
+        if (do_dec) {
+            InterlockedDecrement(&lock->ref_count);
+        }
+        if (InterlockedCompareExchange(&lock->ref_count, 0, 0) == 0) {
+            if (lock->semaphore != INVALID_HANDLE_VALUE) {
+                CloseHandle(lock->semaphore);
+            }
+            if (lock->prev == NULL && lock->next == NULL) {
+                futex_locks_first = futex_locks_last = NULL;
+            } else if (lock->prev == NULL) {
+                futex_locks_first = lock->next;
+                futex_locks_first->prev = NULL;
+            } else if (lock->next == NULL) {
+                futex_locks_last = lock->prev;
+                futex_locks_last->next = NULL;
+            } else {
+                lock->prev->next = lock->next;
+                lock->next->prev = lock->prev;
+            }
+            free(lock);
+        }
+    }
+    ReleaseMutex(android_futex_mtx);
+}
+
+int android_futex_init() {
+    android_futex_mtx = CreateMutex(NULL, FALSE, NULL);
+    if (android_futex_mtx == NULL) {
+        return 0;
+    }
+    return 1;
+}
+
+int android_futex_wake_ex(volatile void *ftx, int pshared, int val) {
+    android_futex_lock_t *lock = android_futex_get_lock(ftx, FALSE, FALSE);
+    if (lock == NULL) {
+        return -1;
+    }
+    if (lock->semaphore == INVALID_HANDLE_VALUE) {
+        return -1;
+    }
+    int woke = 0;
+    if (val == INT_MAX) {
+        LONG prev = 0;
+        while (prev < (INT_MAX - 1)) {
+            if (!ReleaseSemaphore(lock->semaphore, 1, &prev)) {
+                break;
+            }
+            ++woke;
+        }
+    } else if (val >= 0) {
+        LONG prev = 0;
+        for (int i = 0; i < val; ++i) {
+            if (!ReleaseSemaphore(lock->semaphore, 1, &prev) || prev >= (INT_MAX - 1)) {
+                break;
+            }
+            ++woke;
+        }
+    } else {
+        woke = -1;
+    }
+    return woke;
 }
 
 int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct timespec *timeout) {
@@ -22,11 +137,19 @@ int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct
         errno = EAGAIN;
         return -1;
     }
+    android_futex_lock_t *lock = android_futex_get_lock(ftx, TRUE, TRUE);
+    if (lock == NULL) {
+        return -1;
+    }
+    if (lock->semaphore == INVALID_HANDLE_VALUE) {
+        return -1;
+    }
     DWORD wait_time = INFINITE;
     if (timeout) {
         wait_time = (timeout->tv_sec * 1000) + (timeout->tv_nsec / 1000000);
     }
-    WaitOnAddress((PVOID)ftx, &val, sizeof(int), wait_time);
+    WaitForSingleObject(lock->semaphore, wait_time);
+    android_futex_cleanup_lock(lock, TRUE);
     return 0;
 }
 
