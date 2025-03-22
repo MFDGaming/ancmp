@@ -45,7 +45,8 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include <pthread.h>
+#include "android_pthread.h"
+#include "android_pthread_threads.h"
 
 #include "linker.h"
 #include "linker_debug.h"
@@ -158,19 +159,7 @@ static struct r_debug _r_debug = {1, NULL, &rtld_db_dlactivity,
                                   RT_CONSISTENT, 0};
 static struct link_map *r_debug_tail = 0;
 
-static pthread_mutex_t _r_debug_lock =
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER
-
-PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
-#else
-
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-#else
-PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-#endif
+static android_pthread_mutex_t _r_debug_lock = ANDROID_PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 
 static void insert_soinfo_into_debug_map(soinfo * info)
 {
@@ -218,7 +207,7 @@ void notify_gdb_of_load(soinfo * info)
         return;
     }
 
-    pthread_mutex_lock(&_r_debug_lock);
+    android_pthread_mutex_lock(&_r_debug_lock);
 
     _r_debug.r_state = RT_ADD;
     rtld_db_dlactivity();
@@ -228,7 +217,7 @@ void notify_gdb_of_load(soinfo * info)
     _r_debug.r_state = RT_CONSISTENT;
     rtld_db_dlactivity();
 
-    pthread_mutex_unlock(&_r_debug_lock);
+    android_pthread_mutex_unlock(&_r_debug_lock);
 }
 
 void notify_gdb_of_unload(soinfo * info)
@@ -238,7 +227,7 @@ void notify_gdb_of_unload(soinfo * info)
         return;
     }
 
-    pthread_mutex_lock(&_r_debug_lock);
+    android_pthread_mutex_lock(&_r_debug_lock);
 
     _r_debug.r_state = RT_DELETE;
     rtld_db_dlactivity();
@@ -248,7 +237,7 @@ void notify_gdb_of_unload(soinfo * info)
     _r_debug.r_state = RT_CONSISTENT;
     rtld_db_dlactivity();
 
-    pthread_mutex_unlock(&_r_debug_lock);
+    android_pthread_mutex_unlock(&_r_debug_lock);
 }
 
 void notify_gdb_of_libraries()
@@ -2094,6 +2083,10 @@ void android_linker_init() {
     }
     if (!android_futex_init()) {
         puts("android_futex_init failed");
+        exit(1);
+    }
+    if (!android_threads_init()) {
+        puts("android_threads_init failed");
         exit(1);
     }
     WSADATA wsaData;

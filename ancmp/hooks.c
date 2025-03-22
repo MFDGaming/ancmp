@@ -36,6 +36,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
+#include <pthread.h>
 #include <unistd.h>
 #include <sys/select.h>
 #include <netdb.h>
@@ -44,7 +45,6 @@
 #include <sys/uio.h>
 #endif
 #include "posix_funcs.h"
-#include <pthread.h>
 #include "android_cxa.h"
 #include "android_strcasecmp.h"
 #include "android_errno.h"
@@ -130,7 +130,7 @@ int android_gethostname(char *name, size_t size) {
 }
 
 char *android_inet_ntoa(uint32_t addr) {
-    puts("android_inet_ntoa");
+    //puts("android_inet_ntoa");
     struct in_addr real_addr;
     memcpy(&real_addr, &addr, sizeof(uint32_t));
     return inet_ntoa(real_addr);

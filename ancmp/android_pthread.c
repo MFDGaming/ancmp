@@ -1,114 +1,25 @@
 #include "android_pthread.h"
-#include <pthread.h>
-#include <errno.h>
-#include "android_atomic.h"
+#include "android_errno.h"
 #include "android_futex.h"
+#include "android_atomic.h"
 #include <limits.h>
-#include <stdatomic.h>
-#include "posix_funcs.h"
+#include <string.h>
+#include "android_tls.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <processthreadsapi.h>
+#include "android_pthread_threads.h"
+#else
+#include <pthread.h>
+#include <sched.h>
+#endif
 
-#define DEFAULT_STACKSIZE (1024 * 1024)
-#define PAGE_SIZE 4096
-
-static const android_pthread_attr_t gDefaultPthreadAttr = {
-    .flags = 0,
-    .stack_base = NULL,
-    .stack_size = DEFAULT_STACKSIZE,
-    .guard_size = PAGE_SIZE,
-    .sched_policy = ANDROID_SCHED_NORMAL,
-    .sched_priority = 0
-};
-
-int android_pthread_attr_init(android_pthread_attr_t * attr) {
-    if (attr == NULL) {
-        return EINVAL;
-    }
-    *((void **)attr) = malloc(sizeof(pthread_attr_t));
-    return pthread_attr_init(*((void **)attr));
+int android_pthread_equal(android_pthread_t one, android_pthread_t two) {
+    return (one == two ? 1 : 0);
 }
 
-int android_pthread_attr_destroy(android_pthread_attr_t * attr) {
-    if (attr == NULL) {
-        return EINVAL;
-    }
-    int ret = pthread_attr_destroy(*((void **)attr));
-    free(*((void **)attr));
-    *((void **)attr) = NULL;
-    return ret;
-}
-
-int android_pthread_attr_setdetachstate(android_pthread_attr_t * attr, int state) {
-    if (attr == NULL) {
-        return EINVAL;
-    }
-    if (state == ANDROID_PTHREAD_CREATE_DETACHED) {
-        if (*((void **)attr) == NULL) {
-            *((void **)attr) = malloc(sizeof(pthread_attr_t));
-        }
-        pthread_attr_setdetachstate(*((void **)attr), PTHREAD_CREATE_DETACHED);
-    } else if (state == ANDROID_PTHREAD_CREATE_JOINABLE) {
-        if (*((void **)attr) == NULL) {
-            *((void **)attr) = malloc(sizeof(pthread_attr_t));
-        }
-        pthread_attr_setdetachstate(*((void **)attr), PTHREAD_CREATE_JOINABLE);
-    } else {
-        return EINVAL;
-    }
+int android_pthread_setname_np(android_pthread_t thread, const char *name) {
     return 0;
-}
-
-int android_pthread_attr_setschedparam(android_pthread_attr_t * attr, struct android_sched_param const * param) {
-    if (attr == NULL) {
-        return EINVAL;
-    }
-    if (*((void **)attr) == NULL) {
-        *((void **)attr) = malloc(sizeof(pthread_attr_t));
-    }
-    return pthread_attr_setschedparam(*((void **)attr), (struct sched_param *)param);
-}
-
-int android_pthread_attr_setstacksize(android_pthread_attr_t * attr, size_t stack_size) {
-    if (attr == NULL) {
-        return EINVAL;
-    }
-    if (*((void **)attr) == NULL) {
-        *((void **)attr) = malloc(sizeof(pthread_attr_t));
-    }
-    return pthread_attr_setstacksize(*((void **)attr), stack_size);
-}
- 
-int android_pthread_create(android_pthread_t *thread, android_pthread_attr_t const * attr, void *(*start_routine)(void *), void * arg) {
-    pthread_attr_t *real_attr = NULL;
-    if (attr && *((void **)attr)) {
-        real_attr = *((void **)attr);
-    }
-    return pthread_create((pthread_t *)thread, real_attr, start_routine, arg);
-}
-
-void *android_pthread_getspecific(android_pthread_key_t key) {
-    pthread_key_t _key = (pthread_key_t)key;
-    return pthread_getspecific(_key);
-}
- 
-int android_pthread_join(android_pthread_t thid, void ** ret_val) {
-    return pthread_join(*((pthread_t *)(&thid)), ret_val);
-}
- 
-int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_function)(void *)) {
-    return pthread_key_create((pthread_key_t *)key, destructor_function);
-}
-
-android_pthread_t android_pthread_self(void) {
-    pthread_t t = pthread_self();
-    return *((android_pthread_t *)(&t)); 
-}
-
-int android_pthread_setspecific(android_pthread_key_t key, const void *value) {
-    return pthread_setspecific((pthread_key_t)key, value);
-}
-
-int android_pthread_key_delete(android_pthread_key_t key) {
-    return pthread_key_delete((pthread_key_t)key);
 }
 
 int android_pthread_once(android_pthread_once_t *once_control, void (*init_routine)(void)) {
@@ -150,15 +61,169 @@ int android_pthread_once(android_pthread_once_t *once_control, void (*init_routi
     return 0;
 }
 
-int android_pthread_equal(android_pthread_t one, android_pthread_t two) {
-    return (one == two ? 1 : 0);
-}
+#ifdef _WIN32
 
-int android_pthread_detach(android_pthread_t thread) {
-    pthread_t _thread = *(pthread_t *)&thread;
-    return pthread_detach(_thread);
+static int priority_conv(int policy, int priority) {
+    if (policy == ANDROID_SCHED_FIFO) {
+        if (priority <= 19)  return THREAD_PRIORITY_TIME_CRITICAL;
+        if (priority <= 39)  return THREAD_PRIORITY_HIGHEST;
+        if (priority <= 59)  return THREAD_PRIORITY_ABOVE_NORMAL;
+        if (priority <= 79)  return THREAD_PRIORITY_NORMAL;
+        return THREAD_PRIORITY_BELOW_NORMAL;
+    }
+    if (policy == ANDROID_SCHED_RR) {
+        if (priority <= 19)  return THREAD_PRIORITY_HIGHEST;
+        if (priority <= 39)  return THREAD_PRIORITY_ABOVE_NORMAL;
+        if (priority <= 59)  return THREAD_PRIORITY_NORMAL;
+        if (priority <= 79)  return THREAD_PRIORITY_BELOW_NORMAL;
+        return THREAD_PRIORITY_LOWEST;
+    }
+    return THREAD_PRIORITY_NORMAL;
 }
+#endif
 
-int android_pthread_setname_np(android_pthread_t thread, const char *name) {
+int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t const *attr, void *(*start_routine)(void *), void *arg) {
+    android_pthread_attr_t attr_sv = android_gDefaultPthreadAttr;
+    if (attr) {
+        attr_sv = *attr;
+    }
+#ifdef _WIN32
+    android_pthread_internal_t *t = (android_pthread_internal_t *)malloc(sizeof(android_pthread_internal_t));
+    if (t == NULL) {
+        return ANDROID_EAGAIN;
+    }
+    t->is_detached = attr_sv.flags & ANDROID_PTHREAD_ATTR_FLAG_DETACHED;
+    memset(t->tls, 0, sizeof(void *) * ANDROID_BIONIC_TLS_SLOTS);
+    t->tls[ANDROID_TLS_SLOT_SELF] = (void *)t->tls;
+    t->tls[ANDROID_TLS_SLOT_THREAD_ID] = (void *)t;
+
+    t->thread = CreateThread(NULL, attr_sv.stack_size, (LPTHREAD_START_ROUTINE)start_routine, arg, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+    if (t->thread == NULL) {
+        free(t);
+        return ANDROID_EAGAIN;
+    }
+    SetThreadPriority(t->thread, priority_conv(attr_sv.sched_policy, attr_sv.sched_priority));
+    android_threads_append(t);
+    ResumeThread(t->thread);
+    *thread_out = (android_pthread_t)t;
     return 0;
+#else
+    pthread_attr_t real_attr;
+    if (pthread_attr_init(&real_attr) != 0) {
+        return ANDROID_EAGAIN;
+    }
+    int real_policy = SCHED_OTHER;
+    if (attr_sv.sched_policy == ANDROID_SCHED_FIFO) {
+        real_policy = SCHED_FIFO;
+    } else if (attr_sv.sched_policy == ANDROID_SCHED_RR) {
+        real_policy = SCHED_RR;
+    }
+    if (pthread_attr_setschedpolicy(&real_attr, real_policy) != 0) {
+        pthread_attr_destroy(&real_attr);
+        return ANDROID_EAGAIN;
+    }
+    if (real_policy == SCHED_FIFO || real_policy == SCHED_RR) {
+        struct sched_param param;
+        param.sched_priority = attr_sv.sched_priority;
+        if (pthread_attr_setschedparam(&real_attr, &param) != 0) {
+            pthread_attr_destroy(&real_attr);
+            return ANDROID_EAGAIN;
+        }
+    }
+    if (pthread_attr_setdetachstate(&real_attr, (attr_sv.flags & ANDROID_PTHREAD_ATTR_FLAG_DETACHED) ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE) != 0) {
+        pthread_attr_destroy(&real_attr);
+        return ANDROID_EAGAIN;
+    }
+    if (attr_sv.stack_base == NULL) {
+        if (pthread_attr_setstacksize(&real_attr, attr_sv.stack_size) != 0) {
+            pthread_attr_destroy(&real_attr);
+            return ANDROID_EAGAIN;
+        }
+    } else {
+        if (pthread_attr_setstack(&real_attr, attr_sv.stack_base, attr_sv.stack_size) != 0) {
+            pthread_attr_destroy(&real_attr);
+            return ANDROID_EAGAIN;
+        }
+    }
+    if (pthread_attr_setguardsize(&real_attr, attr_sv.guard_size) != 0) {
+        pthread_attr_destroy(&real_attr);
+        return ANDROID_EAGAIN;
+    }
+    pthread_t thrd;
+    if (pthread_create(&thrd, &real_attr, start_routine, arg) != 0) {
+        pthread_attr_destroy(&real_attr);
+        return ANDROID_EAGAIN;
+    }
+    *(pthread_t *)thread_out = thrd;
+    return 0;
+#endif
+}
+
+static void android_pthread_call_destroy(android_pthread_internal_t *thread) {
+    for (int i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
+        void *destructor = NULL;
+        void *val = NULL;
+        WaitForSingleObject(tls_mutex, INFINITE);
+        if (tls_free[i] == 1) {
+            if (tls_destructors[i] != NULL) {
+                if (thread->tls[i] != NULL) {
+                    val = thread->tls[i];
+                    destructor = tls_destructors[i];
+                }
+            }
+        }
+        ReleaseMutex(tls_mutex);
+        if (destructor) {
+            ((void (*)(void *))destructor)(val);
+        }
+    }
+}
+
+int android_pthread_detach(android_pthread_t thid) {
+#ifdef _WIN32
+    android_pthread_internal_t *thrd = (android_pthread_internal_t *)thid;
+    if (thrd == NULL) {
+        return ANDROID_EINVAL;
+    }
+    if (thrd->thread != NULL) {
+        CloseHandle(thrd->thread);
+        android_pthread_call_destroy(thrd);
+    }
+    free(thrd);
+    return 0;
+#else
+    pthread_t _thid = *(pthread_t *)&thid;
+    return pthread_detach(_thid);
+#endif
+}
+
+int android_pthread_join(android_pthread_t thid, void **ret_val) {
+#ifdef _WIN32
+    android_pthread_internal_t *thrd = (android_pthread_internal_t *)thid;
+    if (thrd == NULL) {
+        return ANDROID_EINVAL;
+    }
+    if (thrd->thread != NULL) {
+        WaitForSingleObject(thrd->thread, INFINITE);
+        int status;
+        GetExitCodeThread(thrd->thread, (LPDWORD)&status);
+        CloseHandle(thrd->thread);
+        if (ret_val) *ret_val = (void *)status;
+        android_pthread_call_destroy(thrd);
+    }
+    free(thrd);
+    return 0;
+#else
+    pthread_t _thid = *(pthread_t *)&thid;
+    return pthread_join(_thid, ret_val);
+#endif
+}
+
+android_pthread_t android_pthread_self(void) {
+#ifdef _WIN32
+    return (android_pthread_t)android_threads_get(GetCurrentThreadId());
+#else
+    pthread_t thid = pthread_self();
+    return *(android_pthread_t *)&thid;
+#endif
 }

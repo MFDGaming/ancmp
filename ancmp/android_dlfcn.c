@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "android_dlfcn.h"
-#include <pthread.h>
+#include "android_pthread.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +45,7 @@ static const char *dl_errors[] = {
 #define likely(expr)   __builtin_expect (expr, 1)
 #define unlikely(expr) __builtin_expect (expr, 0)
 
-pthread_mutex_t dl_lock = PTHREAD_MUTEX_INITIALIZER;
+android_pthread_mutex_t dl_lock = ANDROID_PTHREAD_MUTEX_INITIALIZER;
 
 static void set_dlerror(int err)
 {
@@ -58,7 +58,7 @@ void *android_dlopen(const char *filename, int flag)
 {
     soinfo *ret;
 
-    pthread_mutex_lock(&dl_lock);
+    android_pthread_mutex_lock(&dl_lock);
     ret = find_library(filename);
     if (unlikely(ret == NULL)) {
         set_dlerror(ANDROID_DL_ERR_CANNOT_LOAD_LIBRARY);
@@ -66,7 +66,7 @@ void *android_dlopen(const char *filename, int flag)
         call_constructors_recursive(ret);
         ret->refcount++;
     }
-    pthread_mutex_unlock(&dl_lock);
+    android_pthread_mutex_unlock(&dl_lock);
     return ret;
 }
 
@@ -83,7 +83,7 @@ void *android_dlsym(void *handle, const char *symbol)
     Elf32_Sym *sym;
     unsigned bind;
 
-    pthread_mutex_lock(&dl_lock);
+    android_pthread_mutex_lock(&dl_lock);
 
     if(unlikely(handle == 0)) { 
         set_dlerror(ANDROID_DL_ERR_INVALID_LIBRARY_HANDLE);
@@ -114,7 +114,7 @@ void *android_dlsym(void *handle, const char *symbol)
 
         if(likely((bind == STB_GLOBAL || bind == STB_WEAK) && (sym->st_shndx != 0))) {
             unsigned ret = sym->st_value + found->base;
-            pthread_mutex_unlock(&dl_lock);
+            android_pthread_mutex_unlock(&dl_lock);
             return (void*)ret;
         }
 
@@ -124,7 +124,7 @@ void *android_dlsym(void *handle, const char *symbol)
         set_dlerror(ANDROID_DL_ERR_SYMBOL_NOT_FOUND);
 
 err:
-    pthread_mutex_unlock(&dl_lock);
+    android_pthread_mutex_unlock(&dl_lock);
     return 0;
 }
 
@@ -132,7 +132,7 @@ int android_dladdr(const void *addr, android_Dl_info *info)
 {
     int ret = 0;
 
-    pthread_mutex_lock(&dl_lock);
+    android_pthread_mutex_lock(&dl_lock);
 
     /* Determine if this address can be found in any library currently mapped */
     soinfo *si = find_containing_library(addr);
@@ -154,16 +154,16 @@ int android_dladdr(const void *addr, android_Dl_info *info)
         ret = 1;
     }
 
-    pthread_mutex_unlock(&dl_lock);
+    android_pthread_mutex_unlock(&dl_lock);
 
     return ret;
 }
 
 int android_dlclose(void *handle)
 {
-    pthread_mutex_lock(&dl_lock);
+    android_pthread_mutex_lock(&dl_lock);
     (void)unload_library((soinfo*)handle);
-    pthread_mutex_unlock(&dl_lock);
+    android_pthread_mutex_unlock(&dl_lock);
     return 0;
 }
 

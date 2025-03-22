@@ -472,6 +472,11 @@ volatile int *android_errno(void) {
         android_no = ANDROID_EOPNOTSUPP;
     } else
 #endif
+#ifdef ENOTSUP
+    if (no == ENOTSUP) {
+        android_no = ANDROID_ENOTSUP;
+    } else
+#endif
 #ifdef EPFNOSUPPORT
     if (no == EPFNOSUPPORT) {
         android_no = ANDROID_EPFNOSUPPORT;

@@ -1,11 +1,7 @@
 #include "android_cxa.h"
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
+#include "android_pthread.h"
 
 typedef struct {
   long int flavor;
@@ -37,26 +33,8 @@ enum {
     android_ef_cxa
 };
 
-#ifdef _WIN32
-static CRITICAL_SECTION lock;
-static LONG lock_inited = 0;
-#else
-static pthread_mutex_t lock =
 
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER
-
-PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
-#else
-
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-#else
-PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-#endif
-
-#endif
+static android_pthread_mutex_t lock = ANDROID_PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 
 static android_exit_function_list_t initial;
 android_exit_function_list_t *__exit_funcs = &initial;
@@ -64,14 +42,7 @@ android_exit_function_list_t *__exit_funcs = &initial;
 android_exit_function_t *android_new_exitfn() {
     android_exit_function_list_t *l;
     size_t i = 0;
-#ifdef _WIN32
-    if (!InterlockedCompareExchange(&lock_inited, 1, 0)) {
-        InitializeCriticalSection(&lock);
-    }
-    EnterCriticalSection(&lock);
-#else
-    pthread_mutex_lock(&lock);
-#endif
+    android_pthread_mutex_lock(&lock);
     for (l = __exit_funcs; l != NULL; l = l->next) {
         for (i = 0; i < l->idx; ++i) {
             if (l->fns[i].flavor == android_ef_free) {
@@ -98,11 +69,7 @@ android_exit_function_t *android_new_exitfn() {
     if (l != NULL) {
         l->fns[i].flavor = android_ef_us;
     }
-#ifdef _WIN32
-    LeaveCriticalSection(&lock);
-#else
-    pthread_mutex_unlock(&lock);
-#endif
+    android_pthread_mutex_unlock(&lock);
     return l == NULL ? NULL : &l->fns[i];
 }
 
@@ -120,14 +87,7 @@ int android_cxa_atexit(void (*func)(void *), void *arg, void *d) {
 
 void android_cxa_finalize(void *d) {
     android_exit_function_list_t *funcs;
-#ifdef _WIN32
-    if (!InterlockedCompareExchange(&lock_inited, 1, 0)) {
-        InitializeCriticalSection(&lock);
-    }
-    EnterCriticalSection(&lock);
-#else
-    pthread_mutex_lock(&lock);
-#endif
+    android_pthread_mutex_lock(&lock);
     for (funcs = __exit_funcs; funcs; funcs = funcs->next) {
         android_exit_function_t *f;
         for (f = &funcs->fns[funcs->idx - 1]; f >= &funcs->fns[0]; --f) {
@@ -137,11 +97,7 @@ void android_cxa_finalize(void *d) {
             }
         }
     }
-#ifdef _WIN32
-    LeaveCriticalSection(&lock);
-#else
-    pthread_mutex_unlock(&lock);
-#endif
+    android_pthread_mutex_unlock(&lock);
 }
 
 void android_cxa_pure_virtual() {
