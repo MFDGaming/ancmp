@@ -7,7 +7,6 @@
 #include "android_tls.h"
 #ifdef _WIN32
 #include <windows.h>
-#include <processthreadsapi.h>
 #include "android_pthread_threads.h"
 #else
 #include <pthread.h>
@@ -80,6 +79,21 @@ static int priority_conv(int policy, int priority) {
     }
     return THREAD_PRIORITY_NORMAL;
 }
+
+typedef struct {
+    android_pthread_internal_t *thread;
+    HANDLE *event;
+    void *(*start_routine)(void *);
+    void *arg;
+} thread_wrapper_data_t;
+
+DWORD WINAPI thread_wrapper(LPVOID lpParam) {
+    thread_wrapper_data_t *data = (thread_wrapper_data_t *)lpParam;
+    data->thread->thread_id = GetCurrentThreadId();
+    SetEvent(data->event);
+    return (DWORD)data->start_routine(data->arg);
+}
+
 #endif
 
 int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t const *attr, void *(*start_routine)(void *), void *arg) {
@@ -97,7 +111,13 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     t->tls[ANDROID_TLS_SLOT_SELF] = (void *)t->tls;
     t->tls[ANDROID_TLS_SLOT_THREAD_ID] = (void *)t;
 
-    t->thread = CreateThread(NULL, attr_sv.stack_size, (LPTHREAD_START_ROUTINE)start_routine, arg, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+    thread_wrapper_data_t *wrapper_data = (thread_wrapper_data_t *)malloc(sizeof(thread_wrapper_data_t));
+    wrapper_data->thread = t;
+    wrapper_data->start_routine = start_routine;
+    wrapper_data->arg = arg;
+    wrapper_data->event = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, wrapper_data, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
     if (t->thread == NULL) {
         free(t);
         return ANDROID_EAGAIN;
@@ -105,6 +125,9 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     SetThreadPriority(t->thread, priority_conv(attr_sv.sched_policy, attr_sv.sched_priority));
     android_threads_append(t);
     ResumeThread(t->thread);
+    WaitForSingleObject(wrapper_data->event, INFINITE);
+    CloseHandle(wrapper_data->event);
+    free(wrapper_data);
     *thread_out = (android_pthread_t)t;
     return 0;
 #else

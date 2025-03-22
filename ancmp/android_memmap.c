@@ -82,7 +82,7 @@ void *memmap_alloc(void *addr, size_t len, unsigned char overwrite) {
         if (off == -1) {
             return NULL;
         }
-        ret = memory_map + (off * page_size);
+        ret = (void *)((char *)memory_map + (off * page_size));
     } else {
         if ((uintptr_t)addr < (uintptr_t)memory_map || (uintptr_t)addr+len > (uintptr_t)memory_map+alloc_size) {
             return NULL;

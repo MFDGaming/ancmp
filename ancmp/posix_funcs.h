@@ -3,12 +3,18 @@
 #include <time.h>
 
 #ifdef _WIN32
+#define NO_INLINE __declspec(noinline)
+#else
+#define NO_INLINE __attribute__((noinline)) 
+#endif
+
+#ifdef _WIN32
 #define CLOCK_REALTIME 0
 #define CLOCK_MONOTONIC 1
 
 typedef int clockid_t;
 
-ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+long pread(int fd, void *buf, size_t count, off_t offset);
 
 int clock_gettime(clockid_t clk_id, struct timespec *tp);
 #endif

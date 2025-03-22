@@ -31,10 +31,10 @@
 #include <sys/types.h>
 #include "android_elf.h"
 
-#ifdef __i386__
+#if defined(__i386__) || defined(_M_IX86)
 #define ANDROID_X86_LINKER
 #else
-#ifdef __arm__
+#if defined(__arm__) || defined(_M_ARM) 
 #define ANDROID_ARM_LINKER
 #endif
 #endif

@@ -1,6 +1,7 @@
 #ifdef _WIN32
 
 #include "android_pthread_threads.h"
+#include <windows.h>
 
 unsigned char tls_free[ANDROID_BIONIC_TLS_SLOTS];
 void *tls_destructors[ANDROID_BIONIC_TLS_SLOTS];
@@ -21,6 +22,7 @@ BOOL android_threads_init() {
     android_pthread_internal_t *thread = (android_pthread_internal_t *)malloc(sizeof(android_pthread_internal_t));
     thread->is_detached = 0;
     thread->thread = GetCurrentThread();
+    thread->thread_id = GetCurrentThreadId();
     android_threads_append(thread);
     memset(tls_destructors, 0, sizeof(tls_destructors));
     memset(tls_free, 0, sizeof(tls_free));
@@ -53,7 +55,7 @@ android_pthread_internal_t *android_threads_get(DWORD thread_id) {
     WaitForSingleObject(android_threads_mutex, INFINITE);
     android_pthread_internal_t *ret = NULL;
     for (android_threads_t *entry = android_threads_list; entry != NULL; entry = entry->next) {
-        if (GetThreadId(entry->thread->thread) == thread_id) {
+        if (entry->thread->thread_id == thread_id) {
             ret = entry->thread;
             break;
         }

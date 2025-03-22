@@ -22,6 +22,13 @@
 #include "linker_format.h"
 #include "android_elf.h"
 
+#if defined(_MSC_VER)
+    #include <intrin.h>
+    #define GET_RETURN_ADDRESS() _ReturnAddress()
+#else
+    #define GET_RETURN_ADDRESS() __builtin_return_address(0)
+#endif
+
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
 #define ANDROID_DL_SUCCESS                    0
@@ -42,9 +49,6 @@ static const char *dl_errors[] = {
     [ANDROID_DL_ERR_SYMBOL_NOT_GLOBAL] = "Symbol is not global",
 };
 
-#define likely(expr)   __builtin_expect (expr, 1)
-#define unlikely(expr) __builtin_expect (expr, 0)
-
 android_pthread_mutex_t dl_lock = ANDROID_PTHREAD_MUTEX_INITIALIZER;
 
 static void set_dlerror(int err)
@@ -60,7 +64,7 @@ void *android_dlopen(const char *filename, int flag)
 
     android_pthread_mutex_lock(&dl_lock);
     ret = find_library(filename);
-    if (unlikely(ret == NULL)) {
+    if (ret == NULL) {
         set_dlerror(ANDROID_DL_ERR_CANNOT_LOAD_LIBRARY);
     } else {
         call_constructors_recursive(ret);
@@ -85,11 +89,11 @@ void *android_dlsym(void *handle, const char *symbol)
 
     android_pthread_mutex_lock(&dl_lock);
 
-    if(unlikely(handle == 0)) { 
+    if(handle == 0) { 
         set_dlerror(ANDROID_DL_ERR_INVALID_LIBRARY_HANDLE);
         goto err;
     }
-    if(unlikely(symbol == 0)) {
+    if(symbol == 0) {
         set_dlerror(ANDROID_DL_ERR_BAD_SYMBOL_NAME);
         goto err;
     }
@@ -97,7 +101,7 @@ void *android_dlsym(void *handle, const char *symbol)
     if(handle == ANDROID_RTLD_DEFAULT) {
         sym = lookup(symbol, &found, NULL);
     } else if(handle == ANDROID_RTLD_NEXT) {
-        void *ret_addr = __builtin_return_address(0);
+        void *ret_addr = GET_RETURN_ADDRESS();
         soinfo *si = find_containing_library(ret_addr);
 
         sym = NULL;
@@ -109,10 +113,10 @@ void *android_dlsym(void *handle, const char *symbol)
         sym = lookup_in_library(found, symbol);
     }
 
-    if(likely(sym != 0)) {
+    if(sym != 0) {
         bind = ELF32_ST_BIND(sym->st_info);
 
-        if(likely((bind == STB_GLOBAL || bind == STB_WEAK) && (sym->st_shndx != 0))) {
+        if((bind == STB_GLOBAL || bind == STB_WEAK) && (sym->st_shndx != 0)) {
             unsigned ret = sym->st_value + found->base;
             android_pthread_mutex_unlock(&dl_lock);
             return (void*)ret;

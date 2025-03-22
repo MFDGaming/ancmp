@@ -7,20 +7,17 @@
 #include <stdio.h>
 #include <signal.h>
 #include <wchar.h>
-#include <strings.h>
 #include <locale.h>
 #include <wctype.h>
 #include <errno.h>
 #include <time.h>
-#include <sys/time.h>
-#include <dirent.h>
 #include "android_pthread.h"
 #include "android_math.h"
 #include "android_io.h"
 #include "android_ctypes.h"
 #include "android_stat.h"
-#include "android_dirent.h"
 #include "android_socket.h"
+#include "android_dirent.h"
 #include "android_posix_types.h"
 #include "android_fcntl.h"
 #include "android_ioctl.h"
@@ -35,7 +32,9 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <direct.h>
 #else
+#include <strings.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/select.h>
@@ -58,7 +57,7 @@ void *android_stack_chk_guard = NULL;
 
 #ifdef _WIN32
 
-int android_mkdir(const char *pathname, mode_t mode) {
+int android_mkdir(const char *pathname, int mode) {
     puts("android_mkdir");
     return mkdir(pathname);
 }
@@ -429,16 +428,20 @@ size_t android_strlen_chk(const char *s, size_t s_len) {
     return ret;
 }
 
-int __isinff(float x) {
+FLOAT_ABI_FIX int android_isinff(float x) {
     return isinf(x);
 }
 
-int __isfinitef(float x) {
+FLOAT_ABI_FIX int android_isfinitef(float x) {
     return isfinite(x);
 }
  
-int __isfinite(double x) {
+FLOAT_ABI_FIX int android_isfinite(double x) {
     return isfinite(x);
+}
+
+FLOAT_ABI_FIX int android_isnanf(float x) {\
+    return isnan(x);
 }
 
 void android_assert2(const char* __file, int __line, const char* __function, const char* __msg) {
@@ -699,19 +702,19 @@ static hook_t hooks[] = {
     },
     {
         .name = "__isnanf",
-        .addr = __isnanf
+        .addr = android_isnanf
     },
     {
         .name = "__isinff",
-        .addr = __isinff
+        .addr = android_isinff
     },
     {
         .name = "__isfinitef",
-        .addr = __isfinitef
+        .addr = android_isfinitef
     },
     {
         .name = "__isfinite",
-        .addr = __isfinite
+        .addr = android_isfinite
     },
     {
         .name = "bsd_signal",
@@ -1048,11 +1051,11 @@ static hook_t hooks[] = {
     },
     {
         .name = "closedir",
-        .addr = closedir
+        .addr = android_closedir
     },
     {
         .name = "opendir",
-        .addr = opendir
+        .addr = android_opendir
     },
     {
         .name = "readdir",

@@ -28,7 +28,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <signal.h>
 
@@ -54,7 +53,7 @@ typedef enum {
 /* message sent over the socket */
 typedef struct {
     debugger_action_t action;
-    pid_t tid;
+    int tid;
 } debugger_msg_t;
 
 #define  RETRY_ON_EINTR(ret,cond) \

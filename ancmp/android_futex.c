@@ -146,7 +146,7 @@ int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct
     }
     DWORD wait_time = INFINITE;
     if (timeout) {
-        wait_time = (timeout->tv_sec * 1000) + (timeout->tv_nsec / 1000000);
+        wait_time = (DWORD)((timeout->tv_sec * 1000) + (timeout->tv_nsec / 1000000));
     }
     WaitForSingleObject(lock->semaphore, wait_time);
     android_futex_cleanup_lock(lock, TRUE);

@@ -43,7 +43,7 @@ static int translate_windows_error_to_errno(DWORD dwError) {
     }
 }
 
-ssize_t pread(int fd, void *buf, size_t count, off_t offset)
+long pread(int fd, void *buf, size_t count, off_t offset)
 {
     long unsigned int read_bytes = 0;
 

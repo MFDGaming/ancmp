@@ -7,6 +7,7 @@
 
 typedef struct {
     HANDLE thread;
+    DWORD thread_id;
     void *tls[ANDROID_BIONIC_TLS_SLOTS];
     BOOL is_detached;
 } android_pthread_internal_t;

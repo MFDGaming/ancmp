@@ -67,40 +67,40 @@
 extern int debug_verbosity;
 #if LINKER_DEBUG_TO_LOG
 extern int format_log(int, const char *, const char *, ...);
-#define _PRINTVF(v,f,x...)                                        \
+#define _PRINTVF(v,f,...)                                        \
     do {                                                          \
-        if (debug_verbosity > (v)) format_log(5-(v),"linker",x);  \
+        if (debug_verbosity > (v)) format_log(5-(v),"linker",__VA_ARGS__);  \
     } while (0)
 #else /* !LINKER_DEBUG_TO_LOG */
 extern int format_fd(int, const char *, ...);
-#define _PRINTVF(v,f,x...)                           \
+#define _PRINTVF(v,f,...)                           \
     do {                                             \
-        if (debug_verbosity > (v)) format_fd(1, x);  \
+        if (debug_verbosity > (v)) format_fd(1, __VA_ARGS__);  \
     } while (0)
 #endif /* !LINKER_DEBUG_TO_LOG */
 #else /* !LINKER_DEBUG */
-#define _PRINTVF(v,f,x...)   do {} while(0)
+#define _PRINTVF(v,f,...)   do {} while(0)
 #endif /* LINKER_DEBUG */
 
-#define PRINT(x...)          _PRINTVF(-1, FALSE, x)
-#define INFO(x...)           _PRINTVF(0, TRUE, x)
-#define TRACE(x...)          _PRINTVF(1, TRUE, x)
-#define WARN(fmt,args...)    \
-        _PRINTVF(-1, TRUE, "%s:%d| WARNING: " fmt, __FILE__, __LINE__, ## args)
-#define ERROR_O(fmt,args...)    \
-        _PRINTVF(-1, TRUE, "%s:%d| ERROR: " fmt, __FILE__, __LINE__, ## args)
+#define PRINT(...)          _PRINTVF(-1, FALSE, __VA_ARGS__)
+#define INFO(...)           _PRINTVF(0, TRUE, __VA_ARGS__)
+#define TRACE(...)          _PRINTVF(1, TRUE, __VA_ARGS__)
+#define WARN(fmt,...)    \
+        _PRINTVF(-1, TRUE, "%s:%d| WARNING: " fmt, __FILE__, __LINE__, __VA_ARGS__)
+#define ERROR_O(fmt,...)    \
+        _PRINTVF(-1, TRUE, "%s:%d| ERROR: " fmt, __FILE__, __LINE__, __VA_ARGS__)
 
 
 #if TRACE_DEBUG
-#define DEBUG(x...)          _PRINTVF(2, TRUE, "DEBUG: " x)
+#define DEBUG(...)          _PRINTVF(2, TRUE, "DEBUG: " __VA_ARGS__)
 #else /* !TRACE_DEBUG */
-#define DEBUG(x...)          do {} while (0)
+#define DEBUG(...)          do {} while (0)
 #endif /* TRACE_DEBUG */
 
 #if LINKER_DEBUG
-#define TRACE_TYPE(t,x...)   do { if (DO_TRACE_##t) { TRACE(x); } } while (0)
+#define TRACE_TYPE(t,...)   do { if (DO_TRACE_##t) { TRACE(__VA_ARGS__); } } while (0)
 #else  /* !LINKER_DEBUG */
-#define TRACE_TYPE(t,x...)   do {} while (0)
+#define TRACE_TYPE(t,...)   do {} while (0)
 #endif /* LINKER_DEBUG */
 
 #if STATS

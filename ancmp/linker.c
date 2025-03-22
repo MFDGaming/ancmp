@@ -31,14 +31,17 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #include "android_memmap.h"
+#include <direct.h>
+#include <io.h>
+#include <process.h>
 #else
 #include <sys/mman.h>
+#include <unistd.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include "android_dlfcn.h"
@@ -137,11 +140,11 @@ unsigned bitmask[4096];
 
 static char tmp_err_buf[768];
 static char __linker_dl_err_buf[768];
-#define DL_ERR(fmt, x...)                                                     \
+#define DL_ERR(fmt, ...)                                                     \
     do {                                                                      \
         format_buffer(__linker_dl_err_buf, sizeof(__linker_dl_err_buf),            \
-                 "%s[%d]: " fmt, __func__, __LINE__, ##x);                    \
-        ERROR_O(fmt "\n", ##x);                                                      \
+                 "%s[%d]: " fmt, __func__, __LINE__, ##__VA_ARGS__);                    \
+        ERROR_O(fmt "\n", ##__VA_ARGS__);                                                      \
     } while(0)
 
 const char *linker_get_error(void)
@@ -153,7 +156,7 @@ const char *linker_get_error(void)
  * This function is an empty stub where GDB locates a breakpoint to get notified
  * about linker activity.
  */
-extern void __attribute__((noinline)) rtld_db_dlactivity(void);
+extern void NO_INLINE rtld_db_dlactivity(void);
 
 static struct r_debug _r_debug = {1, NULL, &rtld_db_dlactivity,
                                   RT_CONSISTENT, 0};
@@ -654,7 +657,7 @@ is_prelinked(int fd, const char *name)
     off_t sz;
     prelink_info_t info;
 
-    sz = lseek(fd, -sizeof(prelink_info_t), SEEK_END);
+    sz = lseek(fd, (-1) * (long)sizeof(prelink_info_t), SEEK_END);
     if (sz < 0) {
         DL_ERR("lseek() failed!");
         return 0;
