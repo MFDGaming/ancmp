@@ -29,6 +29,7 @@ android_dirent_t *android_readdir(android_DIR *dirp);
 
 #include <dirent.h>
 
+#define android_DIR DIR
 #define android_opendir opendir
 #define android_closedir closedir
 android_dirent_t *android_readdir(DIR *dirp);

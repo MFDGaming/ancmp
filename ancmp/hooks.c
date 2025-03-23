@@ -401,15 +401,10 @@ android_hostent_t *android_gethostbyname(const char *name) {
 #endif
 
 int android_usleep(unsigned long usec) {
-#ifdef _WIN32
-    Sleep(usec / 1000);
-    return 0;
-#else
     struct timespec ts;
     ts.tv_sec = usec / 1000000;
     ts.tv_nsec = (usec % 1000000) * 1000;
-    return nanosleep(&ts, NULL);
-#endif
+    return android_nanosleep(&ts, NULL);
 }
 
 FLOAT_ABI_FIX double android_strtod(const char *nptr, char **endptr) {

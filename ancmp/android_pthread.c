@@ -182,6 +182,7 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
 #endif
 }
 
+#ifdef _WIN32
 static void android_pthread_call_destroy(android_pthread_internal_t *thread) {
     for (int i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
         void *destructor = NULL;
@@ -201,6 +202,7 @@ static void android_pthread_call_destroy(android_pthread_internal_t *thread) {
         }
     }
 }
+#endif
 
 int android_pthread_detach(android_pthread_t thid) {
 #ifdef _WIN32
