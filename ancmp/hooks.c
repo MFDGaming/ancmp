@@ -256,6 +256,9 @@ int android_sigaction(int signum, void *act, void *oldact) {
 
 int android_sched_yield() {
     puts("android_sched_yield");
+    HANDLE ev = CreateEvent(NULL, FALSE, FALSE, NULL);
+    WaitForSingleObject(ev, 0);
+    CloseHandle(ev);
     return -1;
 }
 
@@ -333,6 +336,10 @@ int android_unlink(const char *pathname) {
     return ret;
 }
 
+int android_shutdown(int sockfd, int how) {
+    return shutdown(sockfd, how);
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
@@ -359,6 +366,7 @@ int android_unlink(const char *pathname) {
 #define android_remove remove
 #define android_rename rename
 #define android_unlink unlink
+#define android_shutdown shutdown
 #endif
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0501)
@@ -1172,7 +1180,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "shutdown",
-        .addr = shutdown
+        .addr = android_shutdown
     },
     {
         .name = "select",
@@ -1508,7 +1516,7 @@ void add_custom_hook(char *name, void *addr) {
 }
 
 void *get_hooked_symbol(char *name) {
-    for (size_t i = 0; i < custom_hooks_size; ++i) {
+    for (int i = 0; i < custom_hooks_size; ++i) {
         if (strcmp(name, custom_hooks[i].name) == 0) {
             return custom_hooks[i].addr;
         }

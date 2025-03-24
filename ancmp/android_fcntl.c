@@ -148,7 +148,7 @@ int android_open(const char *pathname, int flags, ...) {
         }
         return _open_osfhandle((intptr_t)dir, _O_RDONLY);
     }
-    int real_flags = 0;
+    int real_flags = _O_BINARY;
     if (flags & ANDROID_O_APPEND) {
         real_flags |= _O_APPEND;
     }
