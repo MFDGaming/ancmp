@@ -88,10 +88,10 @@ typedef struct {
 } thread_wrapper_data_t;
 
 DWORD WINAPI thread_wrapper(LPVOID lpParam) {
-    thread_wrapper_data_t *data = (thread_wrapper_data_t *)lpParam;
-    data->thread->thread_id = GetCurrentThreadId();
-    SetEvent(data->event);
-    return (DWORD)data->start_routine(data->arg);
+    android_pthread_internal_t *thread = (android_pthread_internal_t *)lpParam;
+    TlsSetValue(android_thread_storage, lpParam);
+    SetEvent(thread->tmp_wait_event);
+    return (DWORD)thread->start_func(thread->start_arg);
 }
 
 #endif
@@ -110,24 +110,20 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     memset(t->tls, 0, sizeof(void *) * ANDROID_BIONIC_TLS_SLOTS);
     t->tls[ANDROID_TLS_SLOT_SELF] = (void *)t->tls;
     t->tls[ANDROID_TLS_SLOT_THREAD_ID] = (void *)t;
+    t->tmp_wait_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    t->is_main_thread = FALSE;
+    t->start_func = start_routine;
+    t->start_arg = arg;
 
-    thread_wrapper_data_t *wrapper_data = (thread_wrapper_data_t *)malloc(sizeof(thread_wrapper_data_t));
-    wrapper_data->thread = t;
-    wrapper_data->start_routine = start_routine;
-    wrapper_data->arg = arg;
-    wrapper_data->event = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-    t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, wrapper_data, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+    t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, (void *)t, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
     if (t->thread == NULL) {
         free(t);
         return ANDROID_EAGAIN;
     }
     SetThreadPriority(t->thread, priority_conv(attr_sv.sched_policy, attr_sv.sched_priority));
-    android_threads_append(t);
     ResumeThread(t->thread);
-    WaitForSingleObject(wrapper_data->event, INFINITE);
-    CloseHandle(wrapper_data->event);
-    free(wrapper_data);
+    WaitForSingleObject(t->tmp_wait_event, INFINITE);
+    CloseHandle(t->tmp_wait_event);
     *thread_out = (android_pthread_t)t;
     return 0;
 #else
@@ -185,20 +181,13 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
 #ifdef _WIN32
 static void android_pthread_call_destroy(android_pthread_internal_t *thread) {
     for (int i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
-        void *destructor = NULL;
-        void *val = NULL;
-        WaitForSingleObject(tls_mutex, INFINITE);
-        if (tls_free[i] == 1) {
-            if (tls_destructors[i] != NULL) {
+        if (InterlockedCompareExchange(&tls_free[i], 1, 1) == 1) {
+            void *destructor = InterlockedCompareExchangePointer(&tls_destructors[i], NULL, NULL);
+            if (destructor != NULL) {
                 if (thread->tls[i] != NULL) {
-                    val = thread->tls[i];
-                    destructor = tls_destructors[i];
+                    ((void (*)(void *))destructor)(thread->tls[i]);
                 }
             }
-        }
-        ReleaseMutex(tls_mutex);
-        if (destructor) {
-            ((void (*)(void *))destructor)(val);
         }
     }
 }
@@ -246,7 +235,7 @@ int android_pthread_join(android_pthread_t thid, void **ret_val) {
 
 android_pthread_t android_pthread_self(void) {
 #ifdef _WIN32
-    return (android_pthread_t)android_threads_get(GetCurrentThreadId());
+    return (android_pthread_t)TlsGetValue(android_thread_storage);
 #else
     pthread_t thid = pthread_self();
     return *(android_pthread_t *)&thid;
