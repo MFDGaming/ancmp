@@ -24,7 +24,21 @@ static FILE *get_fp(custom_file_t *stream) {
 }
 
 custom_file_t *android_fopen(const char *filename, const char *mode) {
-    FILE *file = fopen(filename, mode);
+    char *real_mode = (char *)mode;
+    if (strcmp(mode, "r") == 0) {
+        real_mode = "rb";
+    } else if (strcmp(mode, "r+") == 0) {
+        real_mode = "r+b";
+    } else if (strcmp(mode, "w") == 0) {
+        real_mode = "wb";
+    } else if (strcmp(mode, "w+") == 0) {
+        real_mode = "w+b";
+    } else if (strcmp(mode, "a") == 0) {
+        real_mode = "ab";
+    } else if (strcmp(mode, "a+") == 0) {
+        real_mode = "a+b";
+    }
+    FILE *file = fopen(filename, real_mode);
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));
         if (cfile == NULL) {
@@ -33,15 +47,29 @@ custom_file_t *android_fopen(const char *filename, const char *mode) {
         cfile->file = file;
         cfile->afile._file = (short)fileno(file);
         cfile->afile._flags = 0;
-        //printf("\x1b[32mSuccessfully opened %s\x1b[0m\n", filename);
+        printf("\x1b[32mSuccessfully opened %s\x1b[0m\n", filename);
         return cfile;
     }
-    //printf("\x1b[31mFailed to open %s due to %d\x1b[0m\n", filename, errno);
+    printf("\x1b[31mFailed to open %s due to %d\x1b[0m\n", filename, errno);
     return NULL;
 }
 
 custom_file_t *android_fdopen(int fd, const char *mode) {
-    FILE *file = fdopen(fd, mode);
+    char *real_mode = (char *)mode;
+    if (strcmp(mode, "r") == 0) {
+        real_mode = "rb";
+    } else if (strcmp(mode, "r+") == 0) {
+        real_mode = "r+b";
+    } else if (strcmp(mode, "w") == 0) {
+        real_mode = "wb";
+    } else if (strcmp(mode, "w+") == 0) {
+        real_mode = "w+b";
+    } else if (strcmp(mode, "a") == 0) {
+        real_mode = "ab";
+    } else if (strcmp(mode, "a+") == 0) {
+        real_mode = "a+b";
+    }
+    FILE *file = fdopen(fd, real_mode);
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));
         if (cfile == NULL) {
@@ -51,10 +79,10 @@ custom_file_t *android_fdopen(int fd, const char *mode) {
         cfile->file = file;
         cfile->afile._file = (short)fileno(file);
         cfile->afile._flags = 0;
-        //printf("\x1b[32mSuccessfully opened %d\x1b[0m\n", fd);
+        printf("\x1b[32mSuccessfully opened %d\x1b[0m\n", fd);
         return cfile;
     }
-    //printf("\x1b[31mFailed to open %d due to %d\x1b[0m\n", fd, errno);
+    printf("\x1b[31mFailed to open %d due to %d\x1b[0m\n", fd, errno);
     return NULL;
 }
 
@@ -64,6 +92,7 @@ int android_fclose(custom_file_t *stream) {
         free(stream);
         return ret;
     }
+    printf("\x1b[31mFailed to close file due to %d\x1b[0m\n", errno);
     return -1;
 }
 

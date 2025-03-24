@@ -59,7 +59,11 @@ void *android_stack_chk_guard = NULL;
 
 int android_mkdir(const char *pathname, int mode) {
     puts("android_mkdir");
-    return mkdir(pathname);
+    int ret = mkdir(pathname);
+    if (ret != 0) {
+        printf("\x1b[31mFailed to mkdir %s due to %d\x1b[0m\n", pathname, errno);
+    }
+    return ret;
 }
 
 int android_pipe(int fds[2]) {
@@ -302,6 +306,33 @@ int android_getpid() {
     return GetCurrentProcessId();
 }
 
+int android_remove(const char *pathname) {
+    puts("android_remove");
+    int ret = remove(pathname);
+    if (ret != 0) {
+        printf("\x1b[31mFailed to remove %s due to %d\x1b[0m\n", pathname, errno);
+    }
+    return ret;
+}
+
+int android_rename(const char *oldpath, const char *newpath) {
+    puts("android_rename");
+    BOOL ret = MoveFileEx(oldpath, newpath, MOVEFILE_REPLACE_EXISTING);
+    if (!ret ) {
+        printf("\x1b[31mFailed to rename %s to %s due to %d\x1b[0m\n", oldpath, newpath, errno);
+    }
+    return ret ? 0 : -1;
+}
+
+int android_unlink(const char *pathname) {
+    puts("android_unlink");
+    int ret = unlink(pathname);
+    if (ret != 0) {
+        printf("\x1b[31mFailed to unlink %s due to %d\x1b[0m\n", pathname, errno);
+    }
+    return ret;
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
@@ -325,6 +356,9 @@ int android_getpid() {
 #define android_fdatasync fdatasync
 #define android_geteuid geteuid
 #define android_getpid getpid
+#define android_remove remove
+#define android_rename rename
+#define android_unlink unlink
 #endif
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0501)
@@ -862,7 +896,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "strerror",
-        .addr = strerror
+        .addr = android_strerror
     },
     {
         .name = "strlen",
@@ -1010,7 +1044,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "rename",
-        .addr = rename
+        .addr = android_rename
     },
     {
         .name = "__sF",
@@ -1058,7 +1092,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "remove",
-        .addr = remove
+        .addr = android_remove
     },
     {
         .name = "mkdir",
@@ -1390,7 +1424,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "unlink",
-        .addr = unlink
+        .addr = android_unlink
     },
     {
         .name = "getenv",

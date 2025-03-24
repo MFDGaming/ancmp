@@ -134,3 +134,5 @@
 #define ANDROID_ENOTRECOVERABLE 131 
 
 volatile int *android_errno(void);
+
+char *android_strerror(int errnum);
