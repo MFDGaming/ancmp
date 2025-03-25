@@ -6,6 +6,7 @@
 #endif
 #include "android_errno.h"
 #include "android_pthread_threads.h"
+#include <stdio.h>
 
 int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_function)(void *)) {
     puts("android_pthread_key_create");

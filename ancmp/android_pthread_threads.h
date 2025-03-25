@@ -17,8 +17,8 @@ typedef struct {
 
 extern int android_thread_storage;
 
-extern int tls_free[];
-extern void *tls_destructors[];
+extern long volatile tls_free[];
+extern void *volatile tls_destructors[];
 
 BOOL android_threads_init();
 
