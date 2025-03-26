@@ -126,9 +126,12 @@ int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writef
 
 int android_gethostname(char *name, size_t size) {
     puts("android_gethostname");
-    if (GetComputerNameEx(ComputerNameDnsHostname, name, (DWORD *)&size)) {
+    DWORD len = size - 1;
+    if (GetComputerNameEx(ComputerNameDnsHostname, name, &len)) {
+        name[size - 1] = '\0';
         return 0;
     }
+    memset(name, 0, size);
     return -1;
 }
 
