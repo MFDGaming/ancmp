@@ -88,9 +88,13 @@ custom_file_t *android_fdopen(int fd, const char *mode) {
 
 int android_fclose(custom_file_t *stream) {
     if (stream != NULL) {
-        int ret = fclose(get_fp(stream));
-        free(stream);
-        return ret;
+        FILE *fp = get_fp(stream);
+        if (fp != stdin && fp != stdout && fp != stderr) {
+            int ret = fclose(fp);
+            free(stream);
+            return ret;
+        }
+        
     }
     printf("\x1b[31mFailed to close file due to %d\x1b[0m\n", errno);
     return -1;
@@ -123,13 +127,13 @@ long android_ftell(custom_file_t *stream) {
 int android_fgetpos(custom_file_t *stream, android_fpos_t *pos) {
     fpos_t tmp;
     int ret = fgetpos(get_fp(stream), &tmp);
-    memcpy(&pos, &tmp, (sizeof(fpos_t) > sizeof(android_fpos_t)) ? sizeof(android_fpos_t) : sizeof(fpos_t));
+    memcpy(pos, &tmp, (sizeof(fpos_t) > sizeof(android_fpos_t)) ? sizeof(android_fpos_t) : sizeof(fpos_t));
     return ret;
 }
 
 int android_fsetpos(custom_file_t *stream, const android_fpos_t *pos) {
     fpos_t tmp;
-    memcpy(&tmp, &pos, (sizeof(fpos_t) > sizeof(android_fpos_t)) ? sizeof(android_fpos_t) : sizeof(fpos_t));
+    memcpy(&tmp, pos, (sizeof(fpos_t) > sizeof(android_fpos_t)) ? sizeof(android_fpos_t) : sizeof(fpos_t));
     return fsetpos(get_fp(stream), &tmp);
 }
 
@@ -152,13 +156,17 @@ int android_getc(custom_file_t *stream) {
 int android_fprintf(custom_file_t *stream, const char *restrict format, ...) {
     va_list args;
     va_start(args, format);
-    return vfprintf(get_fp(stream), format, args);
+    int ret = vfprintf(get_fp(stream), format, args);
+    va_end(args);
+    return ret;
 }
 
 int android_fscanf(custom_file_t *stream, const char *restrict format, ...) {
     va_list args;
     va_start(args, format);
-    return vfscanf(get_fp(stream), format, args);
+    int ret = vfscanf(get_fp(stream), format, args);
+    va_end(args);
+    return ret;
 }
 
 char *android_fgets(char *s, int n, custom_file_t *stream) {

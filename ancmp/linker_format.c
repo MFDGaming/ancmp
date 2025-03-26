@@ -262,7 +262,8 @@ format_fd(int fd, const char *format, ...)
 
 static int log_vprint(int prio, const char *tag, const char *fmt, va_list  args)
 {
-    char buf[1024];
+    static char buf[1024];
+    buf[0] = '\0';
     int result = vformat_buffer(buf, sizeof buf, fmt, args);
 
     fwrite(&prio, 1, 1, stdout);
