@@ -90,7 +90,6 @@ typedef struct {
 DWORD WINAPI thread_wrapper(LPVOID lpParam) {
     android_pthread_internal_t *thread = (android_pthread_internal_t *)lpParam;
     TlsSetValue(android_thread_storage, lpParam);
-    SetEvent(thread->tmp_wait_event);
     return (DWORD)thread->start_func(thread->start_arg);
 }
 
@@ -110,10 +109,10 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     memset(t->tls, 0, sizeof(void *) * ANDROID_BIONIC_TLS_SLOTS);
     t->tls[ANDROID_TLS_SLOT_SELF] = (void *)t->tls;
     t->tls[ANDROID_TLS_SLOT_THREAD_ID] = (void *)t;
-    t->tmp_wait_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     t->is_main_thread = FALSE;
     t->start_func = start_routine;
     t->start_arg = arg;
+    t->is_joined = 0;
 
     t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, (void *)t, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
     if (t->thread == NULL) {
@@ -122,8 +121,6 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     }
     SetThreadPriority(t->thread, priority_conv(attr_sv.sched_policy, attr_sv.sched_priority));
     ResumeThread(t->thread);
-    WaitForSingleObject(t->tmp_wait_event, INFINITE);
-    CloseHandle(t->tmp_wait_event);
     *thread_out = (android_pthread_t)t;
     return 0;
 #else
@@ -217,16 +214,19 @@ int android_pthread_join(android_pthread_t thid, void **ret_val) {
     if (thrd == NULL) {
         return ANDROID_EINVAL;
     }
-    if (thrd->thread != NULL) {
-        WaitForSingleObject(thrd->thread, INFINITE);
-        int status;
-        GetExitCodeThread(thrd->thread, (LPDWORD)&status);
-        CloseHandle(thrd->thread);
-        if (ret_val) *ret_val = (void *)status;
-        android_pthread_call_destroy(thrd);
+    if (InterlockedCompareExchange(&thrd->is_joined, 1, 0) == 0) {
+        if (thrd->thread != NULL) {
+            WaitForSingleObject(thrd->thread, INFINITE);
+            int status;
+            GetExitCodeThread(thrd->thread, (LPDWORD)&status);
+            CloseHandle(thrd->thread);
+            if (ret_val) *ret_val = (void *)status;
+            android_pthread_call_destroy(thrd);
+        }
+        free(thrd);
+        return 0;
     }
-    free(thrd);
-    return 0;
+    return ANDROID_EINVAL;
 #else
     pthread_t _thid = *(pthread_t *)&thid;
     return pthread_join(_thid, ret_val);

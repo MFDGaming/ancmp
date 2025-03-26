@@ -325,7 +325,7 @@ int android_rename(const char *oldpath, const char *newpath) {
     puts("android_rename");
     BOOL ret = MoveFileEx(oldpath, newpath, MOVEFILE_REPLACE_EXISTING);
     if (!ret ) {
-        printf("\x1b[31mFailed to rename %s to %s due to %d\x1b[0m\n", oldpath, newpath, errno);
+        printf("\x1b[31mFailed to rename %s to %s due to %d\x1b[0m\n", oldpath, newpath, GetLastError());
     }
     return ret ? 0 : -1;
 }
