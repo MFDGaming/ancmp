@@ -9,6 +9,9 @@
 #include <sys/stat.h>
 
 int is_socket(int fd) {
+    if (_get_osfhandle(fd) != INVALID_HANDLE_VALUE) {
+        return 0;
+    }
     int protocol_info;
     int len = sizeof(protocol_info);
     return getsockopt(fd, SOL_SOCKET, SO_TYPE, (char *)&protocol_info, &len) != -1;
@@ -44,7 +47,7 @@ int android_fcntl(int fd, int op, ...) {
                         ret |= ANDROID_O_RDWR;
                     } else {
                         if (dwDesiredAccess & GENERIC_WRITE) {
-                            ret |= ANDROID_O_RDONLY;
+                            ret |= ANDROID_O_WRONLY;
                         }
                         if (dwDesiredAccess & GENERIC_READ) {
                             ret |= ANDROID_O_RDONLY;
@@ -193,7 +196,7 @@ int android_open(const char *pathname, int flags, ...) {
     } else {
         printf("\x1b[31mFailed to run open() for %s due to %d\x1b[0m\n", pathname, errno);
     }
-
+    va_end(args);
     return fd;
 }
 
