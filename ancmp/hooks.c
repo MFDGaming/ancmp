@@ -59,11 +59,11 @@ void *android_stack_chk_guard = NULL;
 
 int android_mkdir(const char *pathname, int mode) {
     puts("android_mkdir");
-    int ret = mkdir(pathname);
-    if (ret != 0) {
-        printf("\x1b[31mFailed to mkdir %s due to %d\x1b[0m\n", pathname, errno);
+    BOOL ret = CreateDirectory(pathname, NULL);
+    if (!ret) {
+        printf("\x1b[31mFailed to mkdir %s due to %lu\x1b[0m\n", pathname, GetLastError());
     }
-    return ret;
+    return ret ? 0 : -1;
 }
 
 int android_pipe(int fds[2]) {
@@ -311,11 +311,19 @@ int android_getpid() {
 
 int android_remove(const char *pathname) {
     puts("android_remove");
-    int ret = remove(pathname);
-    if (ret != 0) {
-        printf("\x1b[31mFailed to remove %s due to %d\x1b[0m\n", pathname, errno);
+    DWORD attr = GetFileAttributes(pathname);
+    BOOL ret = FALSE;
+    if (attr != INVALID_FILE_ATTRIBUTES) {
+        if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+            ret = RemoveDirectory(pathname);
+        } else {
+            ret = DeleteFile(pathname);
+        }
     }
-    return ret;
+    if (!ret) {
+        printf("\x1b[31mFailed to remove %s due to %lu\x1b[0m\n", pathname, GetLastError());
+    }
+    return ret ? 0 : -1;
 }
 
 int android_rename(const char *oldpath, const char *newpath) {
@@ -329,11 +337,11 @@ int android_rename(const char *oldpath, const char *newpath) {
 
 int android_unlink(const char *pathname) {
     puts("android_unlink");
-    int ret = unlink(pathname);
-    if (ret != 0) {
-        printf("\x1b[31mFailed to unlink %s due to %d\x1b[0m\n", pathname, errno);
+    BOOL ret = DeleteFile(pathname);
+    if (!ret) {
+        printf("\x1b[31mFailed to unlink %s due to %lu\x1b[0m\n", pathname, GetLastError());
     }
-    return ret;
+    return ret ? 0 : -1;
 }
 
 int android_shutdown(int sockfd, int how) {
@@ -1137,6 +1145,14 @@ static hook_t hooks[] = {
     },
 #endif
     {
+        .name = "clock_gettime",
+        .addr = clock_gettime
+    },
+    {
+        .name = "pread",
+        .addr = pread
+    },
+    {
         .name = "bsd_signal",
         .addr = signal
     },
@@ -1457,20 +1473,12 @@ static hook_t hooks[] = {
         .addr = perror
     },
     {
-        .name = "pread",
-        .addr = pread
-    },
-    {
         .name = "strrchr",
         .addr = strrchr
     },
     {
         .name = "getenv",
         .addr = getenv
-    },
-    {
-        .name = "clock_gettime",
-        .addr = clock_gettime
     },
     {
         .name = "lseek",

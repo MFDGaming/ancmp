@@ -941,7 +941,7 @@ long android_read(int fd, void *buf, size_t count) {
     if (is_socket(fd)) {
         return recv(fd, buf, count, 0);
     } else {
-        return read(fd, buf, count);
+        return _read(fd, buf, count);
     }
 }
 
@@ -949,7 +949,7 @@ long android_write(int fd, void *buf, size_t count) {
     if (is_socket(fd)) {
         return send(fd, buf, count, 0);
     } else {
-        return write(fd, buf, count);
+        return _write(fd, buf, count);
     }
 }
 #endif
