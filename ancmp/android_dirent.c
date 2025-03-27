@@ -6,17 +6,28 @@
 #ifdef _WIN32
 
 android_DIR *android_opendir(const char *name) {
-    char path[MAX_PATH];
+    DWORD attr = GetFileAttributes(name);
+    if (attr == INVALID_FILE_ATTRIBUTES) {
+        errno = ENOENT;
+        return NULL;
+    }
+    if (!(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+        errno = ENOTDIR;
+        return NULL;
+    }
+    static char path[MAX_PATH];
     snprintf(path, sizeof(path), "%s\\*", name);
 
     android_DIR *dir = (android_DIR *)malloc(sizeof(android_DIR));
     if (dir == NULL) {
+        errno = EACCES;
         return NULL;
     }
 
     dir->hFind = FindFirstFile(path, &(dir->findFileData));
     if (dir->hFind == INVALID_HANDLE_VALUE) {
         free(dir);
+        errno = EACCES;
         return NULL;
     }
 
@@ -28,34 +39,36 @@ int android_closedir(android_DIR *dirp) {
         return -1;
     }
 
-    int result = FindClose(dirp->hFind);
+    BOOL result = FindClose(dirp->hFind);
     free(dirp);
     return result ? 0 : -1;
 }
 
 android_dirent_t *android_readdir(android_DIR *dirp) {
     if (dirp == NULL || dirp->hFind == INVALID_HANDLE_VALUE) {
+        errno = EBADF;
         return NULL;
     }
 
-    android_dirent_t *entry = (android_dirent_t *)malloc(sizeof(android_dirent_t));
-    if (entry == NULL) {
+    static android_dirent_t entry;
+
+    entry.d_ino = 0;
+    entry.d_off = 0;
+    entry.d_reclen = sizeof(android_dirent_t);
+    entry.d_type = (dirp->findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 4 : 8;
+
+    strncpy(entry.d_name, dirp->findFileData.cFileName, sizeof(entry.d_name));
+
+    entry.d_name[sizeof(entry.d_name) - 1] = '\0';
+
+    if (!FindNextFile(dirp->hFind, &(dirp->findFileData))) {
+        if (GetLastError() != ERROR_NO_MORE_FILES) {
+            errno = EBADF;
+        }
         return NULL;
     }
 
-    entry->d_ino = 0;
-    entry->d_off = 0;
-    entry->d_reclen = sizeof(android_dirent_t);
-    entry->d_type = (dirp->findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 4 : 8;
-
-    strncpy(entry->d_name, dirp->findFileData.cFileName, sizeof(entry->d_name) - 1);
-    entry->d_name[sizeof(entry->d_name) - 1] = '\0';
-
-    if (FindNextFile(dirp->hFind, &(dirp->findFileData)) == 0) {
-        return NULL;
-    }
-
-    return entry;
+    return &entry;
 }
 
 #else
