@@ -259,10 +259,7 @@ int android_sigaction(int signum, void *act, void *oldact) {
 
 int android_sched_yield() {
     puts("android_sched_yield");
-    HANDLE ev = CreateEvent(NULL, FALSE, FALSE, NULL);
-    WaitForSingleObject(ev, 0);
-    CloseHandle(ev);
-    return -1;
+    return SwitchToThread() ? 0 : -1;
 }
 
 struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
@@ -325,7 +322,7 @@ int android_rename(const char *oldpath, const char *newpath) {
     puts("android_rename");
     BOOL ret = MoveFileEx(oldpath, newpath, MOVEFILE_REPLACE_EXISTING);
     if (!ret ) {
-        printf("\x1b[31mFailed to rename %s to %s due to %d\x1b[0m\n", oldpath, newpath, GetLastError());
+        printf("\x1b[31mFailed to rename %s to %s due to %lu\x1b[0m\n", oldpath, newpath, GetLastError());
     }
     return ret ? 0 : -1;
 }
@@ -963,11 +960,11 @@ static hook_t hooks[] = {
     },
     {
         .name = "toupper",
-        .addr = toupper
+        .addr = android_toupper
     },
     {
         .name = "tolower",
-        .addr = tolower
+        .addr = android_tolower
     },
     {
         .name = "putchar",
