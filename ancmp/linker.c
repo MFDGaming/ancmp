@@ -124,7 +124,7 @@ int debug_verbosity;
 static int pid;
 
 /* This boolean is set if the program being loaded is setuid */
-static int program_is_setuid;
+static int program_is_setuid = 0;
 
 #if STATS
 struct _link_stats linker_stats;
@@ -2146,12 +2146,16 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
     }
 
     /* Kernel did not provide AT_SECURE - fall back on legacy test. */
-    //program_is_setuid = (getuid() != geteuid()) || (getgid() != getegid());
+#ifndef _WIN32
+    program_is_setuid = (getuid() != geteuid()) || (getgid() != getegid());
+#else
+    program_is_setuid = 0;
+#endif
 
 sanitize:
     /* Sanitize environment if we're loading a setuid program */
-    //if (program_is_setuid)
-        //linker_env_secure();
+    if (program_is_setuid)
+        linker_env_secure();
 
     debugger_init();
 
