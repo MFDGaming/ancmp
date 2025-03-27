@@ -49,7 +49,7 @@ int memmap_init(size_t map_len, size_t pg_len) {
 static long find_free_off(size_t pg_n) {
     long ret = 0;
     size_t cnt = 0;
-    for (long i = 0; i < page_count; ++i) {
+    for (size_t i = 0; i < page_count; ++i) {
         if (cnt == pg_n) {
             return ret;
         }

@@ -9,9 +9,6 @@
 #include <sys/stat.h>
 
 int is_socket(int fd) {
-    if (_get_osfhandle(fd) != INVALID_HANDLE_VALUE) {
-        return 0;
-    }
     int protocol_info;
     int len = sizeof(protocol_info);
     return getsockopt(fd, SOL_SOCKET, SO_TYPE, (char *)&protocol_info, &len) != -1;

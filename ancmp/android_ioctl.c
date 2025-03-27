@@ -32,7 +32,7 @@ static int io_req(int sockfd, android_ifreq_t *req) {
         return -1;
     }
     int interface_count = byte_count / sizeof(INTERFACE_INFO);
-    for (unsigned int i = 0; i < interface_count; i++) {
+    for (int i = 0; i < interface_count; i++) {
         char *name = inet_ntoa(buffer[i].iiAddress.AddressIn.sin_addr);
         size_t name_length = strlen(name) + 1;
         if (strncmp(name, req->ifr_ifrn.ifrn_name, (name_length <= ANDROID_IFNAMSIZ) ? name_length : ANDROID_IFNAMSIZ) == 0) {
