@@ -754,209 +754,24 @@ static hook_t hooks[] = {
         .addr = android_isfinite
     },
     {
-        .name = "bsd_signal",
-        .addr = signal
-    },
-    {
-        .name = "malloc",
-        .addr = malloc
-    },
-    {
-        .name = "realloc",
-        .addr = realloc
-    },
-    {
-        .name = "free",
-        .addr = free
-    },
-    {
-        .name = "exit",
-        .addr = exit
-    },
-    {
-        .name = "abort",
-        .addr = abort
-    },
-    {
         .name = "div",
         .addr = android_div
-    },
-    {
-        .name = "memchr",
-        .addr = memchr
-    },
-    {
-        .name = "memcmp",
-        .addr = memcmp
-    },
-    {
-        .name = "memmove",
-        .addr = memmove
-    },
-    {
-        .name = "memset",
-        .addr = memset
-    },
-    {
-        .name = "wmemcpy",
-        .addr = wmemcpy
-    },
-    {
-        .name = "memcpy",
-        .addr = memcpy
-    },
-    {
-        .name = "wmemmove",
-        .addr = wmemmove
-    },
-    {
-        .name = "wmemset",
-        .addr = wmemset
-    },
-    {
-        .name = "isalpha",
-        .addr = isalpha
-    },
-    {
-        .name = "iscntrl",
-        .addr = iscntrl
-    },
-    {
-        .name = "islower",
-        .addr = islower
-    },
-    {
-        .name = "isprint",
-        .addr = isprint
-    },
-    {
-        .name = "ispunct",
-        .addr = ispunct
-    },
-    {
-        .name = "isspace",
-        .addr = isspace
-    },
-    {
-        .name = "isupper",
-        .addr = isupper
-    },
-    {
-        .name = "isxdigit",
-        .addr = isxdigit
-    },
-    {
-        .name = "iswalpha",
-        .addr = iswalpha
-    },
-    {
-        .name = "iswcntrl",
-        .addr = iswcntrl
-    },
-    {
-        .name = "iswdigit",
-        .addr = iswdigit
-    },
-    {
-        .name = "iswlower",
-        .addr = iswlower
-    },
-    {
-        .name = "iswprint",
-        .addr = iswprint
-    },
-    {
-        .name = "iswpunct",
-        .addr = iswpunct
-    },
-    {
-        .name = "iswspace",
-        .addr = iswspace
-    },
-    
-    {
-        .name = "iswupper",
-        .addr = iswupper
-    },
-    {
-        .name = "iswxdigit",
-        .addr = iswxdigit
     },
     {
         .name = "strcasecmp",
         .addr = android_strcasecmp
     },
     {
-        .name = "strcat",
-        .addr = strcat
-    },
-    {
-        .name = "strchr",
-        .addr = strchr
-    },
-    {
-        .name = "strcmp",
-        .addr = strcmp
-    },
-    {
-        .name = "strcpy",
-        .addr = strcpy
-    },
-    {
         .name = "strerror",
         .addr = android_strerror
-    },
-    {
-        .name = "strlen",
-        .addr = strlen
     },
     {
         .name = "strncasecmp",
         .addr = android_strncasecmp
     },
     {
-        .name = "strncpy",
-        .addr = strncpy
-    },
-    {
-        .name = "strstr",
-        .addr = strstr
-    },
-    {
-        .name = "strtok",
-        .addr = strtok
-    },
-    {
-        .name = "strtoull",
-        .addr = strtoull
-    },
-    {
-        .name = "wcscmp",
-        .addr = wcscmp
-    },
-    {
-        .name = "wcslen",
-        .addr = wcslen
-    },
-    {
-        .name = "wcsncpy",
-        .addr = wcsncpy
-    },
-    {
-        .name = "setlocale",
-        .addr = setlocale
-    },
-    {
         .name = "__errno",
         .addr = android_errno
-    },
-    {
-        .name = "towupper",
-        .addr = towupper
-    },
-    {
-        .name = "towlower",
-        .addr = towlower
     },
     {
         .name = "toupper",
@@ -965,30 +780,6 @@ static hook_t hooks[] = {
     {
         .name = "tolower",
         .addr = android_tolower
-    },
-    {
-        .name = "putchar",
-        .addr = putchar
-    },
-    {
-        .name = "printf",
-        .addr = printf
-    },
-    {
-        .name = "snprintf",
-        .addr = snprintf
-    },
-    {
-        .name = "sprintf",
-        .addr = sprintf
-    },
-    {
-        .name = "sscanf",
-        .addr = sscanf
-    },
-    {
-        .name = "puts",
-        .addr = puts
     },
     {
         .name = "fflush",
@@ -1067,18 +858,6 @@ static hook_t hooks[] = {
         .addr = &android_ctype
     },
     {
-        .name = "vsnprintf",
-        .addr = vsnprintf
-    },
-    {
-        .name = "time",
-        .addr = time
-    },
-    {
-        .name = "mktime",
-        .addr = mktime
-    },
-    {
         .name = "gettimeofday",
         .addr = android_gettimeofday
     },
@@ -1105,10 +884,6 @@ static hook_t hooks[] = {
     {
         .name = "mkdir",
         .addr = android_mkdir
-    },
-    {
-        .name = "access",
-        .addr = access
     },
     {
         .name = "pipe",
@@ -1203,10 +978,6 @@ static hook_t hooks[] = {
         .addr = android_munmap
     },
     {
-        .name = "lseek",
-        .addr = lseek
-    },
-    {
         .name = "close",
         .addr = android_close
     },
@@ -1221,10 +992,6 @@ static hook_t hooks[] = {
     {
         .name = "open",
         .addr = android_open
-    },
-    {
-        .name = "atoi",
-        .addr = atoi
     },
     {
         .name = "getc",
@@ -1247,28 +1014,12 @@ static hook_t hooks[] = {
         .addr = android_fgets
     },
     {
-        .name = "calloc",
-        .addr = calloc
-    },
-    {
-        .name = "strpbrk",
-        .addr = strpbrk
-    },
-    {
         .name = "lrand48",
         .addr = android_lrand48
     },
     {
         .name = "srand48",
         .addr = android_srand48
-    },
-    {
-        .name = "ftime",
-        .addr = ftime
-    },
-    {
-        .name = "gmtime",
-        .addr = gmtime
     },
     {
         .name = "getpid",
@@ -1287,6 +1038,349 @@ static hook_t hooks[] = {
         .addr = android_strtod
     },
     {
+        .name = "fputc",
+        .addr = android_fputc
+    },
+    {
+        .name = "putwc",
+        .addr = android_putwc
+    },
+    {
+        .name = "ungetwc",
+        .addr = android_ungetwc
+    },
+    {
+        .name = "getwc",
+        .addr = android_getwc
+    },
+    {
+        .name = "fdopen",
+        .addr = android_fdopen
+    },
+    {
+        .name = "writev",
+        .addr = android_writev
+    },
+    {
+        .name = "poll",
+        .addr = android_poll
+    },
+    {
+        .name = "ferror",
+        .addr = android_ferror
+    },
+    {
+        .name = "feof",
+        .addr = android_feof
+    },
+    {
+        .name = "stat",
+        .addr = android_stat
+    },
+    {
+        .name = "sigaction",
+        .addr = android_sigaction
+    },
+    {
+        .name = "sched_yield",
+        .addr = android_sched_yield
+    },
+    {
+        .name = "localtime_r",
+        .addr = android_localtime_r
+    },
+    {
+        .name = "fsync",
+        .addr = android_fsync
+    },
+    {
+        .name = "fdatasync",
+        .addr = android_fdatasync
+    },
+    {
+        .name = "unlink",
+        .addr = android_unlink
+    },
+    {
+        .name = "geteuid",
+        .addr = android_geteuid
+    },
+    {
+        .name = "dlopen",
+        .addr = android_dlopen
+    },
+    {
+        .name = "dlclose",
+        .addr = android_dlclose
+    },
+    {
+        .name = "dlsym",
+        .addr = android_dlsym
+    },
+    {
+        .name = "dladdr",
+        .addr = android_dladdr
+    },
+    {
+        .name = "dlerror",
+        .addr = android_dlerror
+    },
+#ifdef ANDROID_ARM_LINKER
+    {
+        .name = "dl_iterate_phdr",
+        .addr = android_dl_unwind_find_exidx
+    },
+#else
+    {
+        .name = "dl_iterate_phdr",
+        .addr = android_dl_iterate_phdr
+    },
+#endif
+    {
+        .name = "bsd_signal",
+        .addr = signal
+    },
+    {
+        .name = "malloc",
+        .addr = malloc
+    },
+    {
+        .name = "realloc",
+        .addr = realloc
+    },
+    {
+        .name = "free",
+        .addr = free
+    },
+    {
+        .name = "exit",
+        .addr = exit
+    },
+    {
+        .name = "abort",
+        .addr = abort
+    },
+    {
+        .name = "memchr",
+        .addr = memchr
+    },
+    {
+        .name = "memcmp",
+        .addr = memcmp
+    },
+    {
+        .name = "memmove",
+        .addr = memmove
+    },
+    {
+        .name = "memset",
+        .addr = memset
+    },
+    {
+        .name = "wmemcpy",
+        .addr = wmemcpy
+    },
+    {
+        .name = "memcpy",
+        .addr = memcpy
+    },
+    {
+        .name = "wmemmove",
+        .addr = wmemmove
+    },
+    {
+        .name = "wmemset",
+        .addr = wmemset
+    },
+    {
+        .name = "isalpha",
+        .addr = isalpha
+    },
+    {
+        .name = "iscntrl",
+        .addr = iscntrl
+    },
+    {
+        .name = "islower",
+        .addr = islower
+    },
+    {
+        .name = "isprint",
+        .addr = isprint
+    },
+    {
+        .name = "ispunct",
+        .addr = ispunct
+    },
+    {
+        .name = "isspace",
+        .addr = isspace
+    },
+    {
+        .name = "isupper",
+        .addr = isupper
+    },
+    {
+        .name = "isxdigit",
+        .addr = isxdigit
+    },
+    {
+        .name = "iswalpha",
+        .addr = iswalpha
+    },
+    {
+        .name = "iswcntrl",
+        .addr = iswcntrl
+    },
+    {
+        .name = "iswdigit",
+        .addr = iswdigit
+    },
+    {
+        .name = "iswlower",
+        .addr = iswlower
+    },
+    {
+        .name = "iswprint",
+        .addr = iswprint
+    },
+    {
+        .name = "iswpunct",
+        .addr = iswpunct
+    },
+    {
+        .name = "iswspace",
+        .addr = iswspace
+    },
+    {
+        .name = "iswupper",
+        .addr = iswupper
+    },
+    {
+        .name = "iswxdigit",
+        .addr = iswxdigit
+    },
+    {
+        .name = "strcat",
+        .addr = strcat
+    },
+    {
+        .name = "strchr",
+        .addr = strchr
+    },
+    {
+        .name = "strcmp",
+        .addr = strcmp
+    },
+    {
+        .name = "strcpy",
+        .addr = strcpy
+    },
+    {
+        .name = "strlen",
+        .addr = strlen
+    },
+    {
+        .name = "strncpy",
+        .addr = strncpy
+    },
+    {
+        .name = "strstr",
+        .addr = strstr
+    },
+    {
+        .name = "strtok",
+        .addr = strtok
+    },
+    {
+        .name = "strtoull",
+        .addr = strtoull
+    },
+    {
+        .name = "wcscmp",
+        .addr = wcscmp
+    },
+    {
+        .name = "wcslen",
+        .addr = wcslen
+    },
+    {
+        .name = "wcsncpy",
+        .addr = wcsncpy
+    },
+    {
+        .name = "setlocale",
+        .addr = setlocale
+    },
+    {
+        .name = "towupper",
+        .addr = towupper
+    },
+    {
+        .name = "towlower",
+        .addr = towlower
+    },
+    {
+        .name = "putchar",
+        .addr = putchar
+    },
+    {
+        .name = "printf",
+        .addr = printf
+    },
+    {
+        .name = "snprintf",
+        .addr = snprintf
+    },
+    {
+        .name = "sprintf",
+        .addr = sprintf
+    },
+    {
+        .name = "sscanf",
+        .addr = sscanf
+    },
+    {
+        .name = "puts",
+        .addr = puts
+    },
+    {
+        .name = "vsnprintf",
+        .addr = vsnprintf
+    },
+    {
+        .name = "time",
+        .addr = time
+    },
+    {
+        .name = "mktime",
+        .addr = mktime
+    },
+    {
+        .name = "access",
+        .addr = access
+    },
+    {
+        .name = "atoi",
+        .addr = atoi
+    },
+    {
+        .name = "calloc",
+        .addr = calloc
+    },
+    {
+        .name = "strpbrk",
+        .addr = strpbrk
+    },
+    {
+        .name = "ftime",
+        .addr = ftime
+    },
+    {
+        .name = "gmtime",
+        .addr = gmtime
+    },
+    {
         .name = "wmemchr",
         .addr = wmemchr
     },
@@ -1297,10 +1391,6 @@ static hook_t hooks[] = {
     {
         .name = "wmemcmp",
         .addr = wmemcmp
-    },
-    {
-        .name = "fputc",
-        .addr = android_fputc
     },
     {
         .name = "wctype",
@@ -1351,40 +1441,8 @@ static hook_t hooks[] = {
         .addr = wcsftime
     },
     {
-        .name = "putwc",
-        .addr = android_putwc
-    },
-    {
-        .name = "ungetwc",
-        .addr = android_ungetwc
-    },
-    {
-        .name = "getwc",
-        .addr = android_getwc
-    },
-    {
-        .name = "fdopen",
-        .addr = android_fdopen
-    },
-    {
-        .name = "writev",
-        .addr = android_writev
-    },
-    {
-        .name = "poll",
-        .addr = android_poll
-    },
-    {
         .name = "strtol",
         .addr = strtol
-    },
-    {
-        .name = "ferror",
-        .addr = android_ferror
-    },
-    {
-        .name = "feof",
-        .addr = android_feof
     },
     {
         .name = "raise",
@@ -1395,24 +1453,8 @@ static hook_t hooks[] = {
         .addr = rmdir
     },
     {
-        .name = "stat",
-        .addr = android_stat
-    },
-    {
-        .name = "sigaction",
-        .addr = android_sigaction
-    },
-    {
         .name = "perror",
         .addr = perror
-    },
-    {
-        .name = "sched_yield",
-        .addr = android_sched_yield
-    },
-    {
-        .name = "localtime_r",
-        .addr = android_localtime_r
     },
     {
         .name = "pread",
@@ -1423,60 +1465,17 @@ static hook_t hooks[] = {
         .addr = strrchr
     },
     {
-        .name = "fsync",
-        .addr = android_fsync
-    },
-    {
-        .name = "fdatasync",
-        .addr = android_fdatasync
-    },
-    {
-        .name = "unlink",
-        .addr = android_unlink
-    },
-    {
         .name = "getenv",
         .addr = getenv
-    },
-    {
-        .name = "geteuid",
-        .addr = android_geteuid
     },
     {
         .name = "clock_gettime",
         .addr = clock_gettime
     },
     {
-        .name = "dlopen",
-        .addr = android_dlopen
+        .name = "lseek",
+        .addr = lseek
     },
-    {
-        .name = "dlclose",
-        .addr = android_dlclose
-    },
-    {
-        .name = "dlsym",
-        .addr = android_dlsym
-    },
-    {
-        .name = "dladdr",
-        .addr = android_dladdr
-    },
-    {
-        .name = "dlerror",
-        .addr = android_dlerror
-    },
-#ifdef ANDROID_ARM_LINKER
-    {
-        .name = "dl_iterate_phdr",
-        .addr = android_dl_unwind_find_exidx
-    },
-#else
-    {
-        .name = "dl_iterate_phdr",
-        .addr = android_dl_iterate_phdr
-    },
-#endif
     {
         .name = (char *)NULL,
         .addr = NULL
