@@ -119,6 +119,7 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
         free(t);
         return ANDROID_EAGAIN;
     }
+    MemoryBarrier();
     SetThreadPriority(t->thread, priority_conv(attr_sv.sched_policy, attr_sv.sched_priority));
     ResumeThread(t->thread);
     *thread_out = (android_pthread_t)t;

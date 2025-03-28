@@ -20,6 +20,9 @@ BOOL android_threads_init() {
     }
     thread->is_detached = 0;
     thread->is_main_thread = TRUE;
+    memset(thread->tls, 0, sizeof(void *) * ANDROID_BIONIC_TLS_SLOTS);
+    MemoryBarrier();
+
     TlsSetValue(android_thread_storage, (void *)thread);
     memset((void *)tls_destructors, 0, sizeof(tls_destructors));
     memset((void *)tls_free, 0, sizeof(tls_free));
