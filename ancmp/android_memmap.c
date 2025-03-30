@@ -7,13 +7,15 @@
 #include <stdio.h>
 #include "android_memmap.h"
 #include <string.h>
+#include "android_pthread_mutex.h"
 
 static unsigned char is_initialized = 0;
 static size_t page_size = 4096;
 size_t page_count = 0;
 static size_t alloc_size = 0;
 static void *memory_map = NULL;
-static unsigned char *free_table = NULL; 
+static unsigned char *free_table = NULL;
+static android_pthread_mutex_t mapper_mtx = ANDROID_PTHREAD_MUTEX_INITIALIZER;
 
 int memmap_init(size_t map_len, size_t pg_len) {
     if (!is_initialized) {
@@ -78,8 +80,10 @@ void *memmap_alloc(void *addr, size_t len, unsigned char overwrite) {
     long off = -1;
     void *ret = NULL;
     if (!overwrite) {
+        android_pthread_mutex_lock(&mapper_mtx);
         off = find_free_off(pg_n);
         if (off == -1) {
+            android_pthread_mutex_unlock(&mapper_mtx);
             return NULL;
         }
         ret = (void *)((char *)memory_map + (off * page_size));
@@ -89,8 +93,10 @@ void *memmap_alloc(void *addr, size_t len, unsigned char overwrite) {
         }
         off = ((uintptr_t)addr - (uintptr_t)memory_map) / page_size;
         ret = addr;
+        android_pthread_mutex_lock(&mapper_mtx);
     }
     set_alloced(off, pg_n, 1);
+    android_pthread_mutex_unlock(&mapper_mtx);
     return ret;
 }
 
@@ -99,6 +105,8 @@ int memmap_dealloc(void *addr, size_t len) {
         return 0;
     }
     size_t pg_n = (len / page_size) + ((len % page_size) ? 1 : 0);
+    android_pthread_mutex_lock(&mapper_mtx);
     set_alloced(((uintptr_t)addr - (uintptr_t)memory_map) / page_size, pg_n, 0);
+    android_pthread_mutex_unlock(&mapper_mtx);
     return 1;
 }
