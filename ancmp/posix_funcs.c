@@ -56,6 +56,10 @@ long pread(int fd, void *buf, size_t count, off_t offset)
                     (DWORD)offset : (DWORD)(offset & 0xFFFFFFFFL);
 
     HANDLE file = (HANDLE)_get_osfhandle(fd);
+    if (file == INVALID_HANDLE_VALUE) {
+        errno = EBADF;
+        return -1;
+    }
     SetLastError(0);
     BOOL RF = ReadFile(file, buf, count, &read_bytes, &overlapped);
 
