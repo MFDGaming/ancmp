@@ -53,7 +53,9 @@ typedef struct {
     void *addr;
 } hook_t;
 
-void *android_stack_chk_guard = NULL;
+
+int android_stack_chk_guard_location[4] = {0xDEADCAFE, 0xDAC0FFEE, 0x8BADF00D, 0xBEEFFACE};
+void *android_stack_chk_guard = (void *)android_stack_chk_guard_location;
 
 #ifdef _WIN32
 
@@ -348,6 +350,10 @@ int android_shutdown(int sockfd, int how) {
     return shutdown(sockfd, how);
 }
 
+int android_ftime(struct _timeb *tp) {
+    return _ftime_s(tp) ? -1 : 0;
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
@@ -375,6 +381,7 @@ int android_shutdown(int sockfd, int how) {
 #define android_rename rename
 #define android_unlink unlink
 #define android_shutdown shutdown
+#define android_ftime ftime
 #endif
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0501)
@@ -1390,7 +1397,7 @@ static hook_t hooks[] = {
     },
     {
         .name = "ftime",
-        .addr = ftime
+        .addr = android_ftime
     },
     {
         .name = "gmtime",
