@@ -354,6 +354,51 @@ int android_ftime(struct _timeb *tp) {
     return _ftime_s(tp) ? -1 : 0;
 }
 
+int android_vsnprintf(char *str, size_t n, const char *fmt, va_list ap) {
+	char dummy;
+    va_list ap_copy;
+    int ret = 0;
+	if (n > INT_MAX) {
+		n = INT_MAX;
+    }
+	if (n == 0) {
+		str = &dummy;
+		n = 1;
+	}
+    va_copy(ap_copy, ap);
+    ret = _vscprintf(fmt, ap_copy);
+    va_end(ap_copy);
+    _vsnprintf(str, n, fmt, ap);
+    if ((ret + 1) > n) {
+	    str[n - 1] = '\0';
+    } else {
+        str[ret] = '\0';
+    }
+	return ret;
+}
+
+int android_snprintf(char *str, size_t n, const char *fmt, ...) {
+	va_list ap;
+	int ret;
+    va_start(ap, fmt);
+    ret = android_vsnprintf(str, n, fmt, ap);
+    va_end(ap);
+	return ret;
+}
+
+int android_vsprintf(char *str, const char *fmt, va_list ap) {
+    return android_vsnprintf(str, INT_MAX, fmt, ap);
+}
+
+int android_sprintf(char *str, const char *fmt, ...) {
+    va_list ap;
+	int ret;
+    va_start(ap, fmt);
+    ret = android_vsnprintf(str, INT_MAX, fmt, ap);
+    va_end(ap);
+	return ret;
+}
+
 #else
 #define android_mkdir mkdir
 #define android_pipe pipe
@@ -382,6 +427,10 @@ int android_ftime(struct _timeb *tp) {
 #define android_unlink unlink
 #define android_shutdown shutdown
 #define android_ftime ftime
+#define android_snprintf snprintf
+#define android_vsnprintf vsnprintf
+#define android_sprintf sprintf
+#define android_vsprintf vsprintf
 #endif
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0501)
@@ -1152,6 +1201,22 @@ static hook_t hooks[] = {
     },
 #endif
     {
+        .name = "vsnprintf",
+        .addr = android_vsnprintf
+    },
+    {
+        .name = "snprintf",
+        .addr = android_snprintf
+    },
+    {
+        .name = "vsprintf",
+        .addr = android_vsprintf
+    },
+    {
+        .name = "sprintf",
+        .addr = android_sprintf
+    },
+    {
         .name = "clock_gettime",
         .addr = clock_gettime
     },
@@ -1352,24 +1417,12 @@ static hook_t hooks[] = {
         .addr = printf
     },
     {
-        .name = "snprintf",
-        .addr = snprintf
-    },
-    {
-        .name = "sprintf",
-        .addr = sprintf
-    },
-    {
         .name = "sscanf",
         .addr = sscanf
     },
     {
         .name = "puts",
         .addr = puts
-    },
-    {
-        .name = "vsnprintf",
-        .addr = vsnprintf
     },
     {
         .name = "time",
@@ -1406,10 +1459,6 @@ static hook_t hooks[] = {
     {
         .name = "wmemchr",
         .addr = wmemchr
-    },
-    {
-        .name = "vsprintf",
-        .addr = vsprintf
     },
     {
         .name = "wmemcmp",
