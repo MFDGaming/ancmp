@@ -28,7 +28,8 @@
  * This is the ELF ABI header file
  * formerly known as "elf_abi.h".
  */
-#pragma once
+#ifndef ANCMP_ANDROID_ELF_EXEC_H
+#define ANCMP_ANDROID_ELF_EXEC_H
 
 #include "android_elf.h"
 
@@ -119,3 +120,5 @@
 #define STT_LOPROC	13		/* reserved range for processor */
 #define STT_HIPROC	15		/*  specific symbol types */
 #define PT_GNU_RELRO    0x6474e552      /* Read-only post relocation */
+
+#endif

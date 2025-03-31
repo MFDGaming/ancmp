@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ANCMP_ANDROID_MMAP_H
+#define ANCMP_ANDROID_MMAP_H
+
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -43,4 +45,6 @@ int android_munmap(void *addr, size_t length);
 #include <sys/mman.h>
 #define android_mmap mmap
 #define android_munmap munmap
+#endif
+
 #endif

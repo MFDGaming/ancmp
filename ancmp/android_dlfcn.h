@@ -25,7 +25,8 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#pragma once
+#ifndef ANCMP_ANDROID_DLFCN_H
+#define ANCMP_ANDROID_DLFCN_H
 
 typedef struct {
     const char *dli_fname;  /* Pathname of shared object that
@@ -54,3 +55,5 @@ enum {
 
 #define ANDROID_RTLD_DEFAULT  ((void*) 0xffffffff)
 #define ANDROID_RTLD_NEXT     ((void*) 0xfffffffe)
+
+#endif

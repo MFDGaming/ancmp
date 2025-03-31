@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_PTHREAD_ATTR_H
+#define ANCMP_ANDROID_PTHREAD_ATTR_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -65,3 +66,5 @@ int android_pthread_attr_getguardsize(android_pthread_attr_t const * attr, size_
 int android_pthread_attr_setscope(android_pthread_attr_t *attr, int  scope);
 
 int android_pthread_attr_getscope(android_pthread_attr_t const *attr);
+
+#endif

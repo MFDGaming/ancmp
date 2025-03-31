@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_DIRENT_H
+#define ANCMP_ANDROID_DIRENT_H
 
 #include <stdint.h>
 
@@ -33,5 +34,7 @@ android_dirent_t *android_readdir(android_DIR *dirp);
 #define android_opendir opendir
 #define android_closedir closedir
 android_dirent_t *android_readdir(DIR *dirp);
+
+#endif
 
 #endif

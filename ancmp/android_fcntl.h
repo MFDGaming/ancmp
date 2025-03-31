@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_FCNTL_H
+#define ANCMP_ANDROID_FCNTL_H
 
 #define ANDROID_F_DUPFD 0  
 #define ANDROID_F_GETFD 1  
@@ -41,4 +42,6 @@ int android_open(const char *pathname, int flags, ...);
 #include <fcntl.h>
 #define android_fcntl fcntl
 #define android_open open
+#endif
+
 #endif

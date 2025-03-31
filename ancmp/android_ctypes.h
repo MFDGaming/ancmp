@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_CTYPES_H
+#define ANCMP_ANDROID_CTYPES_H
 
 #define ANDROID_CTYPE_NUM_CHARS 256
 
@@ -11,3 +12,5 @@ extern const short *android_toupper_tab;
 int android_tolower(int c);
 
 int android_toupper(int c);
+
+#endif

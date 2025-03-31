@@ -1,3 +1,6 @@
+#ifndef ANCMP_POSIX_FUNCS_H
+#define ANCMP_POSIX_FUNCS_H
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <time.h>
@@ -22,3 +25,5 @@ int clock_gettime(clockid_t clk_id, struct timespec *tp);
 size_t bsd_strlcpy(char *dst, const char *src, size_t siz);
 
 char *bsd_strsep(char **stringp, const char *delim);
+
+#endif

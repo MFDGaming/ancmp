@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_SCHED_H
+#define ANCMP_ANDROID_SCHED_H
 
 #define ANDROID_SCHED_NORMAL            0
 #define ANDROID_SCHED_OTHER             0
@@ -8,3 +9,5 @@
 struct android_sched_param {
     int sched_priority;
 };
+
+#endif

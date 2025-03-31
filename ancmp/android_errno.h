@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_ERRNO_H
+#define ANCMP_ANDROID_ERRNO_H
 
 #define ANDROID_EPERM 1  
 #define ANDROID_ENOENT 2  
@@ -136,3 +137,5 @@
 volatile int *android_errno(void);
 
 char *android_strerror(int errnum);
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_POSIX_TYPES_H
+#define ANCMP_ANDROID_POSIX_TYPES_H
 
 #include <string.h>
 #ifdef _WIN32
@@ -33,4 +34,6 @@ typedef struct {
 void fd_set_to_native(android_fd_set_t *android_set, fd_set *native_set);
 
 void fd_set_to_android(fd_set *native_set, android_fd_set_t *android_set);
+#endif
+
 #endif

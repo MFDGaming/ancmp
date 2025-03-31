@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_IO_H
+#define ANCMP_ANDROID_IO_H
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -100,3 +101,5 @@ wint_t android_getwc(custom_file_t *stream);
 int android_ferror(custom_file_t *stream);
 
 int android_feof(custom_file_t *stream);
+
+#endif

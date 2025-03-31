@@ -25,7 +25,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#pragma once
+
+#ifndef ANCMP_LINKER_FORMAT_H
+#define ANCMP_LINKER_FORMAT_H
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -36,3 +38,5 @@
 /* issues (it uses malloc()/free()) and increases code size  */
 
 int format_buffer(char *buffer, size_t bufsize, const char *format, ...);
+
+#endif

@@ -25,7 +25,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#pragma once
+
+#ifndef ANCMP_LINKER_ENVIRON_H
+#define ANCMP_LINKER_ENVIRON_H
 
 /* Call this function before anything else. 'vecs' must be the pointer
  * to the environment block in the ELF data block. The function returns
@@ -49,3 +51,5 @@ extern const char* linker_env_get(const char* name);
 /* Remove unsecure environment variables. This should be used when
  * running setuid programs. */
 extern void        linker_env_secure(void);
+
+#endif

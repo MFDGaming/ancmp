@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_PTHREAD_THREADS_H
+#define ANCMP_ANDROID_PTHREAD_THREADS_H
 
 #ifdef _WIN32
 
@@ -21,5 +22,7 @@ extern long volatile tls_free[];
 extern void *volatile tls_destructors[];
 
 BOOL android_threads_init();
+
+#endif
 
 #endif

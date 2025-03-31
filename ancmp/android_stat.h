@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_STAT_H
+#define ANCMP_ANDROID_STAT_H
 
 #define ANDROID_S_IFMT 00170000
 #define ANDROID_S_IFSOCK 0140000
@@ -69,3 +70,5 @@ int s_to_android(int mode);
 int android_fstat(int fd, android_stat_t *statbuf);
 
 int android_stat(const char *pathname, android_stat_t *statbuf);
+
+#endif

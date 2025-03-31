@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_PTHREAD_MUTEX_H
+#define ANCMP_ANDROID_PTHREAD_MUTEX_H
 
 typedef struct
 {
@@ -108,3 +109,5 @@ int android_pthread_mutexattr_settype(android_pthread_mutexattr_t *attr, int typ
 int android_pthread_mutexattr_getpshared(const android_pthread_mutexattr_t *attr, int *pshared);
 
 int android_pthread_mutexattr_setpshared(android_pthread_mutexattr_t *attr, int pshared);
+
+#endif

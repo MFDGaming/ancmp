@@ -26,7 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef ANCMP_LINKER_H
+#define ANCMP_LINKER_H
 
 #include <sys/types.h>
 #include "android_elf.h"
@@ -223,3 +224,5 @@ int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *), vo
 #endif
 
 void android_linker_init();
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_MATH_H
+#define ANCMP_ANDROID_MATH_H
 
 #include "abi_fix.h"
 
@@ -49,3 +50,5 @@ double android_ldexp(double x, int exp) FLOAT_ABI_FIX;
 float android_ldexpf(float x, int exp) FLOAT_ABI_FIX;
 
 float android_tanf(float x) FLOAT_ABI_FIX;
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_LOGD_H
+#define ANCMP_ANDROID_LOGD_H
 
 #include <stdarg.h>
 
@@ -19,3 +20,5 @@ int android_log_write(int prio, const char* tag, const char* buffer);
 int android_log_print(int prio, const char *tag, const char *fmt, ...);
 
 int android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap);
+
+#endif

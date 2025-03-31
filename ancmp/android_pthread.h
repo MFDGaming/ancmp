@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_PTHREAD_H
+#define ANCMP_ANDROID_PTHREAD_H
 
 #include "android_pthread_attr.h"
 #include "android_pthread_mutex.h"
@@ -21,3 +22,5 @@ int android_pthread_detach(android_pthread_t thid);
 int android_pthread_join(android_pthread_t thid, void **ret_val);
 
 android_pthread_t android_pthread_self(void);
+
+#endif

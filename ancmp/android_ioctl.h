@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ANCMP_ANDROID_IOCTL_H
+#define ANCMP_ANDROID_IOCTL_H
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -70,4 +72,6 @@ typedef struct {
 int android_ioctl(int fd, unsigned long request, ...);
 #else
 #define android_ioctl ioctl
+#endif
+
 #endif

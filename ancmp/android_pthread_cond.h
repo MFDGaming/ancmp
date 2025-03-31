@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_PTHREAD_COND_H
+#define ANCMP_ANDROID_PTHREAD_COND_H
 
 #include "android_pthread_mutex.h"
 #include <time.h>
@@ -36,3 +37,5 @@ int android_pthread_condattr_destroy(android_pthread_condattr_t *attr);
 int android_pthread_condattr_getpshared(const android_pthread_condattr_t *attr, int *pshared);
 
 int android_pthread_condattr_setpshared(android_pthread_condattr_t *attr, int pshared);
+
+#endif

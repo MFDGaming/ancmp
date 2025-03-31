@@ -9,7 +9,8 @@
  ***
  ****************************************************************************
  ****************************************************************************/
-#pragma once
+#ifndef ANCMP_ANDROID_ELF_H
+#define ANCMP_ANDROID_ELF_H
 
 #include <stdint.h>
 
@@ -346,5 +347,7 @@ typedef struct elf64_note {
 #define elfhdr elf64_hdr
 #define elf_phdr elf64_phdr
 #define elf_note elf64_note
+
+#endif
 
 #endif

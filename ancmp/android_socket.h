@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_SOCKET_H
+#define ANCMP_ANDROID_SOCKET_H
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -264,4 +265,6 @@ long android_write(int fd, void *buf, size_t count);
 #define android_read read
 
 #define android_write write
+#endif
+
 #endif

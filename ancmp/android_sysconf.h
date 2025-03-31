@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ANCMP_ANDROID_SYSCONF_H
+#define ANCMP_ANDROID_SYSCONF_H
 
 #define ANDROID_SC_ARG_MAX             0x0000
 #define ANDROID_SC_BC_BASE_MAX         0x0001
@@ -94,3 +95,5 @@
 #define ANDROID_SC_AVPHYS_PAGES                0x0063
 
 long android_sysconf(int name);
+
+#endif

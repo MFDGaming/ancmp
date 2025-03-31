@@ -9,7 +9,8 @@
  ***
  ****************************************************************************
  ****************************************************************************/
-#pragma once
+#ifndef ANCMP_ANDROID_AUXVEC_H
+#define ANCMP_ANDROID_AUXVEC_H
 
 #define ANDROID_AT_NULL 0  
 #define ANDROID_AT_IGNORE 1  
@@ -33,3 +34,5 @@
 #define ANDROID_AT_SECURE 23  
 
 #define ANDROID_AT_VECTOR_SIZE 44  
+
+#endif
