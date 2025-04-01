@@ -192,44 +192,58 @@ static Elf32_Sym libdl_symtab[] = {
       // This is actually the the STH_UNDEF entry. Technically, it's
       // supposed to have st_name == 0, but instead, it points to an index
       // in the strtab with a \0 to make iterating through the symtab easier.
-    { .st_name = sizeof(ANDROID_LIBDL_STRTAB) - 1,
+    { sizeof(ANDROID_LIBDL_STRTAB) - 1, 0, 0, 0, 0, 0
     },
-    { .st_name = 0,   // starting index of the name in libdl_info.strtab
-      .st_value = (Elf32_Addr) &android_dlopen,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 0,   // starting index of the name in libdl_info.strtab
+      (Elf32_Addr) &android_dlopen,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
-    { .st_name = 7,
-      .st_value = (Elf32_Addr) &android_dlclose,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 7,
+      (Elf32_Addr) &android_dlclose,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
-    { .st_name = 15,
-      .st_value = (Elf32_Addr) &android_dlsym,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 15,
+      (Elf32_Addr) &android_dlsym,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
-    { .st_name = 21,
-      .st_value = (Elf32_Addr) &android_dlerror,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 21,
+      (Elf32_Addr) &android_dlerror,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
-    { .st_name = 29,
-      .st_value = (Elf32_Addr) &android_dladdr,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 29,
+      (Elf32_Addr) &android_dladdr,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
 #ifdef ANDROID_ARM_LINKER
-    { .st_name = 36,
-      .st_value = (Elf32_Addr) &android_dl_unwind_find_exidx,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 36,
+      (Elf32_Addr) &android_dl_unwind_find_exidx,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
 #elif defined(ANDROID_X86_LINKER)
-    { .st_name = 36,
-      .st_value = (Elf32_Addr) &android_dl_iterate_phdr,
-      .st_info = STB_GLOBAL << 4,
-      .st_shndx = 1,
+    { 36,
+      (Elf32_Addr) &android_dl_iterate_phdr,
+      0,
+      STB_GLOBAL << 4,
+      0,
+      1
     },
 #endif
 };
