@@ -72,37 +72,6 @@ long pread(int fd, void *buf, size_t count, off_t offset)
 
     return read_bytes;
 }
-
-int clock_gettime(clockid_t clk_id, struct timespec *tp) {
-    static LARGE_INTEGER freq;
-    LARGE_INTEGER now;
-    
-    if (!freq.QuadPart) {
-        QueryPerformanceFrequency(&freq);
-    }
-
-    if (clk_id == CLOCK_REALTIME) {
-        FILETIME ft;
-        ULARGE_INTEGER time;
-        GetSystemTimeAsFileTime(&ft);
-        time.LowPart = ft.dwLowDateTime;
-        time.HighPart = ft.dwHighDateTime;
-        
-        // Convert FILETIME (100-ns intervals since 1601) to timespec
-        time.QuadPart -= 116444736000000000ULL; // Convert to Unix epoch (1970)
-        tp->tv_sec = time.QuadPart / 10000000ULL;
-        tp->tv_nsec = (time.QuadPart % 10000000ULL) * 100;
-        
-    } else if (clk_id == CLOCK_MONOTONIC) {
-        QueryPerformanceCounter(&now);
-        tp->tv_sec = now.QuadPart / freq.QuadPart;
-        tp->tv_nsec = (now.QuadPart % freq.QuadPart) * 1000000000LL / freq.QuadPart;
-    } else {
-        return -1; // Unsupported clock type
-    }
-    
-    return 0;
-}
 #endif
 
 size_t bsd_strlcpy(char *dst, const char *src, size_t siz)

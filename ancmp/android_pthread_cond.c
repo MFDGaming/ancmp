@@ -9,8 +9,8 @@
 #include "posix_funcs.h"
 #include "android_errno.h"
 
-int android_timespec_to_absolute(struct timespec *ts, const struct timespec *abstime, clockid_t clock) {
-    clock_gettime(clock, ts);
+int android_timespec_to_absolute(android_timespec_t *ts, const android_timespec_t *abstime, android_clockid_t clock) {
+    android_clock_gettime(clock, ts);
     ts->tv_sec  = abstime->tv_sec - ts->tv_sec;
     ts->tv_nsec = abstime->tv_nsec - ts->tv_nsec;
     if (ts->tv_nsec < 0) {
@@ -42,7 +42,7 @@ int android_pthread_cond_pulse(android_pthread_cond_t *cond, int counter) {
     return 0;
 }
 
-int android_pthread_cond_timedwait_relative(android_pthread_cond_t *cond, android_pthread_mutex_t * mutex, const struct timespec *reltime) {
+int android_pthread_cond_timedwait_relative(android_pthread_cond_t *cond, android_pthread_mutex_t * mutex, const android_timespec_t *reltime) {
     int status;
     int oldvalue = cond->value;
     android_pthread_mutex_unlock(mutex);
@@ -54,9 +54,9 @@ int android_pthread_cond_timedwait_relative(android_pthread_cond_t *cond, androi
     return 0;
 }
 
-int android_pthread_cond_timedwait2(android_pthread_cond_t *cond, android_pthread_mutex_t * mutex, const struct timespec *abstime, clockid_t clock) {
-    struct timespec ts;
-    struct timespec * tsp;
+int android_pthread_cond_timedwait2(android_pthread_cond_t *cond, android_pthread_mutex_t * mutex, const android_timespec_t *abstime, android_clockid_t clock) {
+    android_timespec_t ts;
+    android_timespec_t * tsp;
     if (abstime != NULL) {
         if (android_timespec_to_absolute(&ts, abstime, clock) < 0) {
             return ANDROID_ETIMEDOUT;
@@ -95,8 +95,8 @@ int android_pthread_cond_signal(android_pthread_cond_t *cond) {
     return android_pthread_cond_pulse(cond, 1);
 }
 
-int android_pthread_cond_timedwait(android_pthread_cond_t *cond, android_pthread_mutex_t *mutex, const struct timespec *abstime) {
-    return android_pthread_cond_timedwait2(cond, mutex, abstime, CLOCK_REALTIME);
+int android_pthread_cond_timedwait(android_pthread_cond_t *cond, android_pthread_mutex_t *mutex, const android_timespec_t *abstime) {
+    return android_pthread_cond_timedwait2(cond, mutex, abstime, ANDROID_CLOCK_REALTIME);
 }
 
 int android_pthread_cond_wait(android_pthread_cond_t *cond, android_pthread_mutex_t *mutex) {

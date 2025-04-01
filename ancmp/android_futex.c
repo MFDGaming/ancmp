@@ -132,7 +132,7 @@ int android_futex_wake_ex(volatile void *ftx, int pshared, int val) {
     return woke;
 }
 
-int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct timespec *timeout) {
+int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const android_timespec_t *timeout) {
     if (InterlockedCompareExchange((long *)ftx, val, val) != val) {
         errno = EAGAIN;
         return -1;
@@ -153,7 +153,7 @@ int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct
     return 0;
 }
 
-int android_futex_wait(volatile void *ftx, int val, const struct timespec *timeout) {
+int android_futex_wait(volatile void *ftx, int val, const android_timespec_t *timeout) {
     return android_futex_wait_ex(ftx, 0, val, timeout);
 }
 
@@ -168,7 +168,7 @@ int android_futex_wake(volatile void *ftx, int count) {
 #include <unistd.h>
 
 // Futex syscall wrapper
-static int futex(volatile void *addr, int op, int val, const struct timespec *timeout, volatile void *addr2, int val3) {
+static int futex(volatile void *addr, int op, int val, const android_timespec_t *timeout, volatile void *addr2, int val3) {
     return syscall(SYS_futex, addr, op, val, timeout, addr2, val3);
 }
 
@@ -179,13 +179,13 @@ int android_futex_wake_ex(volatile void *ftx, int pshared, int val) {
 }
 
 // Wait with timeout (with process-shared support)
-int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const struct timespec *timeout) {
+int android_futex_wait_ex(volatile void *ftx, int pshared, int val, const android_timespec_t *timeout) {
     int op = pshared ? FUTEX_WAIT | FUTEX_PRIVATE_FLAG : FUTEX_WAIT;
     return futex(ftx, op, val, timeout, NULL, 0);
 }
 
 // Standard futex wait (calls `__futex_wait_ex` with `pshared=0`)
-int android_futex_wait(volatile void *ftx, int val, const struct timespec *timeout) {
+int android_futex_wait(volatile void *ftx, int val, const android_timespec_t *timeout) {
     return android_futex_wait_ex(ftx, 0, val, timeout);
 }
 

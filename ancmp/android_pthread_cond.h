@@ -3,6 +3,7 @@
 
 #include "android_pthread_mutex.h"
 #include <time.h>
+#include "android_time.h"
 
 typedef struct {
     int volatile value;
@@ -26,7 +27,7 @@ int android_pthread_cond_broadcast(android_pthread_cond_t *cond);
 
 int android_pthread_cond_signal(android_pthread_cond_t *cond);
 
-int android_pthread_cond_timedwait(android_pthread_cond_t *cond, android_pthread_mutex_t *mutex, const struct timespec *abstime);
+int android_pthread_cond_timedwait(android_pthread_cond_t *cond, android_pthread_mutex_t *mutex, const android_timespec_t *abstime);
 
 int android_pthread_cond_wait(android_pthread_cond_t *cond, android_pthread_mutex_t *mutex);
 

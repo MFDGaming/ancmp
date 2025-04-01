@@ -11,6 +11,7 @@
 #include <wctype.h>
 #include <errno.h>
 #include <time.h>
+#include <wchar.h>
 #include "android_pthread.h"
 #include "android_math.h"
 #include "android_io.h"
@@ -25,9 +26,14 @@
 #include "android_dlfcn.h"
 #include "linker.h"
 #include "android_sysconf.h"
+#include "posix_funcs.h"
+#include "android_cxa.h"
+#include "android_strcasecmp.h"
+#include "android_errno.h"
+#include "android_time.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/timeb.h>
+#include <limits.h>
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
@@ -43,10 +49,6 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 #endif
-#include "posix_funcs.h"
-#include "android_cxa.h"
-#include "android_strcasecmp.h"
-#include "android_errno.h"
 
 typedef struct {
     char *name;
@@ -83,7 +85,7 @@ int android_pipe(int fds[2]) {
     return 0;
 }
 
-int android_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+int android_getsockname(int sockfd, struct sockaddr *addr, android_socklen_t *addrlen) {
     puts("android_getsockname");
     union {
         struct sockaddr_in ipv4;
@@ -149,28 +151,11 @@ uint32_t android_inet_addr(char *addr) {
     return inet_addr(addr);
 }
 
-int android_gettimeofday(struct timeval *tp, struct timezone *tzp) {
-	FILETIME	file_time;
-	SYSTEMTIME	system_time;
-	ULARGE_INTEGER ularge;
-
-	GetSystemTime(&system_time);
-	SystemTimeToFileTime(&system_time, &file_time);
-	ularge.LowPart = file_time.dwLowDateTime;
-	ularge.HighPart = file_time.dwHighDateTime;
-
-	tp->tv_sec = (long) ((ularge.QuadPart - 116444736000000000ULL) / 10000000L);
-	tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
-
-	return 0;
-}
-
 void android_div(div_t *ret, int numerator, int denominator) {
     puts("android_div");
     ret->quot = numerator/denominator;
     ret->rem = numerator%denominator;
 }
-
 
 static uint64_t seed48[3];
 
@@ -194,28 +179,6 @@ long android_lrand48() {
 FLOAT_ABI_FIX double android_drand48() {
     puts("android_drand48");
     return (double)android_lrand48() / (1ULL << 31);
-}
-
-int android_nanosleep(const struct timespec *ts, struct timespec *rem){
-    puts("android_nanosleep");
-    HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
-    if(!timer)
-        return -1;
-
-    time_t sec = ts->tv_sec + ts->tv_nsec / 1000000000L;
-    long nsec = ts->tv_nsec % 1000000000L;
-
-    LARGE_INTEGER delay;
-    delay.QuadPart = -(sec * 1000000000L + nsec) / 100;
-    BOOL ok = SetWaitableTimer(timer, &delay, 0, NULL, NULL, FALSE) &&
-              WaitForSingleObject(timer, INFINITE) == WAIT_OBJECT_0;
-
-    CloseHandle(timer);
-
-    if(!ok)
-      return -1;
-
-    return 0;
 }
 
 long android_syscall(long number, ...) {
@@ -262,16 +225,6 @@ int android_sigaction(int signum, void *act, void *oldact) {
 int android_sched_yield() {
     puts("android_sched_yield");
     return SwitchToThread() ? 0 : -1;
-}
-
-struct tm *android_localtime_r(const time_t *timep, struct tm *result) {
-    puts("android_localtime_r");
-    struct tm *res = localtime(timep);
-    if (res) {
-        memcpy(result, res, sizeof(struct tm));
-        return result;
-    }
-    return NULL;
 }
 
 int android_fsync(int fd) {
@@ -350,10 +303,6 @@ int android_shutdown(int sockfd, int how) {
     return shutdown(sockfd, how);
 }
 
-int android_ftime(struct _timeb *tp) {
-    return _ftime_s(tp) ? -1 : 0;
-}
-
 int android_vsnprintf(char *str, size_t n, const char *fmt, va_list ap) {
 	char dummy;
     va_list ap_copy;
@@ -405,19 +354,16 @@ int android_sprintf(char *str, const char *fmt, ...) {
 #define android_select select
 #define android_gethostname gethostname
 #define android_getsockname getsockname
-#define android_gettimeofday gettimeofday
 #define android_div div
 #define android_inet_ntoa inet_ntoa
 #define android_inet_addr inet_addr
 #define android_lrand48 lrand48
 #define android_srand48 srand48
-#define android_nanosleep nanosleep
 #define android_syscall syscall
 #define android_writev writev
 #define android_poll poll
 #define android_sigaction sigaction
 #define android_sched_yield sched_yield
-#define android_localtime_r localtime_r
 #define android_fsync fsync
 #define android_fdatasync fdatasync
 #define android_geteuid geteuid
@@ -426,7 +372,6 @@ int android_sprintf(char *str, const char *fmt, ...) {
 #define android_rename rename
 #define android_unlink unlink
 #define android_shutdown shutdown
-#define android_ftime ftime
 #define android_snprintf snprintf
 #define android_vsnprintf vsnprintf
 #define android_sprintf sprintf
@@ -505,13 +450,6 @@ android_hostent_t *android_gethostbyname(const char *name) {
 #else
 #define android_gethostbyname gethostbyname
 #endif
-
-int android_usleep(unsigned long usec) {
-    struct timespec ts;
-    ts.tv_sec = usec / 1000000;
-    ts.tv_nsec = (usec % 1000000) * 1000;
-    return android_nanosleep(&ts, NULL);
-}
 
 FLOAT_ABI_FIX double android_strtod(const char *nptr, char **endptr) {
     return strtod(nptr, endptr);
@@ -1218,7 +1156,11 @@ static hook_t hooks[] = {
     },
     {
         .name = "clock_gettime",
-        .addr = clock_gettime
+        .addr = android_clock_gettime
+    },
+    {
+        .name = "ftime",
+        .addr = android_ftime
     },
     {
         .name = "pread",
@@ -1447,10 +1389,6 @@ static hook_t hooks[] = {
     {
         .name = "strpbrk",
         .addr = strpbrk
-    },
-    {
-        .name = "ftime",
-        .addr = android_ftime
     },
     {
         .name = "gmtime",
