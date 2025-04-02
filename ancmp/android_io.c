@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 
-// stdin, stdout, stderr
+/* stdin, stdout, stderr */
 android_file_t android_sf[3];
 
 static FILE *get_fp(custom_file_t *stream) {
@@ -25,6 +25,8 @@ static FILE *get_fp(custom_file_t *stream) {
 
 custom_file_t *android_fopen(const char *filename, const char *mode) {
     char *real_mode = (char *)mode;
+    FILE *file;
+
     if (strcmp(mode, "r") == 0) {
         real_mode = "rb";
     } else if (strcmp(mode, "r+") == 0) {
@@ -38,7 +40,7 @@ custom_file_t *android_fopen(const char *filename, const char *mode) {
     } else if (strcmp(mode, "a+") == 0) {
         real_mode = "a+b";
     }
-    FILE *file = fopen(filename, real_mode);
+    file = fopen(filename, real_mode);
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));
         if (cfile == NULL) {
@@ -56,6 +58,8 @@ custom_file_t *android_fopen(const char *filename, const char *mode) {
 
 custom_file_t *android_fdopen(int fd, const char *mode) {
     char *real_mode = (char *)mode;
+    FILE *file;
+
     if (strcmp(mode, "r") == 0) {
         real_mode = "rb";
     } else if (strcmp(mode, "r+") == 0) {
@@ -69,7 +73,7 @@ custom_file_t *android_fdopen(int fd, const char *mode) {
     } else if (strcmp(mode, "a+") == 0) {
         real_mode = "a+b";
     }
-    FILE *file = fdopen(fd, real_mode);
+    file = fdopen(fd, real_mode);
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));
         if (cfile == NULL) {
@@ -153,18 +157,22 @@ int android_getc(custom_file_t *stream) {
     return getc(get_fp(stream));
 }
 
-int android_fprintf(custom_file_t *stream, const char *restrict format, ...) {
+int android_fprintf(custom_file_t *stream, const char *format, ...) {
     va_list args;
+    int ret;
+
     va_start(args, format);
-    int ret = vfprintf(get_fp(stream), format, args);
+    ret = vfprintf(get_fp(stream), format, args);
     va_end(args);
     return ret;
 }
 
-int android_fscanf(custom_file_t *stream, const char *restrict format, ...) {
+int android_fscanf(custom_file_t *stream, const char *format, ...) {
     va_list args;
+    int ret;
+
     va_start(args, format);
-    int ret = vfscanf(get_fp(stream), format, args);
+    ret = vfscanf(get_fp(stream), format, args);
     va_end(args);
     return ret;
 }

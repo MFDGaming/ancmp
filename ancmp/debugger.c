@@ -37,17 +37,17 @@
 
 extern int tgkill(int tgid, int tid, int sig);
 
-void notify_gdb_of_libraries();
+void notify_gdb_of_libraries(void);
 
 #define DEBUGGER_SOCKET_NAME "android:debuggerd"
 
 typedef enum {
-    // dump a crash
+    /* dump a crash */
     DEBUGGER_ACTION_CRASH,
-    // dump a tombstone file
+    /* dump a tombstone file */
     DEBUGGER_ACTION_DUMP_TOMBSTONE,
-    // dump a backtrace only back to the socket
-    DEBUGGER_ACTION_DUMP_BACKTRACE,
+    /* dump a backtrace only back to the socket */
+    DEBUGGER_ACTION_DUMP_BACKTRACE
 } debugger_action_t;
 
 /* message sent over the socket */
@@ -61,7 +61,7 @@ typedef struct {
         ret = (cond); \
     } while (ret < 0 && errno == EINTR)
 
-// see man(2) prctl, specifically the section about PR_GET_NAME
+/* see man(2) prctl, specifically the section about PR_GET_NAME */
 #define MAX_TASK_NAME_LEN (16)
 
 #if 0
@@ -218,7 +218,7 @@ void debugger_signal_handler(int n, siginfo_t* info, void* unused)
     }
 }
 #endif
-void debugger_init()
+void debugger_init(void)
 {
 #if 0
     struct sigaction act;

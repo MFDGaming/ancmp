@@ -22,7 +22,7 @@ int android_pthread_setname_np(android_pthread_t thread, const char *name) {
 }
 
 int android_pthread_once(android_pthread_once_t *once_control, void (*init_routine)(void)) {
-    volatile android_pthread_once_t *ocptr = once_control;
+    android_pthread_once_t *ocptr = once_control;
     android_pthread_once_t value;
 #define ONCE_INITIALIZING           (1 << 0)
 #define ONCE_COMPLETED              (1 << 1)
@@ -97,11 +97,19 @@ DWORD WINAPI thread_wrapper(LPVOID lpParam) {
 
 int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t const *attr, void *(*start_routine)(void *), void *arg) {
     android_pthread_attr_t attr_sv = android_gDefaultPthreadAttr;
+#ifdef _WIN32
+    android_pthread_internal_t *t;
+#else
+    pthread_attr_t real_attr;
+    int real_policy = SCHED_OTHER;
+    pthread_t thrd;
+#endif
+
     if (attr) {
         attr_sv = *attr;
     }
 #ifdef _WIN32
-    android_pthread_internal_t *t = (android_pthread_internal_t *)malloc(sizeof(android_pthread_internal_t));
+    t = (android_pthread_internal_t *)malloc(sizeof(android_pthread_internal_t));
     if (t == NULL) {
         return ANDROID_EAGAIN;
     }
@@ -125,11 +133,9 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     *thread_out = (android_pthread_t)t;
     return 0;
 #else
-    pthread_attr_t real_attr;
     if (pthread_attr_init(&real_attr) != 0) {
         return ANDROID_EAGAIN;
     }
-    int real_policy = SCHED_OTHER;
     if (attr_sv.sched_policy == ANDROID_SCHED_FIFO) {
         real_policy = SCHED_FIFO;
     } else if (attr_sv.sched_policy == ANDROID_SCHED_RR) {
@@ -166,7 +172,6 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
         pthread_attr_destroy(&real_attr);
         return ANDROID_EAGAIN;
     }
-    pthread_t thrd;
     if (pthread_create(&thrd, &real_attr, start_routine, arg) != 0) {
         pthread_attr_destroy(&real_attr);
         return ANDROID_EAGAIN;
@@ -178,7 +183,8 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
 
 #ifdef _WIN32
 static void android_pthread_call_destroy(android_pthread_internal_t *thread) {
-    for (int i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
+    int i;
+    for (i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
         if (InterlockedCompareExchange(&tls_free[i], 1, 1) == 1) {
             void *destructor = InterlockedCompareExchangePointer(&tls_destructors[i], NULL, NULL);
             if (destructor != NULL) {
@@ -217,8 +223,9 @@ int android_pthread_join(android_pthread_t thid, void **ret_val) {
     }
     if (InterlockedCompareExchange(&thrd->is_joined, 1, 0) == 0) {
         if (thrd->thread != NULL) {
-            WaitForSingleObject(thrd->thread, INFINITE);
             int status;
+
+            WaitForSingleObject(thrd->thread, INFINITE);
             GetExitCodeThread(thrd->thread, (LPDWORD)&status);
             CloseHandle(thrd->thread);
             if (ret_val) *ret_val = (void *)status;

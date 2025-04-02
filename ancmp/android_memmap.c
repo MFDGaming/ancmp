@@ -51,7 +51,8 @@ int memmap_init(size_t map_len, size_t pg_len) {
 static long find_free_off(size_t pg_n) {
     long ret = 0;
     size_t cnt = 0;
-    for (size_t i = 0; i < page_count; ++i) {
+    size_t i;
+    for (i = 0; i < page_count; ++i) {
         if (cnt == pg_n) {
             return ret;
         }
@@ -66,10 +67,11 @@ static long find_free_off(size_t pg_n) {
 }
 
 static int set_alloced(long pg_off, size_t pg_n, unsigned char b) {
+    size_t i;
     if (pg_off >= page_count || pg_off + pg_n > page_count) {
         return 0;
     }
-    for (size_t i = pg_off; i < pg_off + pg_n; ++i) {
+    for (i = pg_off; i < pg_off + pg_n; ++i) {
         free_table[i] = b;
     }
     return 1;
@@ -101,10 +103,12 @@ void *memmap_alloc(void *addr, size_t len, unsigned char overwrite) {
 }
 
 int memmap_dealloc(void *addr, size_t len) {
+    size_t pg_n;
+
     if ((uintptr_t)addr < (uintptr_t)memory_map || (uintptr_t)addr+len > (uintptr_t)memory_map+alloc_size) {
         return 0;
     }
-    size_t pg_n = (len / page_size) + ((len % page_size) ? 1 : 0);
+    pg_n = (len / page_size) + ((len % page_size) ? 1 : 0);
     android_pthread_mutex_lock(&mapper_mtx);
     set_alloced(((uintptr_t)addr - (uintptr_t)memory_map) / page_size, pg_n, 0);
     android_pthread_mutex_unlock(&mapper_mtx);

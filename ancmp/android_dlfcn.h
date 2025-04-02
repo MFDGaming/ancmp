@@ -50,7 +50,7 @@ enum {
   ANDROID_RTLD_LAZY = 1,
 
   ANDROID_RTLD_LOCAL  = 0,
-  ANDROID_RTLD_GLOBAL = 2,
+  ANDROID_RTLD_GLOBAL = 2
 };
 
 #define ANDROID_RTLD_DEFAULT  ((void*) 0xffffffff)

@@ -8,7 +8,7 @@ void *volatile tls_destructors[ANDROID_BIONIC_TLS_SLOTS];
 
 int android_thread_storage = TLS_OUT_OF_INDEXES;
 
-BOOL android_threads_init() {
+BOOL android_threads_init(void) {
     android_pthread_internal_t *thread = (android_pthread_internal_t *)malloc(sizeof(android_pthread_internal_t));
     if (thread == NULL) {
         return FALSE;

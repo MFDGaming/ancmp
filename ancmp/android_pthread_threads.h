@@ -21,7 +21,7 @@ extern int android_thread_storage;
 extern long volatile tls_free[];
 extern void *volatile tls_destructors[];
 
-BOOL android_threads_init();
+BOOL android_threads_init(void);
 
 #endif
 

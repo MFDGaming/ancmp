@@ -62,7 +62,6 @@ void *android_stack_chk_guard = (void *)android_stack_chk_guard_location;
 #ifdef _WIN32
 
 int android_mkdir(const char *pathname, int mode) {
-    puts("android_mkdir");
     BOOL ret = CreateDirectory(pathname, NULL);
     if (!ret) {
         printf("\x1b[31mFailed to mkdir %s due to %lu\x1b[0m\n", pathname, GetLastError());
@@ -71,7 +70,6 @@ int android_mkdir(const char *pathname, int mode) {
 }
 
 int android_pipe(int fds[2]) {
-    puts("android_pipe");
     HANDLE handles[2];
     if (!CreatePipe(&handles[0], &handles[1], NULL, 0)) {
         return -1;
@@ -86,7 +84,6 @@ int android_pipe(int fds[2]) {
 }
 
 int android_getsockname(int sockfd, struct sockaddr *addr, android_socklen_t *addrlen) {
-    puts("android_getsockname");
     union {
         struct sockaddr_in ipv4;
         struct sockaddr_in6 ipv6;
@@ -110,7 +107,6 @@ int android_getsockname(int sockfd, struct sockaddr *addr, android_socklen_t *ad
 }
 
 int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writefds, android_fd_set_t *exceptfds, struct timeval *timeout) {
-    puts("android_select");
     fd_set native_readfds, native_writefds, native_exceptfds;
     fd_set *native_preadfds = NULL, *native_pwritefds = NULL, *native_pexceptfds = NULL;
     if (readfds) {
@@ -129,7 +125,6 @@ int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writef
 }
 
 int android_gethostname(char *name, size_t size) {
-    puts("android_gethostname");
     DWORD len = size - 1;
     if (GetComputerNameEx(ComputerNameDnsHostname, name, &len)) {
         name[size - 1] = '\0';
@@ -140,7 +135,6 @@ int android_gethostname(char *name, size_t size) {
 }
 
 char *android_inet_ntoa(uint32_t addr) {
-    //puts("android_inet_ntoa");
     struct in_addr real_addr;
     memcpy(&real_addr, &addr, sizeof(uint32_t));
     return inet_ntoa(real_addr);
@@ -161,7 +155,7 @@ static uint64_t seed48[3];
 
 static const uint64_t multiplier = 0x5DEECE66D;
 static const uint64_t addend = 0xB;
-static const uint64_t mask = (1ULL << 48) - 1;
+static const uint64_t mask = ((uint64_t)1 << 48) - 1;
 
 void android_srand48(long seedval) {
     puts("android_srand48");
@@ -170,15 +164,15 @@ void android_srand48(long seedval) {
     seed48[2] = 0x0;
 }
 
-long android_lrand48() {
+long android_lrand48(void) {
     puts("android_lrand48");
     seed48[0] = (multiplier * seed48[0] + addend) & mask;
     return (long)(seed48[0] >> 16) & 0x7FFFFFFF;
 }
 
-FLOAT_ABI_FIX double android_drand48() {
+FLOAT_ABI_FIX double android_drand48(void) {
     puts("android_drand48");
-    return (double)android_lrand48() / (1ULL << 31);
+    return (double)android_lrand48() / (1 << 31);
 }
 
 long android_syscall(long number, ...) {
@@ -192,9 +186,9 @@ typedef struct {
 } android_iovec_t;
 
 long android_writev(int fd, const android_iovec_t *iov, int iovcnt) {
-    puts("android_writev");
     int cnt = 0;
-    for (int i = 0; i < iovcnt; ++i) {
+    int i;
+    for (i = 0; i < iovcnt; ++i) {
         long len = android_write(fd, iov[i].iov_base, iov[i].iov_len);
         if (len == -1) {
             return -1;
@@ -222,13 +216,12 @@ int android_sigaction(int signum, void *act, void *oldact) {
     return -1;
 }
 
-int android_sched_yield() {
+int android_sched_yield(void) {
     puts("android_sched_yield");
     return SwitchToThread() ? 0 : -1;
 }
 
 int android_fsync(int fd) {
-    puts("android_fsync");
     HANDLE hFile = (HANDLE)_get_osfhandle(fd);
     if (hFile == INVALID_HANDLE_VALUE) {
         puts("android_fsync failed");
@@ -242,7 +235,6 @@ int android_fsync(int fd) {
 }
 
 int android_fdatasync(int fd) {
-    puts("android_fdatasync");
     HANDLE hFile = (HANDLE)_get_osfhandle(fd);
     if (hFile == INVALID_HANDLE_VALUE) {
         puts("android_fdatasync failed");
@@ -255,17 +247,16 @@ int android_fdatasync(int fd) {
     return 0;
 }
 
-int android_geteuid() {
+int android_geteuid(void) {
     puts("android_geteuid");
     return 0;
 }
 
-int android_getpid() {
+int android_getpid(void) {
     return GetCurrentProcessId();
 }
 
 int android_remove(const char *pathname) {
-    puts("android_remove");
     DWORD attr = GetFileAttributes(pathname);
     BOOL ret = FALSE;
     if (attr != INVALID_FILE_ATTRIBUTES) {
@@ -282,7 +273,6 @@ int android_remove(const char *pathname) {
 }
 
 int android_rename(const char *oldpath, const char *newpath) {
-    puts("android_rename");
     BOOL ret = MoveFileEx(oldpath, newpath, MOVEFILE_REPLACE_EXISTING);
     if (!ret ) {
         printf("\x1b[31mFailed to rename %s to %s due to %lu\x1b[0m\n", oldpath, newpath, GetLastError());
@@ -291,7 +281,6 @@ int android_rename(const char *oldpath, const char *newpath) {
 }
 
 int android_unlink(const char *pathname) {
-    puts("android_unlink");
     BOOL ret = DeleteFile(pathname);
     if (!ret) {
         printf("\x1b[31mFailed to unlink %s due to %lu\x1b[0m\n", pathname, GetLastError());
@@ -400,11 +389,11 @@ static char *h_addr_list[35];
 static char *h_aliases[35];
 
 static android_hostent_t android_host = {
-    .h_name = h_name,
-    .h_addr_list = h_addr_list,
-    .h_aliases = h_aliases,
-    .h_length = 4,
-    .h_addrtype = ANDROID_AF_INET
+    h_name,
+    h_aliases,
+    ANDROID_AF_INET,
+    4,
+    h_addr_list
 };
 
 #ifdef HAS_GETADDRINFO
@@ -412,7 +401,7 @@ android_hostent_t *android_gethostbyname(const char *name) {
     struct addrinfo *info;
     
     if(getaddrinfo(name, NULL, NULL, &info) == 0) {
-        int i = 0;
+        int i;
         struct addrinfo *original_info = info;
         for (i = 0; (i < 34) && (info != NULL); (++i), (info = info->ai_next)) {
             for (;;) {
@@ -455,7 +444,7 @@ FLOAT_ABI_FIX double android_strtod(const char *nptr, char **endptr) {
     return strtod(nptr, endptr);
 }
 
-void android_stack_chk_fail() {
+void android_stack_chk_fail(void) {
     puts("__stack_chk_fail");
 }
 
@@ -483,1004 +472,1004 @@ FLOAT_ABI_FIX int android_isnanf(float x) {\
     return isnan(x);
 }
 
-void android_assert2(const char* __file, int __line, const char* __function, const char* __msg) {
+void android_assert2(const char *__file, int __line, const char *__function, const char *__msg) {
     printf("Assertion failed: %s\nFile: %s\nLine: %d\nFunction: %s\n", __msg, __file, __line, __function);
     abort();
 }
 
 static hook_t pthread_hooks[] = {
     {
-        .name = "pthread_attr_init",
-        .addr = android_pthread_attr_init
+        "pthread_attr_init",
+        (void *)android_pthread_attr_init
     },
     {
-        .name = "pthread_attr_destroy",
-        .addr = android_pthread_attr_destroy
+        "pthread_attr_destroy",
+        (void *)android_pthread_attr_destroy
     },
     {
-        .name = "pthread_attr_setdetachstate",
-        .addr = android_pthread_attr_setdetachstate
+        "pthread_attr_setdetachstate",
+        (void *)android_pthread_attr_setdetachstate
     },
     {
-        .name = "pthread_attr_setschedparam",
-        .addr = android_pthread_attr_setschedparam
+        "pthread_attr_setschedparam",
+        (void *)android_pthread_attr_setschedparam
     },
     {
-        .name = "pthread_attr_setstacksize",
-        .addr = android_pthread_attr_setstacksize
+        "pthread_attr_setstacksize",
+        (void *)android_pthread_attr_setstacksize
     },
     {
-        .name = "pthread_cond_broadcast",
-        .addr = android_pthread_cond_broadcast
+        "pthread_cond_broadcast",
+        (void *)android_pthread_cond_broadcast
     },
     {
-        .name = "pthread_cond_destroy",
-        .addr = android_pthread_cond_destroy
+        "pthread_cond_destroy",
+        (void *)android_pthread_cond_destroy
     },
     {
-        .name = "pthread_cond_init",
-        .addr = android_pthread_cond_init
+        "pthread_cond_init",
+        (void *)android_pthread_cond_init
     },
     {
-        .name = "pthread_mutex_trylock",
-        .addr = android_pthread_mutex_trylock
+        "pthread_mutex_trylock",
+        (void *)android_pthread_mutex_trylock
     },
     {
-        .name = "pthread_cond_timedwait",
-        .addr = android_pthread_cond_timedwait
+        "pthread_cond_timedwait",
+        (void *)android_pthread_cond_timedwait
     },
     {
-        .name = "pthread_cond_wait",
-        .addr = android_pthread_cond_wait
+        "pthread_cond_wait",
+        (void *)android_pthread_cond_wait
     },
     {
-        .name = "pthread_create",
-        .addr = android_pthread_create
+        "pthread_create",
+        (void *)android_pthread_create
     },
     {
-        .name = "pthread_getspecific",
-        .addr = android_pthread_getspecific
+        "pthread_getspecific",
+        (void *)android_pthread_getspecific
     },
     {
-        .name = "pthread_join",
-        .addr = android_pthread_join
+        "pthread_join",
+        (void *)android_pthread_join
     },
     {
-        .name = "pthread_key_create",
-        .addr = android_pthread_key_create
+        "pthread_key_create",
+        (void *)android_pthread_key_create
     },
     {
-        .name = "pthread_mutexattr_destroy",
-        .addr = android_pthread_mutexattr_destroy
+        "pthread_mutexattr_destroy",
+        (void *)android_pthread_mutexattr_destroy
     },
     {
-        .name = "pthread_mutexattr_init",
-        .addr = android_pthread_mutexattr_init
+        "pthread_mutexattr_init",
+        (void *)android_pthread_mutexattr_init
     },
     {
-        .name = "pthread_mutex_destroy",
-        .addr = android_pthread_mutex_destroy
+        "pthread_mutex_destroy",
+        (void *)android_pthread_mutex_destroy
     },
     {
-        .name = "pthread_mutex_init",
-        .addr = android_pthread_mutex_init
+        "pthread_mutex_init",
+        (void *)android_pthread_mutex_init
     },
     {
-        .name = "pthread_mutex_lock",
-        .addr = android_pthread_mutex_lock
+        "pthread_mutex_lock",
+        (void *)android_pthread_mutex_lock
     },
     {
-        .name = "pthread_mutex_unlock",
-        .addr = android_pthread_mutex_unlock
+        "pthread_mutex_unlock",
+        (void *)android_pthread_mutex_unlock
     },
     {
-        .name = "pthread_self",
-        .addr = android_pthread_self
+        "pthread_self",
+        (void *)android_pthread_self
     },
     {
-        .name = "pthread_setspecific",
-        .addr = android_pthread_setspecific
+        "pthread_setspecific",
+        (void *)android_pthread_setspecific
     },
     {
-        .name = "pthread_key_delete",
-        .addr = android_pthread_key_delete
+        "pthread_key_delete",
+        (void *)android_pthread_key_delete
     },
     {
-        .name = "pthread_once",
-        .addr = android_pthread_once
+        "pthread_once",
+        (void *)android_pthread_once
     },
     {
-        .name = "pthread_equal",
-        .addr = android_pthread_equal
+        "pthread_equal",
+        (void *)android_pthread_equal
     },
     {
-        .name = "pthread_cond_signal",
-        .addr = android_pthread_cond_signal
+        "pthread_cond_signal",
+        (void *)android_pthread_cond_signal
     },
     {
-        .name = "pthread_detach",
-        .addr = android_pthread_detach
+        "pthread_detach",
+        (void *)android_pthread_detach
     },
     {
-        .name = "pthread_setname_np",
-        .addr = android_pthread_setname_np
+        "pthread_setname_np",
+        (void *)android_pthread_setname_np
     },
     {
-        .name = (char *)NULL,
-        .addr = NULL
+        (char *)NULL,
+        (void *)NULL
     }
 };
 
 static hook_t math_hooks[] = {
     {
-        .name = "atan2f",
-        .addr = android_atan2f
+        "atan2f",
+        (void *)android_atan2f
     },
     {
-        .name = "ceilf",
-        .addr = android_ceilf
+        "ceilf",
+        (void *)android_ceilf
     },
     {
-        .name = "cosf",
-        .addr = android_cosf
+        "cosf",
+        (void *)android_cosf
     },
     {
-        .name = "floorf",
-        .addr = android_floorf
+        "floorf",
+        (void *)android_floorf
     },
     {
-        .name = "fmodf",
-        .addr = android_fmodf
+        "fmodf",
+        (void *)android_fmodf
     },
     {
-        .name = "logf",
-        .addr = android_logf
+        "logf",
+        (void *)android_logf
     },
     {
-        .name = "powf",
-        .addr = android_powf
+        "powf",
+        (void *)android_powf
     },
     {
-        .name = "sinf",
-        .addr = android_sinf
+        "sinf",
+        (void *)android_sinf
     },
     {
-        .name = "sqrtf",
-        .addr = android_sqrtf
+        "sqrtf",
+        (void *)android_sqrtf
     },
     {
-        .name = "atanf",
-        .addr = android_atanf
+        "atanf",
+        (void *)android_atanf
     },
     {
-        .name = "fmod",
-        .addr = android_fmod
+        "fmod",
+        (void *)android_fmod
     },
     {
-        .name = "floor",
-        .addr = android_floor
+        "floor",
+        (void *)android_floor
     },
     {
-        .name = "ceil",
-        .addr = android_ceil
+        "ceil",
+        (void *)android_ceil
     },
     {
-        .name = "sin",
-        .addr = android_sin
+        "sin",
+        (void *)android_sin
     },
     {
-        .name = "cos",
-        .addr = android_cos
+        "cos",
+        (void *)android_cos
     },
     {
-        .name = "sqrt",
-        .addr = android_sqrt
+        "sqrt",
+        (void *)android_sqrt
     },
     {
-        .name = "pow",
-        .addr = android_pow
+        "pow",
+        (void *)android_pow
     },
     {
-        .name = "atan2",
-        .addr = android_atan2
+        "atan2",
+        (void *)android_atan2
     },
     {
-        .name = "atan",
-        .addr = android_atan
+        "atan",
+        (void *)android_atan
     },
     {
-        .name = "modff",
-        .addr = android_modff
+        "modff",
+        (void *)android_modff
     },
     {
-        .name = "modf",
-        .addr = android_modf
+        "modf",
+        (void *)android_modf
     },
     {
-        .name = "ldexp",
-        .addr = android_ldexp
+        "ldexp",
+        (void *)android_ldexp
     },
     {
-        .name = "ldexpf",
-        .addr = android_ldexpf
+        "ldexpf",
+        (void *)android_ldexpf
     },
     {
-        .name = "tanf",
-        .addr = android_tanf
+        "tanf",
+        (void *)android_tanf
     },
     {
-        .name = (char *)NULL,
-        .addr = NULL
+        (char *)NULL,
+        (void *)NULL
     }
 };
 
 static hook_t hooks[] = {
     {
-        .name = "__cxa_finalize",
-        .addr = android_cxa_finalize
+        "__cxa_finalize",
+        (void *)android_cxa_finalize
     },
     {
-        .name = "__cxa_atexit",
-        .addr = android_cxa_atexit
+        "__cxa_atexit",
+        (void *)android_cxa_atexit
     },
     {
-        .name = "__cxa_pure_virtual",
-        .addr = android_cxa_pure_virtual
+        "__cxa_pure_virtual",
+        (void *)android_cxa_pure_virtual
     },
     {
-        .name = "__stack_chk_fail",
-        .addr = android_stack_chk_fail
+        "__stack_chk_fail",
+        (void *)android_stack_chk_fail
     },
     {
-        .name = "__stack_chk_guard",
-        .addr = &android_stack_chk_guard
+        "__stack_chk_guard",
+        (void *)&android_stack_chk_guard
     },
     {
-        .name = "__strlen_chk",
-        .addr = android_strlen_chk
+        "__strlen_chk",
+        (void *)android_strlen_chk
     },
     {
-        .name = "__isnanf",
-        .addr = android_isnanf
+        "__isnanf",
+        (void *)android_isnanf
     },
     {
-        .name = "__isinff",
-        .addr = android_isinff
+        "__isinff",
+        (void *)android_isinff
     },
     {
-        .name = "__isfinitef",
-        .addr = android_isfinitef
+        "__isfinitef",
+        (void *)android_isfinitef
     },
     {
-        .name = "__isfinite",
-        .addr = android_isfinite
+        "__isfinite",
+        (void *)android_isfinite
     },
     {
-        .name = "div",
-        .addr = android_div
+        "div",
+        (void *)android_div
     },
     {
-        .name = "strcasecmp",
-        .addr = android_strcasecmp
+        "strcasecmp",
+        (void *)android_strcasecmp
     },
     {
-        .name = "strerror",
-        .addr = android_strerror
+        "strerror",
+        (void *)android_strerror
     },
     {
-        .name = "strncasecmp",
-        .addr = android_strncasecmp
+        "strncasecmp",
+        (void *)android_strncasecmp
     },
     {
-        .name = "__errno",
-        .addr = android_errno
+        "__errno",
+        (void *)android_errno
     },
     {
-        .name = "toupper",
-        .addr = android_toupper
+        "toupper",
+        (void *)android_toupper
     },
     {
-        .name = "tolower",
-        .addr = android_tolower
+        "tolower",
+        (void *)android_tolower
     },
     {
-        .name = "fflush",
-        .addr = android_fflush
+        "fflush",
+        (void *)android_fflush
     },
     {
-        .name = "fseek",
-        .addr = android_fseek
+        "fseek",
+        (void *)android_fseek
     },
     {
-        .name = "fgetpos",
-        .addr = android_fgetpos
+        "fgetpos",
+        (void *)android_fgetpos
     },
     {
-        .name = "fputs",
-        .addr = android_fputs
+        "fputs",
+        (void *)android_fputs
     },
     {
-        .name = "inet_ntoa",
-        .addr = android_inet_ntoa
+        "inet_ntoa",
+        (void *)android_inet_ntoa
     },
     {
-        .name = "inet_addr",
-        .addr = android_inet_addr
+        "inet_addr",
+        (void *)android_inet_addr
     },
     {
-        .name = "fsetpos",
-        .addr = android_fsetpos
+        "fsetpos",
+        (void *)android_fsetpos
     },
     {
-        .name = "ftell",
-        .addr = android_ftell
+        "ftell",
+        (void *)android_ftell
     },
     {
-        .name = "fwrite",
-        .addr = android_fwrite
+        "fwrite",
+        (void *)android_fwrite
     },
     {
-        .name = "fread",
-        .addr = android_fread
+        "fread",
+        (void *)android_fread
     },
     {
-        .name = "ungetc",
-        .addr = android_ungetc
+        "ungetc",
+        (void *)android_ungetc
     },
     {
-        .name = "fopen",
-        .addr = android_fopen
+        "fopen",
+        (void *)android_fopen
     },
     {
-        .name = "fclose",
-        .addr = android_fclose
+        "fclose",
+        (void *)android_fclose
     },
     {
-        .name = "putc",
-        .addr = android_putc
+        "putc",
+        (void *)android_putc
     },
     {
-        .name = "setvbuf",
-        .addr = android_setvbuf
+        "setvbuf",
+        (void *)android_setvbuf
     },
     {
-        .name = "rename",
-        .addr = android_rename
+        "rename",
+        (void *)android_rename
     },
     {
-        .name = "__sF",
-        .addr = &android_sf
+        "__sF",
+        (void *)&android_sf
     },
     {
-        .name = "_tolower_tab_",
-        .addr = &android_tolower_tab
+        "_tolower_tab_",
+        (void *)&android_tolower_tab
     },
     {
-        .name = "_ctype_",
-        .addr = &android_ctype
+        "_ctype_",
+        (void *)&android_ctype
     },
     {
-        .name = "gettimeofday",
-        .addr = android_gettimeofday
+        "gettimeofday",
+        (void *)android_gettimeofday
     },
     {
-        .name = "fstat",
-        .addr = android_fstat
+        "fstat",
+        (void *)android_fstat
     },
     {
-        .name = "closedir",
-        .addr = android_closedir
+        "closedir",
+        (void *)android_closedir
     },
     {
-        .name = "opendir",
-        .addr = android_opendir
+        "opendir",
+        (void *)android_opendir
     },
     {
-        .name = "readdir",
-        .addr = android_readdir
+        "readdir",
+        (void *)android_readdir
     },
     {
-        .name = "remove",
-        .addr = android_remove
+        "remove",
+        (void *)android_remove
     },
     {
-        .name = "mkdir",
-        .addr = android_mkdir
+        "mkdir",
+        (void *)android_mkdir
     },
     {
-        .name = "pipe",
-        .addr = android_pipe
+        "pipe",
+        (void *)android_pipe
     },
     {
-        .name = "sysconf",
-        .addr = android_sysconf
+        "sysconf",
+        (void *)android_sysconf
     },
     {
-        .name = "usleep",
-        .addr = android_usleep
+        "usleep",
+        (void *)android_usleep
     },
     {
-        .name = "gethostname",
-        .addr = android_gethostname
+        "gethostname",
+        (void *)android_gethostname
     },
     {
-        .name = "listen",
-        .addr = android_listen
+        "listen",
+        (void *)android_listen
     },
     {
-        .name = "send",
-        .addr = android_send
+        "send",
+        (void *)android_send
     },
     {
-        .name = "sendto",
-        .addr = android_sendto
+        "sendto",
+        (void *)android_sendto
     },
     {
-        .name = "recv",
-        .addr = android_recv
+        "recv",
+        (void *)android_recv
     },
     {
-        .name = "recvfrom",
-        .addr = android_recvfrom
+        "recvfrom",
+        (void *)android_recvfrom
     },
     {
-        .name = "getsockopt",
-        .addr = android_getsockopt
+        "getsockopt",
+        (void *)android_getsockopt
     },
     {
-        .name = "setsockopt",
-        .addr = android_setsockopt
+        "setsockopt",
+        (void *)android_setsockopt
     },
     {
-        .name = "socket",
-        .addr = android_socket
+        "socket",
+        (void *)android_socket
     },
     {
-        .name = "accept",
-        .addr = android_accept
+        "accept",
+        (void *)android_accept
     },
     {
-        .name = "bind",
-        .addr = android_bind
+        "bind",
+        (void *)android_bind
     },
     {
-        .name = "connect",
-        .addr = android_connect
+        "connect",
+        (void *)android_connect
     },
     {
-        .name = "gethostbyname",
-        .addr = android_gethostbyname
+        "gethostbyname",
+        (void *)android_gethostbyname
     },
     {
-        .name = "getsockname",
-        .addr = android_getsockname
+        "getsockname",
+        (void *)android_getsockname
     },
     {
-        .name = "shutdown",
-        .addr = android_shutdown
+        "shutdown",
+        (void *)android_shutdown
     },
     {
-        .name = "select",
-        .addr = android_select
+        "select",
+        (void *)android_select
     },
     {
-        .name = "fcntl",
-        .addr = android_fcntl
+        "fcntl",
+        (void *)android_fcntl
     },
     {
-        .name = "ioctl",
-        .addr = android_ioctl
+        "ioctl",
+        (void *)android_ioctl
     },
     {
-        .name = "mmap",
-        .addr = android_mmap
+        "mmap",
+        (void *)android_mmap
     },
     {
-        .name = "munmap",
-        .addr = android_munmap
+        "munmap",
+        (void *)android_munmap
     },
     {
-        .name = "close",
-        .addr = android_close
+        "close",
+        (void *)android_close
     },
     {
-        .name = "read",
-        .addr = android_read
+        "read",
+        (void *)android_read
     },
     {
-        .name = "write",
-        .addr = android_write
+        "write",
+        (void *)android_write
     },
     {
-        .name = "open",
-        .addr = android_open
+        "open",
+        (void *)android_open
     },
     {
-        .name = "getc",
-        .addr = android_getc
+        "getc",
+        (void *)android_getc
     },
     {
-        .name = "__assert2",
-        .addr = android_assert2
+        "__assert2",
+        (void *)android_assert2
     },
     {
-        .name = "fprintf",
-        .addr = android_fprintf
+        "fprintf",
+        (void *)android_fprintf
     },
     {
-        .name = "fscanf",
-        .addr = android_fscanf
+        "fscanf",
+        (void *)android_fscanf
     },
     {
-        .name = "fgets",
-        .addr = android_fgets
+        "fgets",
+        (void *)android_fgets
     },
     {
-        .name = "lrand48",
-        .addr = android_lrand48
+        "lrand48",
+        (void *)android_lrand48
     },
     {
-        .name = "srand48",
-        .addr = android_srand48
+        "srand48",
+        (void *)android_srand48
     },
     {
-        .name = "getpid",
-        .addr = android_getpid
+        "getpid",
+        (void *)android_getpid
     },
     {
-        .name = "nanosleep",
-        .addr = android_nanosleep
+        "nanosleep",
+        (void *)android_nanosleep
     },
     {
-        .name = "syscall",
-        .addr = android_syscall
+        "syscall",
+        (void *)android_syscall
     },
     {
-        .name = "strtod",
-        .addr = android_strtod
+        "strtod",
+        (void *)android_strtod
     },
     {
-        .name = "fputc",
-        .addr = android_fputc
+        "fputc",
+        (void *)android_fputc
     },
     {
-        .name = "putwc",
-        .addr = android_putwc
+        "putwc",
+        (void *)android_putwc
     },
     {
-        .name = "ungetwc",
-        .addr = android_ungetwc
+        "ungetwc",
+        (void *)android_ungetwc
     },
     {
-        .name = "getwc",
-        .addr = android_getwc
+        "getwc",
+        (void *)android_getwc
     },
     {
-        .name = "fdopen",
-        .addr = android_fdopen
+        "fdopen",
+        (void *)android_fdopen
     },
     {
-        .name = "writev",
-        .addr = android_writev
+        "writev",
+        (void *)android_writev
     },
     {
-        .name = "poll",
-        .addr = android_poll
+        "poll",
+        (void *)android_poll
     },
     {
-        .name = "ferror",
-        .addr = android_ferror
+        "ferror",
+        (void *)android_ferror
     },
     {
-        .name = "feof",
-        .addr = android_feof
+        "feof",
+        (void *)android_feof
     },
     {
-        .name = "stat",
-        .addr = android_stat
+        "stat",
+        (void *)android_stat
     },
     {
-        .name = "sigaction",
-        .addr = android_sigaction
+        "sigaction",
+        (void *)android_sigaction
     },
     {
-        .name = "sched_yield",
-        .addr = android_sched_yield
+        "sched_yield",
+        (void *)android_sched_yield
     },
     {
-        .name = "localtime_r",
-        .addr = android_localtime_r
+        "localtime_r",
+        (void *)android_localtime_r
     },
     {
-        .name = "fsync",
-        .addr = android_fsync
+        "fsync",
+        (void *)android_fsync
     },
     {
-        .name = "fdatasync",
-        .addr = android_fdatasync
+        "fdatasync",
+        (void *)android_fdatasync
     },
     {
-        .name = "unlink",
-        .addr = android_unlink
+        "unlink",
+        (void *)android_unlink
     },
     {
-        .name = "geteuid",
-        .addr = android_geteuid
+        "geteuid",
+        (void *)android_geteuid
     },
     {
-        .name = "dlopen",
-        .addr = android_dlopen
+        "dlopen",
+        (void *)android_dlopen
     },
     {
-        .name = "dlclose",
-        .addr = android_dlclose
+        "dlclose",
+        (void *)android_dlclose
     },
     {
-        .name = "dlsym",
-        .addr = android_dlsym
+        "dlsym",
+        (void *)android_dlsym
     },
     {
-        .name = "dladdr",
-        .addr = android_dladdr
+        "dladdr",
+        (void *)android_dladdr
     },
     {
-        .name = "dlerror",
-        .addr = android_dlerror
+        "dlerror",
+        (void *)android_dlerror
     },
 #ifdef ANDROID_ARM_LINKER
     {
-        .name = "dl_iterate_phdr",
-        .addr = android_dl_unwind_find_exidx
+        "dl_iterate_phdr",
+        (void *)android_dl_unwind_find_exidx
     },
 #else
     {
-        .name = "dl_iterate_phdr",
-        .addr = android_dl_iterate_phdr
+        "dl_iterate_phdr",
+        (void *)android_dl_iterate_phdr
     },
 #endif
     {
-        .name = "vsnprintf",
-        .addr = android_vsnprintf
+        "vsnprintf",
+        (void *)android_vsnprintf
     },
     {
-        .name = "snprintf",
-        .addr = android_snprintf
+        "snprintf",
+        (void *)android_snprintf
     },
     {
-        .name = "vsprintf",
-        .addr = android_vsprintf
+        "vsprintf",
+        (void *)android_vsprintf
     },
     {
-        .name = "sprintf",
-        .addr = android_sprintf
+        "sprintf",
+        (void *)android_sprintf
     },
     {
-        .name = "clock_gettime",
-        .addr = android_clock_gettime
+        "clock_gettime",
+        (void *)android_clock_gettime
     },
     {
-        .name = "ftime",
-        .addr = android_ftime
+        "ftime",
+        (void *)android_ftime
     },
     {
-        .name = "pread",
-        .addr = pread
+        "pread",
+        (void *)pread
     },
     {
-        .name = "bsd_signal",
-        .addr = signal
+        "bsd_signal",
+        (void *)signal
     },
     {
-        .name = "malloc",
-        .addr = malloc
+        "malloc",
+        (void *)malloc
     },
     {
-        .name = "realloc",
-        .addr = realloc
+        "realloc",
+        (void *)realloc
     },
     {
-        .name = "free",
-        .addr = free
+        "free",
+        (void *)free
     },
     {
-        .name = "exit",
-        .addr = exit
+        "exit",
+        (void *)exit
     },
     {
-        .name = "abort",
-        .addr = abort
+        "abort",
+        (void *)abort
     },
     {
-        .name = "memchr",
-        .addr = memchr
+        "memchr",
+        (void *)memchr
     },
     {
-        .name = "memcmp",
-        .addr = memcmp
+        "memcmp",
+        (void *)memcmp
     },
     {
-        .name = "memmove",
-        .addr = memmove
+        "memmove",
+        (void *)memmove
     },
     {
-        .name = "memset",
-        .addr = memset
+        "memset",
+        (void *)memset
     },
     {
-        .name = "wmemcpy",
-        .addr = wmemcpy
+        "wmemcpy",
+        (void *)wmemcpy
     },
     {
-        .name = "memcpy",
-        .addr = memcpy
+        "memcpy",
+        (void *)memcpy
     },
     {
-        .name = "wmemmove",
-        .addr = wmemmove
+        "wmemmove",
+        (void *)wmemmove
     },
     {
-        .name = "wmemset",
-        .addr = wmemset
+        "wmemset",
+        (void *)wmemset
     },
     {
-        .name = "isalpha",
-        .addr = isalpha
+        "isalpha",
+        (void *)isalpha
     },
     {
-        .name = "iscntrl",
-        .addr = iscntrl
+        "iscntrl",
+        (void *)iscntrl
     },
     {
-        .name = "islower",
-        .addr = islower
+        "islower",
+        (void *)islower
     },
     {
-        .name = "isprint",
-        .addr = isprint
+        "isprint",
+        (void *)isprint
     },
     {
-        .name = "ispunct",
-        .addr = ispunct
+        "ispunct",
+        (void *)ispunct
     },
     {
-        .name = "isspace",
-        .addr = isspace
+        "isspace",
+        (void *)isspace
     },
     {
-        .name = "isupper",
-        .addr = isupper
+        "isupper",
+        (void *)isupper
     },
     {
-        .name = "isxdigit",
-        .addr = isxdigit
+        "isxdigit",
+        (void *)isxdigit
     },
     {
-        .name = "iswalpha",
-        .addr = iswalpha
+        "iswalpha",
+        (void *)iswalpha
     },
     {
-        .name = "iswcntrl",
-        .addr = iswcntrl
+        "iswcntrl",
+        (void *)iswcntrl
     },
     {
-        .name = "iswdigit",
-        .addr = iswdigit
+        "iswdigit",
+        (void *)iswdigit
     },
     {
-        .name = "iswlower",
-        .addr = iswlower
+        "iswlower",
+        (void *)iswlower
     },
     {
-        .name = "iswprint",
-        .addr = iswprint
+        "iswprint",
+        (void *)iswprint
     },
     {
-        .name = "iswpunct",
-        .addr = iswpunct
+        "iswpunct",
+        (void *)iswpunct
     },
     {
-        .name = "iswspace",
-        .addr = iswspace
+        "iswspace",
+        (void *)iswspace
     },
     {
-        .name = "iswupper",
-        .addr = iswupper
+        "iswupper",
+        (void *)iswupper
     },
     {
-        .name = "iswxdigit",
-        .addr = iswxdigit
+        "iswxdigit",
+        (void *)iswxdigit
     },
     {
-        .name = "strcat",
-        .addr = strcat
+        "strcat",
+        (void *)strcat
     },
     {
-        .name = "strchr",
-        .addr = strchr
+        "strchr",
+        (void *)strchr
     },
     {
-        .name = "strcmp",
-        .addr = strcmp
+        "strcmp",
+        (void *)strcmp
     },
     {
-        .name = "strcpy",
-        .addr = strcpy
+        "strcpy",
+        (void *)strcpy
     },
     {
-        .name = "strlen",
-        .addr = strlen
+        "strlen",
+        (void *)strlen
     },
     {
-        .name = "strncpy",
-        .addr = strncpy
+        "strncpy",
+        (void *)strncpy
     },
     {
-        .name = "strstr",
-        .addr = strstr
+        "strstr",
+        (void *)strstr
     },
     {
-        .name = "strtok",
-        .addr = strtok
+        "strtok",
+        (void *)strtok
     },
     {
-        .name = "strtoull",
-        .addr = strtoull
+        "strtoull",
+        (void *)strtoull
     },
     {
-        .name = "wcscmp",
-        .addr = wcscmp
+        "wcscmp",
+        (void *)wcscmp
     },
     {
-        .name = "wcslen",
-        .addr = wcslen
+        "wcslen",
+        (void *)wcslen
     },
     {
-        .name = "wcsncpy",
-        .addr = wcsncpy
+        "wcsncpy",
+        (void *)wcsncpy
     },
     {
-        .name = "setlocale",
-        .addr = setlocale
+        "setlocale",
+        (void *)setlocale
     },
     {
-        .name = "towupper",
-        .addr = towupper
+        "towupper",
+        (void *)towupper
     },
     {
-        .name = "towlower",
-        .addr = towlower
+        "towlower",
+        (void *)towlower
     },
     {
-        .name = "putchar",
-        .addr = putchar
+        "putchar",
+        (void *)putchar
     },
     {
-        .name = "printf",
-        .addr = printf
+        "printf",
+        (void *)printf
     },
     {
-        .name = "sscanf",
-        .addr = sscanf
+        "sscanf",
+        (void *)sscanf
     },
     {
-        .name = "puts",
-        .addr = puts
+        "puts",
+        (void *)puts
     },
     {
-        .name = "time",
-        .addr = time
+        "time",
+        (void *)time
     },
     {
-        .name = "mktime",
-        .addr = mktime
+        "mktime",
+        (void *)mktime
     },
     {
-        .name = "access",
-        .addr = access
+        "access",
+        (void *)access
     },
     {
-        .name = "atoi",
-        .addr = atoi
+        "atoi",
+        (void *)atoi
     },
     {
-        .name = "calloc",
-        .addr = calloc
+        "calloc",
+        (void *)calloc
     },
     {
-        .name = "strpbrk",
-        .addr = strpbrk
+        "strpbrk",
+        (void *)strpbrk
     },
     {
-        .name = "gmtime",
-        .addr = gmtime
+        "gmtime",
+        (void *)gmtime
     },
     {
-        .name = "wmemchr",
-        .addr = wmemchr
+        "wmemchr",
+        (void *)wmemchr
     },
     {
-        .name = "wmemcmp",
-        .addr = wmemcmp
+        "wmemcmp",
+        (void *)wmemcmp
     },
     {
-        .name = "wctype",
-        .addr = wctype
+        "wctype",
+        (void *)wctype
     },
     {
-        .name = "iswctype",
-        .addr = iswctype
+        "iswctype",
+        (void *)iswctype
     },
     {
-        .name = "wctob",
-        .addr = wctob
+        "wctob",
+        (void *)wctob
     },
     {
-        .name = "btowc",
-        .addr = btowc
+        "btowc",
+        (void *)btowc
     },
     {
-        .name = "wcrtomb",
-        .addr = wcrtomb
+        "wcrtomb",
+        (void *)wcrtomb
     },
     {
-        .name = "mbrtowc",
-        .addr = mbrtowc
+        "mbrtowc",
+        (void *)mbrtowc
     },
     {
-        .name = "strcoll",
-        .addr = strcoll
+        "strcoll",
+        (void *)strcoll
     },
     {
-        .name = "strxfrm",
-        .addr = strxfrm
+        "strxfrm",
+        (void *)strxfrm
     },
     {
-        .name = "wcscoll",
-        .addr = wcscoll
+        "wcscoll",
+        (void *)wcscoll
     },
     {
-        .name = "wcsxfrm",
-        .addr = wcsxfrm
+        "wcsxfrm",
+        (void *)wcsxfrm
     },
     {
-        .name = "strftime",
-        .addr = strftime
+        "strftime",
+        (void *)strftime
     },
     {
-        .name = "wcsftime",
-        .addr = wcsftime
+        "wcsftime",
+        (void *)wcsftime
     },
     {
-        .name = "strtol",
-        .addr = strtol
+        "strtol",
+        (void *)strtol
     },
     {
-        .name = "raise",
-        .addr = raise
+        "raise",
+        (void *)raise
     },
     {
-        .name = "rmdir",
-        .addr = rmdir
+        "rmdir",
+        (void *)rmdir
     },
     {
-        .name = "perror",
-        .addr = perror
+        "perror",
+        (void *)perror
     },
     {
-        .name = "strrchr",
-        .addr = strrchr
+        "strrchr",
+        (void *)strrchr
     },
     {
-        .name = "getenv",
-        .addr = getenv
+        "getenv",
+        (void *)getenv
     },
     {
-        .name = "lseek",
-        .addr = lseek
+        "lseek",
+        (void *)lseek
     },
     {
-        .name = (char *)NULL,
-        .addr = NULL
+        (char *)NULL,
+        (void *)NULL
     }
 };
 
@@ -1488,13 +1477,15 @@ static hook_t *custom_hooks = NULL;
 static int custom_hooks_size = 0;
 static int custom_hooks_arr_size = 0;
 
-static void custom_hooks_resize() {
+static void custom_hooks_resize(void) {
     if (custom_hooks_arr_size == 0) {
         custom_hooks_arr_size = 512;
         custom_hooks = (hook_t *) malloc(custom_hooks_arr_size * sizeof(hook_t));
     } else {
+        hook_t *new_array;
+
         custom_hooks_arr_size *= 2;
-        hook_t *new_array = (hook_t *) malloc(custom_hooks_arr_size * sizeof(hook_t));
+        new_array = (hook_t *) malloc(custom_hooks_arr_size * sizeof(hook_t));
         memcpy(&new_array[0], &custom_hooks[0], custom_hooks_size * sizeof(hook_t));
         free(custom_hooks);
         custom_hooks = new_array;
@@ -1502,10 +1493,12 @@ static void custom_hooks_resize() {
 }
 
 void add_custom_hook(char *name, void *addr) {
+    int i;
+
     if (custom_hooks_size + 1 >= custom_hooks_arr_size) {
         custom_hooks_resize();
     }
-    for (int i = 0; i < custom_hooks_size; ++i) {
+    for (i = 0; i < custom_hooks_size; ++i) {
         if (strcmp(custom_hooks[i].name, name) == 0) {
             custom_hooks[i].name = name;
             custom_hooks[i].addr = addr;
@@ -1517,22 +1510,25 @@ void add_custom_hook(char *name, void *addr) {
 }
 
 void *get_hooked_symbol(char *name) {
-    for (int i = 0; i < custom_hooks_size; ++i) {
+    int i;
+    hook_t *hook;
+
+    for (i = 0; i < custom_hooks_size; ++i) {
         if (strcmp(name, custom_hooks[i].name) == 0) {
             return custom_hooks[i].addr;
         }
     }
-    for (hook_t *hook = &hooks[0]; hook->name != NULL; ++hook) {
+    for (hook = &hooks[0]; hook->name != NULL; ++hook) {
         if (strcmp(name, hook->name) == 0) {
             return hook->addr;
         }
     }
-    for (hook_t *hook = &pthread_hooks[0]; hook->name != NULL; ++hook) {
+    for (hook = &pthread_hooks[0]; hook->name != NULL; ++hook) {
         if (strcmp(name, hook->name) == 0) {
             return hook->addr;
         }
     }
-    for (hook_t *hook = &math_hooks[0]; hook->name != NULL; ++hook) {
+    for (hook = &math_hooks[0]; hook->name != NULL; ++hook) {
         if (strcmp(name, hook->name) == 0) {
             return hook->addr;
         }

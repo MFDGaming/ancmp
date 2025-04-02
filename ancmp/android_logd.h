@@ -12,7 +12,7 @@ enum  {
     ANDROID_LOG_WARN,
     ANDROID_LOG_ERROR,
     ANDROID_LOG_FATAL,
-    ANDROID_LOG_SILENT,
+    ANDROID_LOG_SILENT
 };
 
 int android_log_write(int prio, const char* tag, const char* buffer);

@@ -103,7 +103,7 @@ static soinfo *somain; /* main process, always the one after libdl_info */
 #endif
 
 
-static inline int validate_soinfo(soinfo *si)
+static int validate_soinfo(soinfo *si)
 {
     return (si >= sopool && si < sopool + SO_MAX) ||
         si == &libdl_info;
@@ -206,7 +206,7 @@ static void remove_soinfo_from_debug_map(soinfo * info)
 void notify_gdb_of_load(soinfo * info)
 {
     if (info->flags & FLAG_EXE) {
-        // GDB already knows about the main executable
+        /* GDB already knows about the main executable */
         return;
     }
 
@@ -226,7 +226,7 @@ void notify_gdb_of_load(soinfo * info)
 void notify_gdb_of_unload(soinfo * info)
 {
     if (info->flags & FLAG_EXE) {
-        // GDB already knows about the main executable
+        /* GDB already knows about the main executable */
         return;
     }
 
@@ -243,7 +243,7 @@ void notify_gdb_of_unload(soinfo * info)
     android_pthread_mutex_unlock(&_r_debug_lock);
 }
 
-void notify_gdb_of_libraries()
+void notify_gdb_of_libraries(void)
 {
     _r_debug.r_state = RT_ADD;
     rtld_db_dlactivity();
@@ -591,11 +591,14 @@ static int _open_lib(const char *name)
 {
     int fd;
     struct stat filestat;
-
-    //if ((stat(name, &filestat) >= 0) && S_ISREG(filestat.st_mode)) {
+#if 0
+    if ((stat(name, &filestat) >= 0) && S_ISREG(filestat.st_mode)) {
+#endif
         if ((fd = open(name, O_RDONLY)) >= 0)
             return fd;
-    //}
+#if 0
+    }
+#endif
 
     return -1;
 }
@@ -828,6 +831,8 @@ static int reserve_mem_region(soinfo *si)
 
 static int alloc_mem_region(soinfo *si)
 {
+    void *base;
+
     if (si->base) {
         /* Attempt to mmap a prelinked library. */
         return reserve_mem_region(si);
@@ -838,10 +843,10 @@ static int alloc_mem_region(soinfo *si)
     */
 
 #ifdef _WIN32
-    void *base = memmap_alloc(NULL, si->size, 0);
+    base = memmap_alloc(NULL, si->size, 0);
     if (base == NULL) {
 #else
-    void *base = mmap(NULL, si->size, PROT_NONE,
+    base = mmap(NULL, si->size, PROT_NONE,
                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (base == MAP_FAILED) {
 #endif
@@ -1282,9 +1287,10 @@ unsigned unload_library(soinfo *si)
             if(d[0] == DT_NEEDED){
                 soinfo *lsi = (soinfo *)d[1];
 
-                // The next line will segfault if the we don't undo the
-                // PT_GNU_RELRO protections (see comments above and in
-                // link_image().
+                /* The next line will segfault if the we don't undo the
+                   PT_GNU_RELRO protections (see comments above and in
+                   link_image().
+                 */
                 d[1] = 0;
 
                 if (validate_soinfo(lsi)) {
@@ -1550,10 +1556,12 @@ static void call_array(unsigned *ctor, int count, int reverse)
     }
 
     for(n = count; n > 0; n--) {
+        void (*func)(void);
+
         TRACE("[ %5d Looking at %s *0x%08x == 0x%08x ]\n", pid,
               reverse ? "dtor" : "ctor",
               (unsigned)ctor, (unsigned)*ctor);
-        void (*func)() = (void (*)()) *ctor;
+        func = (void (*)(void)) *ctor;
         ctor += inc;
         if(((int) func == 0) || ((int) func == -1)) continue;
         TRACE("[ %5d Calling func @ 0x%08x ]\n", pid, (unsigned)func);
@@ -1566,17 +1574,18 @@ void call_constructors_recursive(soinfo *si)
     if (si->constructors_called)
         return;
 
-    // Set this before actually calling the constructors, otherwise it doesn't
-    // protect against recursive constructor calls. One simple example of
-    // constructor recursion is the libc debug malloc, which is implemented in
-    // libc_malloc_debug_leak.so:
-    // 1. The program depends on libc, so libc's constructor is called here.
-    // 2. The libc constructor calls dlopen() to load libc_malloc_debug_leak.so.
-    // 3. dlopen() calls call_constructors_recursive() with the newly created
-    //    soinfo for libc_malloc_debug_leak.so.
-    // 4. The debug so depends on libc, so call_constructors_recursive() is
-    //    called again with the libc soinfo. If it doesn't trigger the early-
-    //    out above, the libc constructor will be called again (recursively!).
+    /* Set this before actually calling the constructors, otherwise it doesn't
+       protect against recursive constructor calls. One simple example of
+       constructor recursion is the libc debug malloc, which is implemented in
+       libc_malloc_debug_leak.so:
+       1. The program depends on libc, so libc's constructor is called here.
+       2. The libc constructor calls dlopen() to load libc_malloc_debug_leak.so.
+       3. dlopen() calls call_constructors_recursive() with the newly created
+          soinfo for libc_malloc_debug_leak.so.
+       4. The debug so depends on libc, so call_constructors_recursive() is
+          called again with the libc soinfo. If it doesn't trigger the early-
+          out above, the libc constructor will be called again (recursively!).
+     */
     si->constructors_called = 1;
 
     if (si->flags & FLAG_EXE) {
@@ -1853,7 +1862,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
             si->plt_got = (unsigned *)(si->base + *d);
             break;
         case DT_DEBUG:
-            // Set the DT_DEBUG entry to the addres of _r_debug for GDB
+            /* Set the DT_DEBUG entry to the addres of _r_debug for GDB */
             *d = (int) &_r_debug;
             break;
          case DT_RELA:
@@ -1935,8 +1944,11 @@ static int link_image(soinfo *si, unsigned wr_offset)
 
     for(d = si->dynamic; *d; d += 2) {
         if(d[0] == DT_NEEDED){
+            soinfo *lsi;
+
             DEBUG("%5d %s needs %s\n", pid, si->name, si->strtab + d[1]);
-            soinfo *lsi = find_library(si->strtab + d[1]);
+            lsi = find_library(si->strtab + d[1]);
+            
             if(lsi == 0) {
 #if 0
                 bsd_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
@@ -2078,8 +2090,9 @@ static void parse_preloads(const char *path, char *delim)
     }
 }
 
-void android_linker_init() {
+void android_linker_init(void) {
 #ifdef _WIN32
+    WSADATA wsaData;
     if(!memmap_init(1024*1024*100, 4096)) {
         puts("meminit failed");
         exit(1);
@@ -2092,7 +2105,6 @@ void android_linker_init() {
         puts("android_threads_init failed");
         exit(1);
     }
-    WSADATA wsaData;
     WSAStartup(MAKEWORD(2,2), &wsaData);
 #endif
 }
@@ -2115,6 +2127,8 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
     const char *ldpath_env = NULL;
     const char *ldpreload_env = NULL;
 
+    int nn;
+
     /* NOTE: we store the elfdata pointer on a special location
      *       of the temporary TLS area in order to pass it to
      *       the C Library's runtime initializer.
@@ -2123,7 +2137,7 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
      *       to point to a different location to ensure that no other
      *       shared library constructor can access it.
      */
-    //__libc_init_tls(elfdata);
+    /*__libc_init_tls(elfdata);*/
 
     pid = getpid();
 
@@ -2204,7 +2218,7 @@ sanitize:
          */
     bsd_strlcpy((char*) linker_soinfo.name, "/system/bin/linker", sizeof linker_soinfo.name);
     linker_soinfo.flags = 0;
-    linker_soinfo.base = 0;     // This is the important part; must be zero.
+    linker_soinfo.base = 0;     /* This is the important part; must be zero. */
     insert_soinfo_into_debug_map(&linker_soinfo);
 
         /* extract information passed from the kernel */
@@ -2227,7 +2241,6 @@ sanitize:
      * the first entry is the PHDR because this will not be true
      * for certain executables (e.g. some in the NDK unit test suite)
      */
-    int nn;
     si->base = 0;
     for ( nn = 0; nn < si->phnum; nn++ ) {
         if (si->phdr[nn].p_type == PT_PHDR) {
@@ -2330,7 +2343,7 @@ static unsigned find_linker_base(unsigned **elfdata) {
         vecs += 2;
     }
 
-    return 0; // should never happen
+    return 0; /* should never happen */
 }
 
 /*
@@ -2362,16 +2375,18 @@ unsigned __linker_init(unsigned **elfdata) {
     linker_so.gnu_relro_len = 0;
 
     if (link_image(&linker_so, 0)) {
-        // It would be nice to print an error message, but if the linker
-        // can't link itself, there's no guarantee that we'll be able to
-        // call write() (because it involves a GOT reference).
-        //
-        // This situation should never occur unless the linker itself
-        // is corrupt.
+        /* It would be nice to print an error message, but if the linker
+           can't link itself, there's no guarantee that we'll be able to
+           call write() (because it involves a GOT reference).
+          
+           This situation should never occur unless the linker itself
+           is corrupt.
+         */
         exit(-1);
     }
 
-    // We have successfully fixed our own relocations. It's safe to run
-    // the main part of the linker now.
+    /* We have successfully fixed our own relocations. It's safe to run
+       the main part of the linker now. 
+     */
     return __linker_init_post_relocation(elfdata);
 }

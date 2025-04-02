@@ -4,7 +4,8 @@
 #include <windows.h>
 
 static void UnixTimeToFileTime(time_t t, FILETIME *ft) {
-    LONGLONG ull = ((LONGLONG)t * 10000000LL) + 116444736000000000LL;
+    const LONGLONG EPOCH_DIFFERENCE = 116444736000000000;
+    LONGLONG ull = ((LONGLONG)t * 10000000) + EPOCH_DIFFERENCE;
     ft->dwLowDateTime = (DWORD)ull;
     ft->dwHighDateTime = (DWORD)(ull >> 32);
 }

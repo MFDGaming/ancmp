@@ -443,7 +443,7 @@ out_vformat(Out *o, const char *format, va_list args)
             break;
 
         /* nope, we are at a '%' modifier */
-        nn++;  // skip it
+        nn++;  /* skip it */
 
         /* parse flags */
         for (;;) {

@@ -3,12 +3,12 @@
 #include <string.h>
 
 const android_pthread_attr_t android_gDefaultPthreadAttr = {
-    .flags = 0,
-    .stack_base = NULL,
-    .stack_size = ANDROID_DEFAULT_STACKSIZE,
-    .guard_size = ANDROID_PAGE_SIZE,
-    .sched_policy = ANDROID_SCHED_NORMAL,
-    .sched_priority = 0
+    0,
+    NULL,
+    ANDROID_DEFAULT_STACKSIZE,
+    ANDROID_PAGE_SIZE,
+    ANDROID_SCHED_NORMAL,
+    0
 };
 
 int android_pthread_attr_init(android_pthread_attr_t * attr)
@@ -85,7 +85,7 @@ int android_pthread_attr_getstacksize(android_pthread_attr_t const * attr, size_
 int android_pthread_attr_setstackaddr(android_pthread_attr_t * attr, void * stack_addr)
 {
 #if 1
-    // It's not clear if this is setting the top or bottom of the stack, so don't handle it for now.
+    /* It's not clear if this is setting the top or bottom of the stack, so don't handle it for now. */
     return ANDROID_ENOSYS;
 #else
     if ((uint32_t)stack_addr & (PAGE_SIZE - 1)) {

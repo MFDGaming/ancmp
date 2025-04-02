@@ -45,7 +45,7 @@
 #define PAGE_SIZE 4096
 #define PAGE_MASK 4095
 
-void debugger_init();
+void debugger_init(void);
 const char *addr_to_name(unsigned addr);
 
 /* magic shared structures that GDB knows about */
@@ -69,7 +69,7 @@ struct dl_phdr_info
 };
 
 
-// Values for r_debug->state
+/* Values for r_debug->state */
 enum {
     RT_CONSISTENT,
     RT_ADD,
@@ -89,8 +89,10 @@ typedef struct soinfo soinfo;
 
 #define FLAG_LINKED     0x00000001
 #define FLAG_ERROR      0x00000002
-#define FLAG_EXE        0x00000004 // The main executable
-#define FLAG_LINKER     0x00000010 // The linker itself
+/* The main executable */
+#define FLAG_EXE        0x00000004
+/* The linker itself */
+#define FLAG_LINKER     0x00000010
 
 #define SOINFO_NAME_LEN 128
 
@@ -103,7 +105,7 @@ struct soinfo
     unsigned base;
     unsigned size;
 
-    int unused;  // DO NOT USE, maintained for compatibility.
+    int unused;  /* DO NOT USE, maintained for compatibility. */
 
     unsigned *dynamic;
 
@@ -223,6 +225,6 @@ _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *), void *);
 #endif
 
-void android_linker_init();
+void android_linker_init(void);
 
 #endif

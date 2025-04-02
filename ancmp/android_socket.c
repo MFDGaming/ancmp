@@ -852,9 +852,11 @@ int android_bind(int sockfd, const struct sockaddr *addr, android_socklen_t addr
     if (addr != NULL) {
         struct sockaddr *a = (struct sockaddr *)malloc(addrlen);
         if (a) {
+            int ret;
+            
             memcpy(a, addr, addrlen);
             a->sa_family = af_to_native(a->sa_family);
-            int ret = bind(sockfd, a, addrlen);
+            ret = bind(sockfd, a, addrlen);
             free(a);
             return ret;
         }
@@ -875,9 +877,11 @@ int android_connect(int sockfd, const struct sockaddr *addr, android_socklen_t a
     if (addr != NULL) {
         struct sockaddr *a = (struct sockaddr *)malloc(addrlen);
         if (a) {
+            int ret;
+
             memcpy(a, addr, addrlen);
             a->sa_family = af_to_native(a->sa_family);
-            int ret = connect(sockfd, a, addrlen);
+            ret = connect(sockfd, a, addrlen);
             free(a);
             return ret;
         }
@@ -914,9 +918,11 @@ long android_sendto(int sockfd, const void *buf, size_t len, int flags, const st
     if (dest_addr != NULL) {
         struct sockaddr *a = (struct sockaddr *)malloc(addrlen);
         if (a) {
+            int ret;
+
             memcpy(a, dest_addr, addrlen);
             a->sa_family = af_to_native(a->sa_family);
-            int ret = sendto(sockfd, buf, len, msg_to_native(flags), a, addrlen);
+            ret = sendto(sockfd, buf, len, msg_to_native(flags), a, addrlen);
             free(a);
             return ret;
         }

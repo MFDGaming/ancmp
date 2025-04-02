@@ -18,14 +18,13 @@ static int check_nonblocksock(SOCKET sock) {
     u_long mode;
     int result = ioctlsocket(sock, FIONBIO, &mode);
     if (result != 0) {
-        //printf("Error in ioctlsocket: %d\n", WSAGetLastError());
+        /* printf("Error in ioctlsocket: %d\n", WSAGetLastError()); */
         return 0;
     }
     return (mode != 0);
 }
 
 int android_fcntl(int fd, int op, ...) {
-    puts("android_fcntl");
     int ret = 0;
     int is_s = is_socket(fd);
     va_list args;
@@ -68,17 +67,22 @@ int android_fcntl(int fd, int op, ...) {
     } else if (op == ANDROID_F_SETLK || op == ANDROID_F_SETLKW || op == ANDROID_F_GETLK) {
         android_flock_t *flock = va_arg(args, android_flock_t *);
         HANDLE hFile = (HANDLE)_get_osfhandle(fd);
+        LARGE_INTEGER len;
+        LARGE_INTEGER start;
+        OVERLAPPED ov;
+
         if (hFile == INVALID_HANDLE_VALUE) {
             va_end(args);
             return -1;
         }
-        LARGE_INTEGER len;
-        LARGE_INTEGER start;
+        
         if (flock->l_whence == SEEK_SET) {
             start.QuadPart = flock->l_start;
         } else if (flock->l_whence == SEEK_CUR) {
-            LARGE_INTEGER dist = {.QuadPart = 0};
+            LARGE_INTEGER dist;
             LARGE_INTEGER cur_pos;
+
+            dist.QuadPart = 0;
             if (!SetFilePointerEx(hFile, dist, &cur_pos, FILE_CURRENT)) {
                 va_end(args);
                 return -1;
@@ -95,7 +99,6 @@ int android_fcntl(int fd, int op, ...) {
             va_end(args);
             return -1;
         }
-        OVERLAPPED ov;
         ZeroMemory(&ov, sizeof(OVERLAPPED));
         ov.Offset = start.LowPart;
         ov.OffsetHigh = start.HighPart;
@@ -139,6 +142,10 @@ int android_fcntl(int fd, int op, ...) {
 
 int android_open(const char *pathname, int flags, ...) {
     DWORD attr = GetFileAttributes(pathname);
+    va_list args;
+    int fd;
+    int real_flags = _O_BINARY;
+
     if ((attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))) {
         HANDLE dir = CreateFile(pathname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
         if (dir != INVALID_HANDLE_VALUE) {
@@ -148,7 +155,6 @@ int android_open(const char *pathname, int flags, ...) {
         }
         return _open_osfhandle((intptr_t)dir, _O_RDONLY);
     }
-    int real_flags = _O_BINARY;
     if (flags & ANDROID_O_APPEND) {
         real_flags |= _O_APPEND;
     }
@@ -171,10 +177,8 @@ int android_open(const char *pathname, int flags, ...) {
         real_flags |= _O_WRONLY;
     }
 
-    va_list args;
     va_start(args, flags);
     
-    int fd;
     if (flags & ANDROID_O_CREAT) {
         unsigned short mode = va_arg(args, int);
         unsigned short real_mode = 0;

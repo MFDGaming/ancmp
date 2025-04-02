@@ -6,7 +6,10 @@
 #ifdef _WIN32
 
 android_DIR *android_opendir(const char *name) {
+    static char path[MAX_PATH];
+    android_DIR *dir;
     DWORD attr = GetFileAttributes(name);
+
     if (attr == INVALID_FILE_ATTRIBUTES) {
         errno = ENOENT;
         return NULL;
@@ -15,10 +18,10 @@ android_DIR *android_opendir(const char *name) {
         errno = ENOTDIR;
         return NULL;
     }
-    static char path[MAX_PATH];
     snprintf(path, sizeof(path), "%s\\*", name);
+    path[sizeof(path)-1] = '\0';
 
-    android_DIR *dir = (android_DIR *)malloc(sizeof(android_DIR));
+    dir = (android_DIR *)malloc(sizeof(android_DIR));
     if (dir == NULL) {
         errno = EACCES;
         return NULL;
@@ -35,22 +38,24 @@ android_DIR *android_opendir(const char *name) {
 }
 
 int android_closedir(android_DIR *dirp) {
+    BOOL result;
+
     if (dirp == NULL) {
         return -1;
     }
 
-    BOOL result = FindClose(dirp->hFind);
+    result = FindClose(dirp->hFind);
     free(dirp);
     return result ? 0 : -1;
 }
 
 android_dirent_t *android_readdir(android_DIR *dirp) {
+    static android_dirent_t entry;
+
     if (dirp == NULL || dirp->hFind == INVALID_HANDLE_VALUE) {
         errno = EBADF;
         return NULL;
     }
-
-    static android_dirent_t entry;
 
     entry.d_ino = 0;
     entry.d_off = 0;

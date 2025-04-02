@@ -46,8 +46,10 @@ static int translate_windows_error_to_errno(DWORD dwError) {
 long pread(int fd, void *buf, size_t count, off_t offset)
 {
     long unsigned int read_bytes = 0;
-
     OVERLAPPED overlapped;
+    HANDLE file;
+    BOOL RF;
+
     memset(&overlapped, 0, sizeof(OVERLAPPED));
 
     overlapped.OffsetHigh = (sizeof(off_t) <= sizeof(DWORD)) ?
@@ -55,13 +57,13 @@ long pread(int fd, void *buf, size_t count, off_t offset)
     overlapped.Offset = (sizeof(off_t) <= sizeof(DWORD)) ?
                     (DWORD)offset : (DWORD)(offset & 0xFFFFFFFFL);
 
-    HANDLE file = (HANDLE)_get_osfhandle(fd);
+    file = (HANDLE)_get_osfhandle(fd);
     if (file == INVALID_HANDLE_VALUE) {
         errno = EBADF;
         return -1;
     }
     SetLastError(0);
-    BOOL RF = ReadFile(file, buf, count, &read_bytes, &overlapped);
+    RF = ReadFile(file, buf, count, &read_bytes, &overlapped);
 
     /* For some reason it errors when it hits end of file so we don't want to check that */
     if ((RF == 0) && GetLastError() != ERROR_HANDLE_EOF) {

@@ -19,8 +19,9 @@ int android_log_write(int prio, const char* tag, const char* buffer) {
 }
 
 int android_log_print(int prio, const char *tag, const char *fmt, ...) {
-    printf("[%s] %s: ", tag, prio_to_text[prio % 9]);
     va_list args;
+    
+    printf("[%s] %s: ", tag, prio_to_text[prio % 9]);
     va_start(args, fmt);
     vprintf(fmt, args);
     va_end(args);

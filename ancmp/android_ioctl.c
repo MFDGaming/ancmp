@@ -6,15 +6,18 @@
 static int io_conf(int sockfd, android_ifconf_t *conf) {
     size_t buffer_length = (conf->ifc_len / sizeof(android_ifreq_t)) * sizeof(INTERFACE_INFO);
     INTERFACE_INFO *buffer = (INTERFACE_INFO *)malloc(buffer_length);
+    int interface_count;
+    int i;
+    unsigned long byte_count = 0;
+
     if (buffer == NULL) {
         return -1;
     }
-    unsigned long byte_count = 0;
     if (WSAIoctl(sockfd, SIO_GET_INTERFACE_LIST, 0, 0, (void *)buffer, buffer_length, &byte_count, 0, 0) == SOCKET_ERROR) {
         return -1;
     }
-    int interface_count = byte_count / sizeof(INTERFACE_INFO);
-    for (int i = 0; i < interface_count; i++) {
+    interface_count = byte_count / sizeof(INTERFACE_INFO);
+    for (i = 0; i < interface_count; i++) {
         char *name = inet_ntoa(buffer[i].iiAddress.AddressIn.sin_addr);
         size_t name_length = strlen(name) + 1;
         memcpy(conf->ifc_ifcu.ifcu_req->ifr_ifrn.ifrn_name, name, (name_length <= ANDROID_IFNAMSIZ) ? name_length : ANDROID_IFNAMSIZ);
@@ -28,11 +31,14 @@ static int io_conf(int sockfd, android_ifconf_t *conf) {
 static int io_req(int sockfd, android_ifreq_t *req) {
     INTERFACE_INFO buffer[30];
     unsigned long byte_count = 0;
+    int interface_count;
+    int i;
+
     if (WSAIoctl(sockfd, SIO_GET_INTERFACE_LIST, 0, 0, (void *)buffer, sizeof(buffer), &byte_count, 0, 0) == SOCKET_ERROR) {
         return -1;
     }
-    int interface_count = byte_count / sizeof(INTERFACE_INFO);
-    for (int i = 0; i < interface_count; i++) {
+    interface_count = byte_count / sizeof(INTERFACE_INFO);
+    for (i = 0; i < interface_count; i++) {
         char *name = inet_ntoa(buffer[i].iiAddress.AddressIn.sin_addr);
         size_t name_length = strlen(name) + 1;
         if (strncmp(name, req->ifr_ifrn.ifrn_name, (name_length <= ANDROID_IFNAMSIZ) ? name_length : ANDROID_IFNAMSIZ) == 0) {

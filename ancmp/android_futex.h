@@ -6,7 +6,7 @@
 #include "android_time.h"
 
 #ifdef _WIN32
-int android_futex_init();
+int android_futex_init(void);
 #endif
 
 int android_futex_wake_ex(volatile void *ftx, int pshared, int val);

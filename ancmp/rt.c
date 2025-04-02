@@ -36,4 +36,3 @@
 void NO_INLINE rtld_db_dlactivity(void)
 {
 }
-

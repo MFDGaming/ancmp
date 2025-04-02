@@ -39,7 +39,7 @@ static android_pthread_mutex_t lock = ANDROID_PTHREAD_RECURSIVE_MUTEX_INITIALIZE
 static android_exit_function_list_t initial;
 android_exit_function_list_t *__exit_funcs = &initial;
 
-android_exit_function_t *android_new_exitfn() {
+android_exit_function_t *android_new_exitfn(void) {
     android_exit_function_list_t *l;
     size_t i = 0;
     android_pthread_mutex_lock(&lock);
@@ -100,7 +100,7 @@ void android_cxa_finalize(void *d) {
     android_pthread_mutex_unlock(&lock);
 }
 
-void android_cxa_pure_virtual() {
+void android_cxa_pure_virtual(void) {
     puts("Pure virtual function called. Are you calling virtual methods from a destructor?");
     abort();
 }

@@ -84,9 +84,9 @@ int android_setvbuf(custom_file_t *stream, char *buf, int mode, size_t size);
 
 int android_getc(custom_file_t *stream);
 
-int android_fprintf(custom_file_t *stream, const char *restrict format, ...);
+int android_fprintf(custom_file_t *stream, const char *format, ...);
 
-int android_fscanf(custom_file_t *stream, const char *restrict format, ...);
+int android_fscanf(custom_file_t *stream, const char *format, ...);
 
 char *android_fgets(char *s, int n, custom_file_t *stream);
 
