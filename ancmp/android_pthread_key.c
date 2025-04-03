@@ -7,6 +7,7 @@
 #include "android_errno.h"
 #include "android_pthread_threads.h"
 #include <stdio.h>
+#include "android_atomic.h"
 
 int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_function)(void *)) {
 #ifdef _WIN32
@@ -65,7 +66,7 @@ void *android_pthread_getspecific(android_pthread_key_t key) {
         return NULL;
     }
     if (InterlockedCompareExchange(&tls_free[key], 1, 1) == 1) {
-        MemoryBarrier();
+        ANDROID_MEMBAR_FULL();
         ret = thread->tls[key];
     }
     /* puts("android_pthread_getspecific success");
@@ -89,7 +90,7 @@ int android_pthread_setspecific(android_pthread_key_t key, const void *ptr) {
     }
     if (InterlockedCompareExchange(&tls_free[key], 1, 1) == 1) {
         thread->tls[key] = (void *)ptr;
-        MemoryBarrier();
+        ANDROID_MEMBAR_FULL();
         return 0;
     }
     return ANDROID_EINVAL;

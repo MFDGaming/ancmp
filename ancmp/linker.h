@@ -172,6 +172,7 @@ extern soinfo libdl_info;
  * need the above relocations. However, in practice,
  * the following ones turn up from time to time.
  */
+#define R_ARM_NONE       0
 #define R_ARM_ABS32      2
 #define R_ARM_REL32      3
 

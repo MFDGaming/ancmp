@@ -83,14 +83,18 @@ int android_fcntl(int fd, int op, ...) {
             LARGE_INTEGER cur_pos;
 
             dist.QuadPart = 0;
-            if (!SetFilePointerEx(hFile, dist, &cur_pos, FILE_CURRENT)) {
+            cur_pos.LowPart = SetFilePointer(hFile, dist.LowPart, &dist.HighPart, FILE_CURRENT);
+            cur_pos.HighPart = dist.HighPart;
+    
+            if (cur_pos.LowPart == -1 && GetLastError() != NO_ERROR) {
                 va_end(args);
                 return -1;
             }
             start.QuadPart = cur_pos.QuadPart + flock->l_start;
         } else if (flock->l_whence == SEEK_END) {
             LARGE_INTEGER file_size;
-            if(!GetFileSizeEx(hFile, &file_size)) {
+            file_size.LowPart = GetFileSize(hFile, (LPDWORD)&file_size.HighPart);
+            if(file_size.LowPart == -1 && GetLastError() != NO_ERROR) {
                 va_end(args);
                 return -1;
             }
@@ -146,7 +150,7 @@ int android_open(const char *pathname, int flags, ...) {
     int fd;
     int real_flags = _O_BINARY;
 
-    if ((attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))) {
+    if ((attr != -1 && (attr & FILE_ATTRIBUTE_DIRECTORY))) {
         HANDLE dir = CreateFile(pathname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
         if (dir != INVALID_HANDLE_VALUE) {
             printf("\x1b[32mSuccessfully ran open() for dir %s\x1b[0m\n", pathname);

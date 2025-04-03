@@ -1,5 +1,15 @@
 #include "android_atomic.h"
 
+#ifdef _WIN32
+void ANDROID_MEMBAR_FULL(void) {
+#ifdef _MSC_VER
+    __asm { lock add dword ptr [esp], 0 }
+#else
+    __asm__ volatile("lock addl $0, (%%esp)" ::: "memory");
+#endif
+}
+#endif
+
 int android_atomic_cmpxchg(int old, int _new, volatile int *addr) {
 #ifdef _WIN32
     return InterlockedCompareExchange((LONG volatile *)addr, _new, old) != old;

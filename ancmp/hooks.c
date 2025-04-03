@@ -6,7 +6,6 @@
 #include <float.h>
 #include <stdio.h>
 #include <signal.h>
-#include <wchar.h>
 #include <locale.h>
 #include <wctype.h>
 #include <errno.h>
@@ -31,6 +30,7 @@
 #include "android_strcasecmp.h"
 #include "android_errno.h"
 #include "android_time.h"
+#include "wchar/android_wchar.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -49,6 +49,9 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 #endif
+#include <stdarg.h>
+#include "android_strto.h"
+#include "linker_format.h"
 
 typedef struct {
     char *name;
@@ -126,7 +129,7 @@ int android_select(int nfds, android_fd_set_t *readfds, android_fd_set_t *writef
 
 int android_gethostname(char *name, size_t size) {
     DWORD len = size - 1;
-    if (GetComputerNameEx(ComputerNameDnsHostname, name, &len)) {
+    if (GetComputerName(name, &len)) {
         name[size - 1] = '\0';
         return 0;
     }
@@ -218,7 +221,8 @@ int android_sigaction(int signum, void *act, void *oldact) {
 
 int android_sched_yield(void) {
     puts("android_sched_yield");
-    return SwitchToThread() ? 0 : -1;
+    Sleep(0);
+    return 0;
 }
 
 int android_fsync(int fd) {
@@ -259,7 +263,7 @@ int android_getpid(void) {
 int android_remove(const char *pathname) {
     DWORD attr = GetFileAttributes(pathname);
     BOOL ret = FALSE;
-    if (attr != INVALID_FILE_ATTRIBUTES) {
+    if (attr != -1) {
         if (attr & FILE_ATTRIBUTE_DIRECTORY) {
             ret = RemoveDirectory(pathname);
         } else {
@@ -294,8 +298,8 @@ int android_shutdown(int sockfd, int how) {
 
 int android_vsnprintf(char *str, size_t n, const char *fmt, va_list ap) {
 	char dummy;
-    va_list ap_copy;
     int ret = 0;
+    va_list ap_copy;
 	if (n > INT_MAX) {
 		n = INT_MAX;
     }
@@ -303,9 +307,19 @@ int android_vsnprintf(char *str, size_t n, const char *fmt, va_list ap) {
 		str = &dummy;
 		n = 1;
 	}
+#if defined(_MSC_VER) && !defined(va_copy)
+    ap_copy = ap;
+#else
     va_copy(ap_copy, ap);
-    ret = _vscprintf(fmt, ap_copy);
+#endif
+    ret = _vsnprintf(NULL, 0, fmt, ap);
+#if !defined(_MSC_VER) || defined(va_copy)
     va_end(ap_copy);
+#endif
+    if (ret == -1) {
+        str[0] = '\0';
+        return 0;
+    }
     _vsnprintf(str, n, fmt, ap);
     if ((ret + 1) > n) {
 	    str[n - 1] = '\0';
@@ -1152,132 +1166,156 @@ static hook_t hooks[] = {
         (void *)android_ftime
     },
     {
-        "pread",
-        (void *)pread
+        "towupper",
+        (void *)android_towupper
     },
     {
-        "bsd_signal",
-        (void *)signal
+        "towlower",
+        (void *)android_towlower
     },
     {
-        "malloc",
-        (void *)malloc
+        "wcscmp",
+        (void *)android_wcscmp
     },
     {
-        "realloc",
-        (void *)realloc
+        "wcslen",
+        (void *)android_wcslen
     },
     {
-        "free",
-        (void *)free
+        "wcsncpy",
+        (void *)android_wcsncpy
     },
     {
-        "exit",
-        (void *)exit
+        "wcscoll",
+        (void *)android_wcscoll
     },
     {
-        "abort",
-        (void *)abort
-    },
-    {
-        "memchr",
-        (void *)memchr
-    },
-    {
-        "memcmp",
-        (void *)memcmp
-    },
-    {
-        "memmove",
-        (void *)memmove
-    },
-    {
-        "memset",
-        (void *)memset
+        "wcsxfrm",
+        (void *)android_wcsxfrm
     },
     {
         "wmemcpy",
-        (void *)wmemcpy
-    },
-    {
-        "memcpy",
-        (void *)memcpy
+        (void *)android_wmemcpy
     },
     {
         "wmemmove",
-        (void *)wmemmove
+        (void *)android_wmemmove
     },
     {
         "wmemset",
-        (void *)wmemset
+        (void *)android_wmemset
+    },
+    {
+        "wmemchr",
+        (void *)android_wmemchr
+    },
+    {
+        "wmemcmp",
+        (void *)android_wmemcmp
+    },
+    {
+        "strtoull",
+        (void *)android_strtoull
     },
     {
         "isalpha",
-        (void *)isalpha
+        (void *)android_isalpha
     },
     {
         "iscntrl",
-        (void *)iscntrl
+        (void *)android_iscntrl
     },
     {
         "islower",
-        (void *)islower
+        (void *)android_islower
     },
     {
         "isprint",
-        (void *)isprint
+        (void *)android_isprint
     },
     {
         "ispunct",
-        (void *)ispunct
+        (void *)android_ispunct
     },
     {
         "isspace",
-        (void *)isspace
+        (void *)android_isspace
     },
     {
         "isupper",
-        (void *)isupper
+        (void *)android_isupper
     },
     {
         "isxdigit",
-        (void *)isxdigit
+        (void *)android_isxdigit
     },
     {
         "iswalpha",
-        (void *)iswalpha
+        (void *)android_iswalpha
     },
     {
         "iswcntrl",
-        (void *)iswcntrl
+        (void *)android_iswcntrl
     },
     {
         "iswdigit",
-        (void *)iswdigit
+        (void *)android_iswdigit
     },
     {
         "iswlower",
-        (void *)iswlower
+        (void *)android_iswlower
     },
     {
         "iswprint",
-        (void *)iswprint
+        (void *)android_iswprint
     },
     {
         "iswpunct",
-        (void *)iswpunct
+        (void *)android_iswpunct
     },
     {
         "iswspace",
-        (void *)iswspace
+        (void *)android_iswspace
     },
     {
         "iswupper",
-        (void *)iswupper
+        (void *)android_iswupper
     },
     {
         "iswxdigit",
-        (void *)iswxdigit
+        (void *)android_iswxdigit
+    },
+    {
+        "iswctype",
+        (void *)android_iswctype
+    },
+    {
+        "wctype",
+        (void *)android_wctype
+    },
+    {
+        "wctob",
+        (void *)android_wctob
+    },
+    {
+        "btowc",
+        (void *)android_btowc
+    },
+    {
+        "wcrtomb",
+        (void *)android_wcrtomb
+    },
+    {
+        "mbrtowc",
+        (void *)android_mbrtowc
+    },
+    {
+        "wcsftime",
+        (void *)android_wcsftime
+    },
+    {
+        "pread",
+        (void *)pread
     },
     {
         "strcat",
@@ -1312,36 +1350,64 @@ static hook_t hooks[] = {
         (void *)strtok
     },
     {
-        "strtoull",
-        (void *)strtoull
+        "strpbrk",
+        (void *)strpbrk
     },
     {
-        "wcscmp",
-        (void *)wcscmp
+        "strcoll",
+        (void *)strcoll
     },
     {
-        "wcslen",
-        (void *)wcslen
+        "strxfrm",
+        (void *)strxfrm
     },
     {
-        "wcsncpy",
-        (void *)wcsncpy
+        "strftime",
+        (void *)strftime
+    },
+    {
+        "strtol",
+        (void *)strtol
+    },
+    {
+        "strrchr",
+        (void *)strrchr
+    },
+    {
+        "memchr",
+        (void *)memchr
+    },
+    {
+        "memcmp",
+        (void *)memcmp
+    },
+    {
+        "memmove",
+        (void *)memmove
+    },
+    {
+        "memset",
+        (void *)memset
+    },
+    {
+        "memcpy",
+        (void *)memcpy
+    },
+    {
+        "malloc",
+        (void *)malloc
+    },
+    {
+        "realloc",
+        (void *)realloc
+    },
+    {
+        "free",
+        (void *)free
     },
     {
         "setlocale",
         (void *)setlocale
-    },
-    {
-        "towupper",
-        (void *)towupper
-    },
-    {
-        "towlower",
-        (void *)towlower
-    },
-    {
-        "putchar",
-        (void *)putchar
     },
     {
         "printf",
@@ -1354,6 +1420,22 @@ static hook_t hooks[] = {
     {
         "puts",
         (void *)puts
+    },
+    {
+        "putchar",
+        (void *)putchar
+    },
+    {
+        "bsd_signal",
+        (void *)signal
+    },
+    {
+        "exit",
+        (void *)exit
+    },
+    {
+        "abort",
+        (void *)abort
     },
     {
         "time",
@@ -1376,72 +1458,8 @@ static hook_t hooks[] = {
         (void *)calloc
     },
     {
-        "strpbrk",
-        (void *)strpbrk
-    },
-    {
         "gmtime",
         (void *)gmtime
-    },
-    {
-        "wmemchr",
-        (void *)wmemchr
-    },
-    {
-        "wmemcmp",
-        (void *)wmemcmp
-    },
-    {
-        "wctype",
-        (void *)wctype
-    },
-    {
-        "iswctype",
-        (void *)iswctype
-    },
-    {
-        "wctob",
-        (void *)wctob
-    },
-    {
-        "btowc",
-        (void *)btowc
-    },
-    {
-        "wcrtomb",
-        (void *)wcrtomb
-    },
-    {
-        "mbrtowc",
-        (void *)mbrtowc
-    },
-    {
-        "strcoll",
-        (void *)strcoll
-    },
-    {
-        "strxfrm",
-        (void *)strxfrm
-    },
-    {
-        "wcscoll",
-        (void *)wcscoll
-    },
-    {
-        "wcsxfrm",
-        (void *)wcsxfrm
-    },
-    {
-        "strftime",
-        (void *)strftime
-    },
-    {
-        "wcsftime",
-        (void *)wcsftime
-    },
-    {
-        "strtol",
-        (void *)strtol
     },
     {
         "raise",
@@ -1454,10 +1472,6 @@ static hook_t hooks[] = {
     {
         "perror",
         (void *)perror
-    },
-    {
-        "strrchr",
-        (void *)strrchr
     },
     {
         "getenv",

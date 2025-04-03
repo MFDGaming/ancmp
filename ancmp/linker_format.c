@@ -29,10 +29,15 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
-#include <stdint.h>
+#include "ancmp_stdint.h"
 #include <stddef.h>
 #include "linker_format.h"
 #include "linker_debug.h"
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 /* define UNIT_TESTS to build this file as a single executable that runs
  * the formatter's unit tests
@@ -131,7 +136,7 @@ buf_out_length(BufOut *bo)
     return bo->total;
 }
 
-static int
+int
 vformat_buffer(char *buff, size_t buffsize, const char *format, va_list args)
 {
     BufOut bo;
@@ -172,10 +177,6 @@ vsnprintf(char *buff, size_t bufsize, const char *format, va_list args)
     return format_buffer(buff, bufsize, format, args);
 }
 #endif
-
-#if LINKER_DEBUG
-
-#if !LINKER_DEBUG_TO_LOG
 
 /*** File descriptor output
  ***/
@@ -224,26 +225,34 @@ fd_out_length(FdOut *fdo)
     return fdo->total;
 }
 
-
 int
-format_fd(int fd, const char *format, ...)
+vformat_fd(int fd, const char *format, va_list ap)
 {
     FdOut fdo;
     Out* out;
-    va_list args;
 
     out = fd_out_init(&fdo, fd);
     if (out == NULL)
         return 0;
 
-    va_start(args, format);
-    out_vformat(out, format, args);
-    va_end(args);
+    out_vformat(out, format, ap);
 
     return fd_out_length(&fdo);
 }
 
-#else /* LINKER_DEBUG_TO_LOG */
+int
+format_fd(int fd, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    va_start(args, format);
+    ret = vformat_fd(fd, format, args);
+    va_end(args);
+    return ret;
+}
+
+#if LINKER_DEBUG
 
 /*** Log output
  ***/
@@ -263,8 +272,9 @@ format_fd(int fd, const char *format, ...)
 static int log_vprint(int prio, const char *tag, const char *fmt, va_list  args)
 {
     static char buf[1024];
+    int result;
     buf[0] = '\0';
-    int result = vformat_buffer(buf, sizeof buf, fmt, args);
+    result = vformat_buffer(buf, sizeof buf, fmt, args);
 
     fwrite(&prio, 1, 1, stdout);
     fwrite(tag, 1, strlen(tag) + 1, stdout);
@@ -291,8 +301,6 @@ format_log(int prio, const char *tag, const char *format, ...)
     va_end(args);
     return ret;
 }
-
-#endif /* LINKER_DEBUG_TO_LOG */
 
 #endif /* LINKER_DEBUG */
 
@@ -494,7 +502,7 @@ out_vformat(Out *o, const char *format, va_list args)
         case 'l':
             bytelen = sizeof(long);
             if (format[nn] == 'l') {
-                bytelen = sizeof(long long);
+                bytelen = sizeof(int64_t);
                 nn += 1;
             }
             c = format[nn++];

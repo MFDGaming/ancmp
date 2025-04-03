@@ -12,7 +12,7 @@
 #ifndef ANCMP_ANDROID_ELF_H
 #define ANCMP_ANDROID_ELF_H
 
-#include <stdint.h>
+#include "ancmp_stdint.h"
 
 typedef uint32_t Elf32_Addr;
 typedef uint16_t Elf32_Half;

@@ -1,6 +1,8 @@
 #ifndef ANCMP_ANDROID_STAT_H
 #define ANCMP_ANDROID_STAT_H
 
+#include "ancmp_stdint.h"
+
 #define ANDROID_S_IFMT 00170000
 #define ANDROID_S_IFSOCK 0140000
 #define ANDROID_S_IFLNK 0120000
@@ -34,33 +36,33 @@
 #define ANDROID_S_ISSOCK(m) (((m) & ANDROID_S_IFMT) == ANDROID_S_IFSOCK)
 
 typedef struct {
-    unsigned long long  st_dev;
-    unsigned char       __pad0[4];
+    uint64_t st_dev;
+    unsigned char __pad0[4];
 
-    unsigned long       __st_ino;
-    unsigned int        st_mode;
-    unsigned int        st_nlink;
+    unsigned long __st_ino;
+    unsigned int st_mode;
+    unsigned int st_nlink;
 
-    unsigned int       st_uid;
-    unsigned int       st_gid;
+    unsigned int st_uid;
+    unsigned int st_gid;
 
-    unsigned long long  st_rdev;
-    unsigned char       __pad3[4];
+    uint64_t st_rdev;
+    unsigned char __pad3[4];
 
-    long long           st_size;
-    unsigned long	st_blksize;
-    unsigned long long  st_blocks;
+    int64_t st_size;
+    unsigned long st_blksize;
+    uint64_t st_blocks;
 
-    unsigned long       _st_atime;
-    unsigned long       _st_atime_nsec;
+    unsigned long _st_atime;
+    unsigned long _st_atime_nsec;
 
-    unsigned long       _st_mtime;
-    unsigned long       _st_mtime_nsec;
+    unsigned long _st_mtime;
+    unsigned long _st_mtime_nsec;
 
-    unsigned long       _st_ctime;
-    unsigned long       _st_ctime_nsec;
+    unsigned long _st_ctime;
+    unsigned long _st_ctime_nsec;
 
-    unsigned long long  st_ino;
+    uint64_t st_ino;
 } android_stat_t;
 
 int s_to_native(int mode);

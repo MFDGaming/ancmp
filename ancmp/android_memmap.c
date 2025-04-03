@@ -3,7 +3,7 @@
 #else
 #include <sys/mman.h>
 #endif
-#include <stdint.h>
+#include "ancmp_stdint.h"
 #include <stdio.h>
 #include "android_memmap.h"
 #include <string.h>

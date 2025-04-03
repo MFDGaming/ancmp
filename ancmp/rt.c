@@ -33,6 +33,6 @@
 
 #include "posix_funcs.h"
 
-void NO_INLINE rtld_db_dlactivity(void)
+void rtld_db_dlactivity(void)
 {
 }

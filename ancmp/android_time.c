@@ -1,4 +1,5 @@
 #include "android_time.h"
+#include "android_atomic.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -112,18 +113,14 @@ struct tm *android_localtime_r(const android_time_t *timep, struct tm *result) {
 }
 
 int android_clock_gettime(android_clockid_t clk_id, android_timespec_t *tp) {
-    static LARGE_INTEGER freq = {0};
-    static volatile LONG initialized = 0;
+    LARGE_INTEGER freq = {0};
     LARGE_INTEGER now;
     ULARGE_INTEGER time;
     ULONGLONG seconds, remainder, nanoseconds;
     const ULONGLONG EPOCH_DIFFERENCE = 116444736000000000;
-
-    if (InterlockedCompareExchange(&initialized, 1, 0) == 0) {
-        if (!QueryPerformanceFrequency(&freq)) {
-            freq.QuadPart = 0;
-        }
-        MemoryBarrier();
+    BOOL qpf_success = QueryPerformanceFrequency(&freq);
+    if (!qpf_success) {
+        return -1;
     }
     if (clk_id == ANDROID_CLOCK_REALTIME) {
         FILETIME ft;
@@ -167,22 +164,36 @@ int android_gettimeofday(android_timeval_t *tp, android_timezone_t *tzp) {
     return 0;
 }
 
-int android_nanosleep(const android_timespec_t *ts, android_timespec_t *rem) {
-    LARGE_INTEGER delay;
-    BOOL ok;
-    HANDLE timer;
-    if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000L) {
-        return -1;
+int android_nanosleep(const android_timespec_t *req, android_timespec_t *rem) {
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER start, current;
+    LONGLONG requested_ticks;
+
+    QueryPerformanceFrequency(&frequency);
+    requested_ticks = (LONGLONG)req->tv_sec * frequency.QuadPart + req->tv_nsec * frequency.QuadPart / 1000000000;
+    QueryPerformanceCounter(&start);
+
+    while (1) {
+        LONGLONG elapsed_ticks;
+
+        QueryPerformanceCounter(&current);
+
+        elapsed_ticks = current.QuadPart - start.QuadPart;
+
+        if (elapsed_ticks >= requested_ticks) {
+            break;
+        }
+
+        Sleep(0);
     }
-    timer = CreateWaitableTimer(NULL, TRUE, NULL);
-    if (!timer) {
-        return -1;
+
+    if (rem != NULL) {
+        LONGLONG remaining_ticks = requested_ticks - (current.QuadPart - start.QuadPart);
+        rem->tv_sec = (time_t)(remaining_ticks / frequency.QuadPart);
+        rem->tv_nsec = (long)((remaining_ticks % frequency.QuadPart) * 1000000000 / frequency.QuadPart);
     }
-    delay.QuadPart = -(((LONGLONG)ts->tv_sec * 10000000) + (ts->tv_nsec / 100));
-    ok = SetWaitableTimer(timer, &delay, 0, NULL, NULL, FALSE) &&
-              WaitForSingleObject(timer, INFINITE) == WAIT_OBJECT_0;
-    CloseHandle(timer);
-    return ok ? 0 : -1;
+
+    return 0;
 }
 
 #endif

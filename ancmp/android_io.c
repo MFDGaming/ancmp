@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
+#include "linker_format.h"
 
 /* stdin, stdout, stderr */
 android_file_t android_sf[3];
@@ -185,16 +186,16 @@ int android_fputc(int c, custom_file_t *stream) {
     return fputc(c, get_fp(stream));
 }
 
-wint_t android_putwc(wchar_t wc, custom_file_t *stream) {
-    return putwc(wc, get_fp(stream));
+android_wint_t android_putwc(android_wchar_t wc, custom_file_t *stream) {
+    return (android_wint_t)fputc((char)wc, get_fp(stream));
 }
 
-wint_t android_ungetwc(wint_t wc, custom_file_t *stream) {
-	return ungetwc(wc, get_fp(stream));
+android_wint_t android_ungetwc(android_wint_t wc, custom_file_t *stream) {
+	return (android_wint_t)ungetc((char)wc, get_fp(stream));
 }
 
-wint_t android_getwc(custom_file_t *stream) {
-    return getwc(get_fp(stream));
+android_wint_t android_getwc(custom_file_t *stream) {
+    return (android_wint_t)fgetc(get_fp(stream));
 }
 
 int android_ferror(custom_file_t *stream) {

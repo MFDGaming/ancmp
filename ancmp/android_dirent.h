@@ -1,7 +1,7 @@
 #ifndef ANCMP_ANDROID_DIRENT_H
 #define ANCMP_ANDROID_DIRENT_H
 
-#include <stdint.h>
+#include "ancmp_stdint.h"
 
 typedef struct {
     uint64_t          d_ino;

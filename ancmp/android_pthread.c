@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include "android_tls.h"
+#include "android_atomic.h"
 #ifdef _WIN32
 #include <windows.h>
 #include "android_pthread_threads.h"
@@ -122,12 +123,12 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     t->start_arg = arg;
     t->is_joined = 0;
 
-    t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, (void *)t, CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+    t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, (void *)t, CREATE_SUSPENDED, NULL);
     if (t->thread == NULL) {
         free(t);
         return ANDROID_EAGAIN;
     }
-    MemoryBarrier();
+    ANDROID_MEMBAR_FULL();
     SetThreadPriority(t->thread, priority_conv(attr_sv.sched_policy, attr_sv.sched_priority));
     ResumeThread(t->thread);
     *thread_out = (android_pthread_t)t;

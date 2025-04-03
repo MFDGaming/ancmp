@@ -37,6 +37,12 @@
 /* implementation into the dynamic linker since this creates */
 /* issues (it uses malloc()/free()) and increases code size  */
 
+int vformat_fd(int fd, const char *format, va_list ap);
+
+int format_fd(int fd, const char *format, ...);
+
+int vformat_buffer(char *buff, size_t buffsize, const char *format, va_list args);
+
 int format_buffer(char *buffer, size_t bufsize, const char *format, ...);
 
 #endif

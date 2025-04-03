@@ -3,8 +3,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-
-#define ANDROID_MEMBAR_FULL MemoryBarrier
+void ANDROID_MEMBAR_FULL(void);
 #else
 #define ANDROID_MEMBAR_FULL __sync_synchronize
 #endif

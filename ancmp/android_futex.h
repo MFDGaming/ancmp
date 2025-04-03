@@ -1,7 +1,7 @@
 #ifndef ANCMP_ANDROID_FUTEX_H
 #define ANCMP_ANDROID_FUTEX_H
 
-#include <stdint.h>
+#include "ancmp_stdint.h"
 #include <time.h>
 #include "android_time.h"
 

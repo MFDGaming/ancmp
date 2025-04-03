@@ -2,6 +2,7 @@
 
 #include "android_pthread_threads.h"
 #include <windows.h>
+#include "android_atomic.h"
 
 long volatile tls_free[ANDROID_BIONIC_TLS_SLOTS];
 void *volatile tls_destructors[ANDROID_BIONIC_TLS_SLOTS];
@@ -21,7 +22,7 @@ BOOL android_threads_init(void) {
     thread->is_detached = 0;
     thread->is_main_thread = TRUE;
     memset(thread->tls, 0, sizeof(void *) * ANDROID_BIONIC_TLS_SLOTS);
-    MemoryBarrier();
+    ANDROID_MEMBAR_FULL();
 
     TlsSetValue(android_thread_storage, (void *)thread);
     memset((void *)tls_destructors, 0, sizeof(tls_destructors));

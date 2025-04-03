@@ -40,11 +40,16 @@
  */
 #define LINKER_DEBUG_TO_LOG  1
 #define TRACE_DEBUG          1
-#define DO_TRACE_LOOKUP      1
-#define DO_TRACE_RELO        1
+#define DO_TRACE_LOOKUP      0
+#define DO_TRACE_RELO        0
 #define TIMING               0
 #define STATS                0
 #define COUNT_PAGES          0
+
+enum {
+    LOOKUP,
+    RELO
+};
 
 /*********************************************************************
  * You shouldn't need to modify anything below unless you are adding
@@ -60,49 +65,19 @@
 #define TRUE                 1
 #define FALSE                0
 
-/* Only use printf() during debugging.  We have seen occasional memory
- * corruption when the linker uses printf().
- */
-#if LINKER_DEBUG
-#include "linker_format.h"
-extern int debug_verbosity;
-#if LINKER_DEBUG_TO_LOG
-extern int format_log(int, const char *, const char *, ...);
-#define _PRINTVF(v,f,...)                                        \
-    do {                                                          \
-        if (debug_verbosity > (v)) format_log(5-(v),"linker",__VA_ARGS__);  \
-    } while (0)
-#else /* !LINKER_DEBUG_TO_LOG */
-extern int format_fd(int, const char *, ...);
-#define _PRINTVF(v,f,...)                           \
-    do {                                             \
-        if (debug_verbosity > (v)) format_fd(1, __VA_ARGS__);  \
-    } while (0)
-#endif /* !LINKER_DEBUG_TO_LOG */
-#else /* !LINKER_DEBUG */
-#define _PRINTVF(v,f,...)   do {} while(0)
-#endif /* LINKER_DEBUG */
+void PRINT(const char *fmt, ...);
 
-#define PRINT(...)          _PRINTVF(-1, FALSE, __VA_ARGS__)
-#define INFO(...)           _PRINTVF(0, TRUE, __VA_ARGS__)
-#define TRACE(...)          _PRINTVF(1, TRUE, __VA_ARGS__)
-#define WARN(fmt,...)    \
-        _PRINTVF(-1, TRUE, "%s:%d| WARNING: " fmt, __FILE__, __LINE__, __VA_ARGS__)
-#define ERROR_O(fmt,...)    \
-        _PRINTVF(-1, TRUE, "%s:%d| ERROR: " fmt, __FILE__, __LINE__, __VA_ARGS__)
+void INFO(const char *fmt, ...);
 
+void TRACE(const char *fmt, ...);
 
-#if TRACE_DEBUG
-#define DEBUG(...)          _PRINTVF(2, TRUE, "DEBUG: " __VA_ARGS__)
-#else /* !TRACE_DEBUG */
-#define DEBUG(...)          do {} while (0)
-#endif /* TRACE_DEBUG */
+void WARN(const char *fmt, ...);
 
-#if LINKER_DEBUG
-#define TRACE_TYPE(t,...)   do { if (DO_TRACE_##t) { TRACE(__VA_ARGS__); } } while (0)
-#else  /* !LINKER_DEBUG */
-#define TRACE_TYPE(t,...)   do {} while (0)
-#endif /* LINKER_DEBUG */
+void ERROR_O(const char *fmt, ...);
+
+void DEBUG(const char *fmt, ...);
+
+void TRACE_TYPE(int type, const char *fmt, ...);
 
 #if STATS
 #define RELOC_ABSOLUTE        0
@@ -126,11 +101,6 @@ extern struct _link_stats linker_stats;
 #else /* !STATS */
 #define COUNT_RELOC(type)     do {} while(0)
 #endif /* STATS */
-
-#if TIMING
-#undef WARN
-#define WARN(x...)           do {} while (0)
-#endif /* TIMING */
 
 #if COUNT_PAGES
 extern unsigned bitmask[];

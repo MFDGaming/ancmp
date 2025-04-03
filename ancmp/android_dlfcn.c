@@ -23,8 +23,10 @@
 #include "android_elf.h"
 
 #if defined(_MSC_VER)
+/*
     #include <intrin.h>
-    #define GET_RETURN_ADDRESS() _ReturnAddress()
+    #define GET_RETURN_ADDRESS() _ReturnAddress()*/
+    #define GET_RETURN_ADDRESS() 0
 #else
     #define GET_RETURN_ADDRESS() __builtin_return_address(0)
 #endif
@@ -278,7 +280,7 @@ static unsigned libdl_buckets[1] = { 1 };
 static unsigned libdl_chains[7] = { 0, 2, 3, 4, 5, 6, 0 };
 
 soinfo libdl_info = {
-    "libdl.so",
+    {'l', 'i', 'b', 'd', 'l', '.', 's', 'o','\0'},
     (Elf32_Phdr *)NULL, 0, 0, 0, 0, 0, (unsigned *)NULL, 0, 0, (soinfo *)NULL,
     FLAG_LINKED,
     ANDROID_LIBDL_STRTAB,

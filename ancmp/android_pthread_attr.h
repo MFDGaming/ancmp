@@ -1,7 +1,7 @@
 #ifndef ANCMP_ANDROID_PTHREAD_ATTR_H
 #define ANCMP_ANDROID_PTHREAD_ATTR_H
 
-#include <stdint.h>
+#include "ancmp_stdint.h"
 #include <stdlib.h>
 #include "android_sched.h"
 

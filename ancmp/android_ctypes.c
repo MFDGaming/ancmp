@@ -148,3 +148,59 @@ int android_toupper(int c) {
 		return(c);
 	return((android_toupper_tab + 1)[c]);
 }
+
+int android_isalnum(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & (ANDROID_U|ANDROID_L|ANDROID_N)));
+}
+
+int android_isalpha(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & (ANDROID_U|ANDROID_L)));
+}
+
+int android_iscntrl(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & ANDROID_C));
+}
+
+int android_isdigit(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & ANDROID_N));
+}
+
+int android_isgraph(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & (ANDROID_P|ANDROID_U|ANDROID_L|ANDROID_N)));
+}
+
+int android_islower(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & ANDROID_L));
+}
+
+int android_isprint(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & (ANDROID_P|ANDROID_U|ANDROID_L|ANDROID_N|ANDROID_B)));
+}
+
+int android_ispunct(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & ANDROID_P));
+}
+
+int android_isspace(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & ANDROID_S));
+}
+
+int android_isupper(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & ANDROID_U));
+}
+
+int android_isxdigit(int c) {
+	return (c == -1 ? 0 : ((android_ctype + 1)[(unsigned char)c] & (ANDROID_N|ANDROID_X)));
+}
+
+int android_isblank(int c) {
+	return (c == ' ' || c == '\t');
+}
+
+int android_isascii(int c) {
+	return ((unsigned int)c <= 0177);
+}
+
+int android_toascii(int c) {
+	return (c & 0177);
+}

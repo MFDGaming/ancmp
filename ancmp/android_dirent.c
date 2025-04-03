@@ -10,7 +10,7 @@ android_DIR *android_opendir(const char *name) {
     android_DIR *dir;
     DWORD attr = GetFileAttributes(name);
 
-    if (attr == INVALID_FILE_ATTRIBUTES) {
+    if (attr == -1) {
         errno = ENOENT;
         return NULL;
     }
@@ -18,7 +18,7 @@ android_DIR *android_opendir(const char *name) {
         errno = ENOTDIR;
         return NULL;
     }
-    snprintf(path, sizeof(path), "%s\\*", name);
+    _snprintf(path, sizeof(path), "%s\\*", name);
     path[sizeof(path)-1] = '\0';
 
     dir = (android_DIR *)malloc(sizeof(android_DIR));

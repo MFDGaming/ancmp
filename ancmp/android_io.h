@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <wctype.h>
+#include "wchar/android_wchar.h"
 
 typedef off_t android_fpos_t;
 
@@ -92,11 +93,11 @@ char *android_fgets(char *s, int n, custom_file_t *stream);
 
 int android_fputc(int c, custom_file_t *stream);
 
-wint_t android_putwc(wchar_t wc, custom_file_t *stream);
+android_wint_t android_putwc(android_wchar_t wc, custom_file_t *stream);
 
-wint_t android_ungetwc(wint_t wc, custom_file_t *stream);
+android_wint_t android_ungetwc(android_wint_t wc, custom_file_t *stream);
 
-wint_t android_getwc(custom_file_t *stream);
+android_wint_t android_getwc(custom_file_t *stream);
 
 int android_ferror(custom_file_t *stream);
 

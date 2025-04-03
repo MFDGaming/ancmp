@@ -27,6 +27,7 @@
  */
 
 #include "android_auxvec.h"
+#include "android_time.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -50,11 +51,11 @@
 
 #include "android_pthread.h"
 #include "android_pthread_threads.h"
+#include "linker_format.h"
 
 #include "linker.h"
 #include "linker_debug.h"
 #include "linker_environ.h"
-#include "linker_format.h"
 #include "android_elf_exec.h"
 #include "posix_funcs.h"
 #include "hooks.h"
@@ -140,12 +141,35 @@ unsigned bitmask[4096];
 
 static char tmp_err_buf[768];
 static char __linker_dl_err_buf[768];
-#define DL_ERR(fmt, ...)                                                     \
-    do {                                                                      \
-        format_buffer(__linker_dl_err_buf, sizeof(__linker_dl_err_buf),            \
-                 "%s[%d]: " fmt, __func__, __LINE__, ##__VA_ARGS__);                    \
-        ERROR_O(fmt "\n", ##__VA_ARGS__);                                                      \
-    } while(0)
+
+void DL_ERR(const char *fmt, ...) {
+#if LINKER_DEBUG && TRACE_DEBUG
+    va_list ap;
+    va_list ap_copy;
+    va_start(ap, fmt);
+
+#if defined(_MSC_VER) && !defined(va_copy)
+    ap_copy = ap;
+#else
+    va_copy(ap_copy, ap);
+#endif
+
+#ifdef _WIN32
+    _vsnprintf(__linker_dl_err_buf, sizeof(__linker_dl_err_buf), fmt, ap_copy);
+#else
+    vsnprintf(__linker_dl_err_buf, sizeof(__linker_dl_err_buf), fmt, ap_copy);
+#endif
+
+#if !defined(_MSC_VER) || defined(va_copy)
+    va_end(ap_copy);
+#endif
+    __linker_dl_err_buf[sizeof(__linker_dl_err_buf) - 1] = '\0';
+    printf("[linker] ERROR : ");
+    vprintf(fmt, ap);
+    printf("\n");
+    va_end(ap);
+#endif
+}
 
 const char *linker_get_error(void)
 {
@@ -156,7 +180,7 @@ const char *linker_get_error(void)
  * This function is an empty stub where GDB locates a breakpoint to get notified
  * about linker activity.
  */
-extern void NO_INLINE rtld_db_dlactivity(void);
+extern void rtld_db_dlactivity(void);
 
 static struct r_debug _r_debug = {1, NULL, &rtld_db_dlactivity,
                                   RT_CONSISTENT, 0};
@@ -2142,8 +2166,8 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
     pid = getpid();
 
 #if TIMING
-    struct timeval t0, t1;
-    gettimeofday(&t0, 0);
+    android_timeval_t t0, t1;
+    android_gettimeofday(&t0, 0);
 #endif
 
     /* Initialize environment functions, and get to the ELF aux vectors table */
@@ -2281,7 +2305,7 @@ sanitize:
 #endif
 
 #if TIMING
-    gettimeofday(&t1,NULL);
+    android_gettimeofday(&t1,NULL);
     PRINT("LINKER TIME: %s: %d microseconds\n", argv[0], (int) (
                (((long long)t1.tv_sec * 1000000LL) + (long long)t1.tv_usec) -
                (((long long)t0.tv_sec * 1000000LL) + (long long)t0.tv_usec)
