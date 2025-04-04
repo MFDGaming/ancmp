@@ -1,5 +1,5 @@
-#ifndef ANCMP_ANDROID_WCSNCMP
-#define ANCMP_ANDROID_WCSNCMP
+#ifndef ANCMP_ANDROID_WCSNCMP_H
+#define ANCMP_ANDROID_WCSNCMP_H
 
 #include "android_wchar_internal.h"
 #include <stdlib.h>

@@ -1,5 +1,5 @@
-#ifndef ANDROID_WCHAR
-#define ANDROID_WCHAR
+#ifndef ANDROID_WCHAR_H
+#define ANDROID_WCHAR_H
 
 #include "android_wchar_internal.h"
 #include "android_wcschr.h"

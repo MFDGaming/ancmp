@@ -1,6 +1,6 @@
 #include "android_wctype.h"
 #include "../android_ctypes.h"
-#include <string.h>
+#include "../string/android_string.h"
 #include <stdio.h>
 
 int android_iswalnum(android_wint_t wc) {
@@ -75,7 +75,7 @@ android_wctype_t android_wctype(const char *property)
     };
     int  nn;
     for ( nn = 0; nn < ANDROID_WC_TYPE_MAX; nn++ )
-        if ( !strcmp( properties[nn], property ) )
+        if ( !android_strcmp( properties[nn], property ) )
             return (android_wctype_t)(nn);
     return 0;
 }

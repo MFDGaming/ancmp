@@ -1,6 +1,6 @@
 #include "android_strto.h"
 #include <errno.h>
-#include <ctype.h>
+#include "android_ctypes.h"
 
 uintmax_t android_strtoumax(const char *nptr, char **endptr, int base) {
 	const char *s;
@@ -13,7 +13,7 @@ uintmax_t android_strtoumax(const char *nptr, char **endptr, int base) {
 	s = nptr;
 	do {
 		c = (unsigned char) *s++;
-	} while (isspace(c));
+	} while (android_isspace(c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
@@ -44,10 +44,10 @@ uintmax_t android_strtoumax(const char *nptr, char **endptr, int base) {
 	    cutlim = UINTMAX_MAX % base;
 	}
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
-		if (isdigit(c))
+		if (android_isdigit(c))
 			c -= '0';
-		else if (isalpha(c))
-			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else if (android_isalpha(c))
+			c -= android_isupper(c) ? 'A' - 10 : 'a' - 10;
 		else
 			break;
 		if (c >= base)

@@ -27,8 +27,8 @@
  */
 
 #include "android_wmemmove.h"
-#include <string.h>
+#include "../string/android_string.h"
 
 android_wchar_t *android_wmemmove(android_wchar_t *d, const android_wchar_t *s, size_t n) {
-	return (android_wchar_t *)memmove(d, s, n * sizeof(android_wchar_t));
+	return (android_wchar_t *)android_memmove(d, s, n * sizeof(android_wchar_t));
 }

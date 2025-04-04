@@ -1,5 +1,5 @@
-#ifndef ANCMP_ANDROID_WCTYPE
-#define ANCMP_ANDROID_WCTYPE
+#ifndef ANCMP_ANDROID_WCTYPE_H
+#define ANCMP_ANDROID_WCTYPE_H
 
 #include "android_wchar_internal.h"
 #include <limits.h>

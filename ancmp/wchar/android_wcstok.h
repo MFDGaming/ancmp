@@ -1,5 +1,5 @@
-#ifndef ANCMP_ANDROID_WCSTOK
-#define ANCMP_ANDROID_WCSTOK
+#ifndef ANCMP_ANDROID_WCSTOK_H
+#define ANCMP_ANDROID_WCSTOK_H
 
 #include "android_wchar_internal.h"
 #include <stdlib.h>

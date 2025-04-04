@@ -1,5 +1,5 @@
-#ifndef ANCMP_ANDROID_WMEMMOVE
-#define ANCMP_ANDROID_WMEMMOVE
+#ifndef ANCMP_ANDROID_WMEMMOVE_H
+#define ANCMP_ANDROID_WMEMMOVE_H
 
 #include "android_wchar_internal.h"
 #include <stdlib.h>

@@ -27,8 +27,8 @@
  */
 
 #include "android_wmemcpy.h"
-#include <string.h>
+#include "../string/android_string.h"
 
 android_wchar_t *android_wmemcpy(android_wchar_t *d, const android_wchar_t *s, size_t n) {
-	return (android_wchar_t *)memcpy(d, s, n * sizeof(android_wchar_t));
+	return (android_wchar_t *)android_memcpy(d, s, n * sizeof(android_wchar_t));
 }

@@ -2,43 +2,43 @@
 #include <math.h>
 
 FLOAT_ABI_FIX float android_atan2f(float x, float y) {
-    return atan2f(x, y);
+    return (float)atan2((double)x, (double)y);
 }
 
 FLOAT_ABI_FIX float android_ceilf(float x) {
-    return ceilf(x);
+    return (float)ceil((double)x);
 }
 
 FLOAT_ABI_FIX float android_cosf(float x) {
-    return cosf(x);
+    return (float)cos((double)x);
 }
 
 FLOAT_ABI_FIX float android_floorf(float x) {
-    return floorf(x);
+    return (float)floor((double)x);
 }
 
 FLOAT_ABI_FIX float android_fmodf(float x, float y) {
-    return fmodf(x, y);
+    return (float)fmod((double)x, (double)y);
 }
 
 FLOAT_ABI_FIX float android_logf(float x) {
-    return logf(x);
+    return (float)log((double)x);
 }
 
 FLOAT_ABI_FIX float android_powf(float x, float y) {
-    return powf(x, y);
+    return (float)pow((double)x, (double)y);
 }
 
 FLOAT_ABI_FIX float android_sinf(float x) {
-    return sinf(x);
+    return (float)sin((double)x);
 }
 
 FLOAT_ABI_FIX float android_sqrtf(float x) {
-    return sqrtf(x);
+    return (float)sqrt((double)x);
 }
 
 FLOAT_ABI_FIX float android_atanf(float x) {
-    return atanf(x);
+    return (float)atanf((double)x);
 }
 
 FLOAT_ABI_FIX double android_fmod(double x, double y) {
@@ -82,7 +82,10 @@ FLOAT_ABI_FIX double android_modf(double x, double *iptr) {
 }
 
 FLOAT_ABI_FIX float android_modff(float x, float *iptr) {
-    return modff(x, iptr);
+    double i;
+    float ret = (float)modf((double)x, &i);
+    *iptr = (float)i;
+    return ret;
 }
 
 FLOAT_ABI_FIX double android_ldexp(double x, int exp) {
@@ -90,9 +93,9 @@ FLOAT_ABI_FIX double android_ldexp(double x, int exp) {
 }
 
 FLOAT_ABI_FIX float android_ldexpf(float x, int exp) {
-    return ldexpf(x, exp);
+    return (float)ldexp((double)x, exp);
 }
 
 FLOAT_ABI_FIX float android_tanf(float x) {
-    return tanf(x);
+    return (float)tan((double)x);
 }

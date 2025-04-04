@@ -1,5 +1,5 @@
-#ifndef ANCMP_ANDROID_WCSWIDTH
-#define ANCMP_ANDROID_WCSWIDTH
+#ifndef ANCMP_ANDROID_WCSWIDTH_H
+#define ANCMP_ANDROID_WCSWIDTH_H
 
 #include "android_wchar_internal.h"
 #include <stdlib.h>

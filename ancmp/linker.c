@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
+#include "string/android_string.h"
 #include "android_pthread.h"
 #include "android_pthread_threads.h"
 #include "linker_format.h"
@@ -301,7 +302,7 @@ static soinfo *alloc_info(const char *name)
 
     /* Make sure we get a clean block of soinfo */
     memset(si, 0, sizeof(soinfo));
-    bsd_strlcpy((char*) si->name, name, sizeof(si->name));
+    android_strlcpy((char*) si->name, name, sizeof(si->name));
     sonext->next = si;
     si->next = NULL;
     si->refcount = 0;
@@ -1954,7 +1955,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
             soinfo *lsi = find_library(ldpreload_names[i]);
             if(lsi == 0) {
 #if 0
-                bsd_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
+                android_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
                 DL_ERR("%5d could not load needed library '%s' for '%s' (%s)",
                        pid, ldpreload_names[i], si->name, tmp_err_buf);
                 goto fail;
@@ -1975,7 +1976,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
             
             if(lsi == 0) {
 #if 0
-                bsd_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
+                android_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
                 DL_ERR("%5d could not load needed library '%s' for '%s' (%s)",
                        pid, si->strtab + d[1], si->name, tmp_err_buf);
                 goto fail;
@@ -2073,9 +2074,9 @@ static void parse_library_path(const char *path, char *delim)
     char *ldpaths_bufp = ldpaths_buf;
     int i = 0;
 
-    len = bsd_strlcpy(ldpaths_buf, path, sizeof(ldpaths_buf));
+    len = android_strlcpy(ldpaths_buf, path, sizeof(ldpaths_buf));
 
-    while (i < LDPATH_MAX && (ldpaths[i] = bsd_strsep(&ldpaths_bufp, delim))) {
+    while (i < LDPATH_MAX && (ldpaths[i] = android_strsep(&ldpaths_bufp, delim))) {
         if (*ldpaths[i] != '\0')
             ++i;
     }
@@ -2096,9 +2097,9 @@ static void parse_preloads(const char *path, char *delim)
     char *ldpreloads_bufp = ldpreloads_buf;
     int i = 0;
 
-    len = bsd_strlcpy(ldpreloads_buf, path, sizeof(ldpreloads_buf));
+    len = android_strlcpy(ldpreloads_buf, path, sizeof(ldpreloads_buf));
 
-    while (i < LDPRELOAD_MAX && (ldpreload_names[i] = bsd_strsep(&ldpreloads_bufp, delim))) {
+    while (i < LDPRELOAD_MAX && (ldpreload_names[i] = android_strsep(&ldpreloads_bufp, delim))) {
         if (*ldpreload_names[i] != '\0') {
             ++i;
         }
@@ -2240,7 +2241,7 @@ sanitize:
          * is.  Don't use alloc_info(), because the linker shouldn't
          * be on the soinfo list.
          */
-    bsd_strlcpy((char*) linker_soinfo.name, "/system/bin/linker", sizeof linker_soinfo.name);
+    android_strlcpy((char*) linker_soinfo.name, "/system/bin/linker", sizeof linker_soinfo.name);
     linker_soinfo.flags = 0;
     linker_soinfo.base = 0;     /* This is the important part; must be zero. */
     insert_soinfo_into_debug_map(&linker_soinfo);

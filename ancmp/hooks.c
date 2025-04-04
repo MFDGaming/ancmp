@@ -27,7 +27,7 @@
 #include "android_sysconf.h"
 #include "posix_funcs.h"
 #include "android_cxa.h"
-#include "android_strcasecmp.h"
+#include "string/android_string.h"
 #include "android_errno.h"
 #include "android_time.h"
 #include "wchar/android_wchar.h"
@@ -1314,84 +1314,88 @@ static hook_t hooks[] = {
         (void *)android_wcsftime
     },
     {
-        "pread",
-        (void *)pread
-    },
-    {
         "strcat",
-        (void *)strcat
+        (void *)android_strcat
     },
     {
         "strchr",
-        (void *)strchr
+        (void *)android_strchr
     },
     {
         "strcmp",
-        (void *)strcmp
+        (void *)android_strcmp
     },
     {
         "strcpy",
-        (void *)strcpy
+        (void *)android_strcpy
     },
     {
         "strlen",
-        (void *)strlen
+        (void *)android_strlen
     },
     {
         "strncpy",
-        (void *)strncpy
+        (void *)android_strncpy
     },
     {
         "strstr",
-        (void *)strstr
+        (void *)android_strstr
     },
     {
         "strtok",
-        (void *)strtok
+        (void *)android_strtok
     },
     {
         "strpbrk",
-        (void *)strpbrk
+        (void *)android_strpbrk
     },
     {
         "strcoll",
-        (void *)strcoll
+        (void *)android_strcoll
     },
     {
         "strxfrm",
-        (void *)strxfrm
+        (void *)android_strxfrm
     },
     {
-        "strftime",
-        (void *)strftime
+        "strrchr",
+        (void *)android_strrchr
+    },
+    {
+        "memchr",
+        (void *)android_memchr
+    },
+    {
+        "memcmp",
+        (void *)android_memcmp
+    },
+    {
+        "memmove",
+        (void *)android_memmove
+    },
+    {
+        "memset",
+        (void *)android_memset
+    },
+    {
+        "memcpy",
+        (void *)android_memcpy
+    },
+    {
+        "pread",
+        (void *)pread
     },
     {
         "strtol",
         (void *)strtol
     },
     {
-        "strrchr",
-        (void *)strrchr
+        "strftime",
+        (void *)strftime
     },
     {
-        "memchr",
-        (void *)memchr
-    },
-    {
-        "memcmp",
-        (void *)memcmp
-    },
-    {
-        "memmove",
-        (void *)memmove
-    },
-    {
-        "memset",
-        (void *)memset
-    },
-    {
-        "memcpy",
-        (void *)memcpy
+        "calloc",
+        (void *)calloc
     },
     {
         "malloc",
@@ -1452,10 +1456,6 @@ static hook_t hooks[] = {
     {
         "atoi",
         (void *)atoi
-    },
-    {
-        "calloc",
-        (void *)calloc
     },
     {
         "gmtime",
