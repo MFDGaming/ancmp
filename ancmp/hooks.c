@@ -418,19 +418,57 @@ size_t android_strlen_chk(const char *s, size_t s_len) {
 }
 
 FLOAT_ABI_FIX int android_isinff(float x) {
-    return isinf(x);
+    union {
+        float f;
+        unsigned int u;
+    } value;
+    unsigned int exp, frac;
+
+    value.f = x;
+    exp  = (value.u >> 23) & 0xFF;
+    frac = value.u & 0x7FFFFF;
+
+    return (exp == 0xFF) && (frac == 0);
 }
 
 FLOAT_ABI_FIX int android_isfinitef(float x) {
-    return isfinite(x);
+    union {
+        float f;
+        unsigned int u;
+    } value;
+    unsigned int exp;
+
+    value.f = x;
+    exp = (value.u >> 23) & 0xFF;
+
+    return exp != 0xFF;
 }
  
 FLOAT_ABI_FIX int android_isfinite(double x) {
-    return isfinite(x);
+    union {
+        double d;
+        uint64_t u;
+    } value;
+    unsigned int exp;
+
+    value.d = x;
+    exp = (unsigned int)((value.u >> 52) & 0x7FF);
+
+    return exp != 0x7FF;
 }
 
-FLOAT_ABI_FIX int android_isnanf(float x) {\
-    return isnan(x);
+FLOAT_ABI_FIX int android_isnanf(float x) {
+    union {
+        float f;
+        unsigned int u;
+    } value;
+    unsigned int exp, frac;
+
+    value.f = x;
+    exp  = (value.u >> 23) & 0xFF;
+    frac = value.u & 0x7FFFFF;
+
+    return (exp == 0xFF) && (frac != 0);
 }
 
 void android_assert2(const char *__file, int __line, const char *__function, const char *__msg) {

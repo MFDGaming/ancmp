@@ -38,7 +38,7 @@ FLOAT_ABI_FIX float android_sqrtf(float x) {
 }
 
 FLOAT_ABI_FIX float android_atanf(float x) {
-    return (float)atanf((double)x);
+    return (float)atan((double)x);
 }
 
 FLOAT_ABI_FIX double android_fmod(double x, double y) {
