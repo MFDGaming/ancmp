@@ -2,6 +2,7 @@
 #include "../android_ctypes.h"
 #include "../string/android_string.h"
 #include <stdio.h>
+#include "../tzcode/android_strftime.h"
 
 int android_iswalnum(android_wint_t wc) {
     return android_isalnum(wc);
@@ -122,5 +123,5 @@ size_t android_mbrtowc(android_wchar_t *pwc, const char *s, size_t n, android_mb
 }
 
 size_t android_wcsftime(android_wchar_t *wcs, size_t maxsize, const android_wchar_t *format,  const struct tm *timptr) {
-    return strftime((char*)wcs, maxsize, (const char*)format, timptr);
+    return android_strftime((char*)wcs, maxsize, (const char*)format, timptr);
 }

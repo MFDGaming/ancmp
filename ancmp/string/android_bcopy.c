@@ -33,7 +33,6 @@
 
 #include "android_bcopy.h"
 
-#include <string.h>
 /*
  * sizeof(word) MUST BE A POWER OF TWO
  * SO THAT wmask BELOW IS ALL ONES
