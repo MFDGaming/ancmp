@@ -23,12 +23,14 @@
 #include "android_elf.h"
 
 #if defined(_MSC_VER)
-/*
-    #include <intrin.h>
-    #define GET_RETURN_ADDRESS() _ReturnAddress()*/
-    #define GET_RETURN_ADDRESS() 0
+__declspec(naked) void *GET_RETURN_ADDRESS() {
+    __asm {
+        mov eax, [esp + 4]
+        ret
+    }
+}
 #else
-    #define GET_RETURN_ADDRESS() __builtin_return_address(0)
+#define GET_RETURN_ADDRESS() __builtin_return_address(0)
 #endif
 
 /* This file hijacks the symbols stubbed out in libdl.so. */
