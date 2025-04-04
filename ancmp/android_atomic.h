@@ -1,8 +1,9 @@
 #ifndef ANCMP_ANDROID_ATOMIC_H
 #define ANCMP_ANDROID_ATOMIC_H
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_MSC_VER)
 #include <windows.h>
+
 void ANDROID_MEMBAR_FULL(void);
 #else
 #define ANDROID_MEMBAR_FULL __sync_synchronize

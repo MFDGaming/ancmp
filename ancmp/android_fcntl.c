@@ -3,6 +3,7 @@
 #include <stdio.h>
 #ifdef _WIN32
 #include <winsock2.h>
+#include <windows.h>
 #include <io.h>
 #include <fcntl.h>
 #include "android_stat.h"
@@ -86,7 +87,7 @@ int android_fcntl(int fd, int op, ...) {
             cur_pos.LowPart = SetFilePointer(hFile, dist.LowPart, &dist.HighPart, FILE_CURRENT);
             cur_pos.HighPart = dist.HighPart;
     
-            if (cur_pos.LowPart == -1 && GetLastError() != NO_ERROR) {
+            if (cur_pos.LowPart == -1 && GetLastError() != 0) {
                 va_end(args);
                 return -1;
             }
@@ -94,7 +95,7 @@ int android_fcntl(int fd, int op, ...) {
         } else if (flock->l_whence == SEEK_END) {
             LARGE_INTEGER file_size;
             file_size.LowPart = GetFileSize(hFile, (LPDWORD)&file_size.HighPart);
-            if(file_size.LowPart == -1 && GetLastError() != NO_ERROR) {
+            if(file_size.LowPart == -1 && GetLastError() != 0) {
                 va_end(args);
                 return -1;
             }

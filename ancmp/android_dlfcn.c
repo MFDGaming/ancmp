@@ -22,7 +22,7 @@
 #include "linker_format.h"
 #include "android_elf.h"
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(_WIN32)
 __declspec(naked) void *GET_RETURN_ADDRESS() {
     __asm {
         mov eax, [esp + 4]
