@@ -189,9 +189,9 @@ int android_fstat(int fd, android_stat_t *statbuf) {
     int ret = fstat(fd, &tmp);
     native_to_android(&tmp, statbuf);
     if (ret == 0) {
-        printf("\x1b[32mSuccessfully ran stat() for %d\x1b[0m\n", fd);
+        printf("\x1b[32mSuccessfully ran fstat() for %d\x1b[0m\n", fd);
     } else {
-        printf("\x1b[31mFailed to run stat() for %d due to %d\x1b[0m\n", fd, errno);
+        printf("\x1b[31mFailed to run fstat() for %d due to %d\x1b[0m\n", fd, errno);
     }
     return ret;
 }

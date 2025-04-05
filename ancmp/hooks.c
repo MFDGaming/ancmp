@@ -294,6 +294,14 @@ int android_unlink(const char *pathname) {
     return ret ? 0 : -1;
 }
 
+int android_rmdir(const char *pathname) {
+    BOOL ret = RemoveDirectory(pathname);
+    if (!ret) {
+        printf("\x1b[31mFailed to remove directory %s due to %lu\x1b[0m\n", pathname, GetLastError());
+    }
+    return ret ? 0 : -1;
+}
+
 int android_shutdown(int sockfd, int how) {
     return shutdown(sockfd, how);
 }
@@ -321,6 +329,7 @@ int android_shutdown(int sockfd, int how) {
 #define android_remove remove
 #define android_rename rename
 #define android_unlink unlink
+#define android_rmdir rmdir
 #define android_shutdown shutdown
 #endif
 #ifdef _WIN32
@@ -1375,6 +1384,10 @@ static hook_t hooks[] = {
         (void *)android_strftime
     },
     {
+        "rmdir",
+        (void *)android_rmdir
+    },
+    {
         "pread",
         (void *)pread
     },
@@ -1449,10 +1462,6 @@ static hook_t hooks[] = {
     {
         "raise",
         (void *)raise
-    },
-    {
-        "rmdir",
-        (void *)rmdir
     },
     {
         "perror",

@@ -3,6 +3,16 @@
 
 #include "ancmp_stdint.h"
 
+#define ANDROID_DT_UNKNOWN     0
+#define ANDROID_DT_FIFO        1
+#define ANDROID_DT_CHR         2
+#define ANDROID_DT_DIR         4
+#define ANDROID_DT_BLK         6
+#define ANDROID_DT_REG         8
+#define ANDROID_DT_LNK         10
+#define ANDROID_DT_SOCK        12
+#define ANDROID_DT_WHT         14
+
 typedef struct {
     uint64_t          d_ino;
     int64_t           d_off;
@@ -17,7 +27,8 @@ typedef struct {
 
 typedef struct android_DIR {
     HANDLE hFind;
-    WIN32_FIND_DATA findFileData;
+    WIN32_FIND_DATAA findFileData;
+    volatile long first;
 } android_DIR;
 
 android_DIR *android_opendir(const char *name);
