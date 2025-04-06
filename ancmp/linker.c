@@ -61,6 +61,7 @@
 #include "posix_funcs.h"
 #include "hooks.h"
 #include "android_futex.h"
+#include "android_errno.h"
 
 #define ALLOW_SYMBOLS_FROM_MAIN 1
 #define SO_MAX 128
@@ -2116,10 +2117,14 @@ static void parse_preloads(const char *path, char *delim)
 }
 
 void android_linker_init(void) {
+    if (!android_errno_init()) {
+        puts("android_errno_init failed");
+        exit(1);
+    }
 #ifdef _WIN32
     WSADATA wsaData;
     if(!memmap_init(1024*1024*100, 4096)) {
-        puts("meminit failed");
+        puts("memmap_init failed");
         exit(1);
     }
     if (!android_futex_init()) {

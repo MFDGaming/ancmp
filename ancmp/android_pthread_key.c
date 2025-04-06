@@ -21,7 +21,7 @@ int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_fun
         return ANDROID_EINVAL;
     }
 #ifdef _WIN32
-    for (i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
+    for (i = 5; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
         if (InterlockedCompareExchange(&tls_free[i], 1, 0) == 0) {
             *key = i;
             InterlockedExchangePointer(&tls_destructors[i], (void *)destructor_function);

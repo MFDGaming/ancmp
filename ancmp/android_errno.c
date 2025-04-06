@@ -2,6 +2,7 @@
 #include <errno.h>
 #include "android_atomic.h"
 #include <string.h>
+#include <stdlib.h>
 
 int no_to_android(int no) {
     int android_no;
@@ -1337,10 +1338,54 @@ int no_to_native(int android_no) {
     return no;
 }
 
-volatile int *android_errno(void) {
-    static volatile int android_no;
-    android_atomic_swap(no_to_android(errno), &android_no);
-    return &android_no;
+#ifdef _WIN32
+DWORD android_errno_key;
+#else
+pthread_key_t android_errno_key;
+#endif
+
+int android_errno_init(void) {
+    void *errno_alloc = calloc(1, sizeof(int));
+    if (errno_alloc == NULL) {
+        return 0;
+    }
+#ifdef _WIN32
+    android_errno_key = TlsAlloc();
+    if (android_errno_key == TLS_OUT_OF_INDEXES) {
+        free(errno_alloc);
+        return 0;
+    }
+    if (!TlsSetValue(android_errno_key, errno_alloc)) {
+        free(errno_alloc);
+        return 0;
+    }
+#else
+    if (pthread_key_create(&android_errno_key, NULL) != 0) {
+        free(errno_alloc);
+        return 0;
+    }
+    if (pthread_setspecific(android_errno_key, errno_alloc) != 0) {
+        free(errno_alloc);
+        return 0;
+    }
+#endif
+    return 1;
+}
+
+int *android_errno(void) {
+    static int dummy = 0;
+#ifdef _WIN32
+    int *ret = (int *)TlsGetValue(android_errno_key);
+#else
+    int *ret = (int *)pthread_getspecific(android_errno_key);
+#endif
+    if (!ret) {
+        return &dummy;
+    }
+    if (errno != 0) {
+        *ret = no_to_android(errno);
+    }
+    return ret;
 }
 
 char *android_strerror(int errnum) {

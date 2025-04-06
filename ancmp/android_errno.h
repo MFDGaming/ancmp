@@ -1,6 +1,12 @@
 #ifndef ANCMP_ANDROID_ERRNO_H
 #define ANCMP_ANDROID_ERRNO_H
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
 #define ANDROID_EPERM 1  
 #define ANDROID_ENOENT 2  
 #define ANDROID_ESRCH 3  
@@ -134,7 +140,15 @@
 #define ANDROID_EOWNERDEAD 130  
 #define ANDROID_ENOTRECOVERABLE 131 
 
-volatile int *android_errno(void);
+#ifdef _WIN32
+extern DWORD android_errno_key;
+#else
+extern pthread_key_t android_errno_key;
+#endif
+
+int android_errno_init(void);
+
+int *android_errno(void);
 
 char *android_strerror(int errnum);
 
