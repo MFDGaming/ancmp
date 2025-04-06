@@ -31,6 +31,20 @@ typedef struct {
     int tz_dsttime;
 } android_timezone_t;
 
+typedef struct {
+    int     tm_sec;
+    int     tm_min;
+    int     tm_hour;
+    int     tm_mday;
+    int     tm_mon;
+    int     tm_year;
+    int     tm_wday;
+    int     tm_yday;
+    int     tm_isdst;
+    long int tm_gmtoff;
+    const char *tm_zone;
+ } android_tm_t;
+
 typedef int android_clockid_t;
 
 struct tm *android_localtime_r(const long *timep, struct tm *result);
@@ -40,6 +54,12 @@ int android_clock_gettime(android_clockid_t clk_id, android_timespec_t *tp);
 int android_gettimeofday(android_timeval_t *tp, android_timezone_t *tzp);
 
 int android_nanosleep(const android_timespec_t *ts, android_timespec_t *rem);
+
+android_time_t android_time(android_time_t *tloc);
+
+android_tm_t *android_gmtime(const android_time_t *timer);
+
+android_time_t android_mktime(struct tm *timeptr);
 
 #else
 #include <sys/time.h>
@@ -56,6 +76,9 @@ int android_nanosleep(const android_timespec_t *ts, android_timespec_t *rem);
 #define android_clock_gettime clock_gettime
 #define android_gettimeofday gettimeofday
 #define android_nanosleep nanosleep
+#define android_time time
+#define android_gmtime gmtime
+#define android_mktime mktime
 #endif
 
 int android_ftime(android_timeb_t *tp);

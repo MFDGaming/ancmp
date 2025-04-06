@@ -196,6 +196,36 @@ int android_nanosleep(const android_timespec_t *req, android_timespec_t *rem) {
     return 0;
 }
 
+android_time_t android_time(android_time_t *tloc) {
+    time_t t = time(NULL);
+    if (tloc) *tloc = (android_time_t)t;
+    return (android_time_t)t;
+}
+
+android_tm_t *android_gmtime(const android_time_t *timer) {
+    static android_tm_t tm;
+    struct tm *real_tm;
+    time_t t = (time_t)*timer;
+    real_tm = gmtime(&t);
+    tm.tm_sec = real_tm->tm_sec;
+    tm.tm_min = real_tm->tm_min;
+    tm.tm_hour = real_tm->tm_hour;
+    tm.tm_mday = real_tm->tm_mday;
+    tm.tm_mon = real_tm->tm_mon;
+    tm.tm_year = real_tm->tm_year;
+    tm.tm_wday = real_tm->tm_wday;
+    tm.tm_yday = real_tm->tm_yday;
+    tm.tm_isdst = real_tm->tm_isdst;
+    tm.tm_gmtoff = 0;
+    tm.tm_zone = "UTC";
+    return &tm;
+}
+
+android_time_t android_mktime(struct tm *timeptr) {
+    time_t t = mktime(timeptr);
+    return (android_time_t)t;
+}
+
 #endif
 
 int android_ftime(android_timeb_t *tp) {

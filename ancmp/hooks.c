@@ -1160,6 +1160,18 @@ static hook_t hooks[] = {
         (void *)android_ftime
     },
     {
+        "time",
+        (void *)android_time
+    },
+    {
+        "gmtime",
+        (void *)android_gmtime
+    },
+    {
+        "mktime",
+        (void *)android_mktime
+    },
+    {
         "towupper",
         (void *)android_towupper
     },
@@ -1440,24 +1452,12 @@ static hook_t hooks[] = {
         (void *)abort
     },
     {
-        "time",
-        (void *)time
-    },
-    {
-        "mktime",
-        (void *)mktime
-    },
-    {
         "access",
         (void *)access
     },
     {
         "atoi",
         (void *)atoi
-    },
-    {
-        "gmtime",
-        (void *)gmtime
     },
     {
         "raise",
