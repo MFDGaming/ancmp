@@ -88,18 +88,17 @@ typedef struct {
     void *arg;
 } thread_wrapper_data_t;
 
-static void android_pthread_call_destroy(android_pthread_internal_t *thread) {
-    int i;
-    for (i = 0; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
-        if (InterlockedCompareExchange(&tls_free[i], 1, 1) == 1) {
-            void *destructor = InterlockedCompareExchangePointer(&tls_destructors[i], NULL, NULL);
-            if (destructor != NULL) {
-                if (thread->tls[i] != NULL) {
-                    ((void (*)(void *))destructor)(thread->tls[i]);
-                }
-            }
+static void android_pthread_call_destroy(void) {
+    android_pthread_destructor_t *current;
+    
+    WaitForSingleObject(android_pthread_destructors_mutex, INFINITE);
+    for (current = android_pthread_destructors; current != NULL; current = current->next) {
+        void *val = TlsGetValue(current->tls_index);
+        if (val && current->destructor_function) {
+            current->destructor_function(val);
         }
     }
+    ReleaseMutex(android_pthread_destructors_mutex);
 }
 
 static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
@@ -118,9 +117,9 @@ static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
         free(errno_alloc);
         return ANDROID_EACCES;
     }
-    thread->tls[ANDROID_TLS_SLOT_ERRNO] = errno_alloc;
+
     ret = (DWORD)thread->start_func(thread->start_arg);
-    android_pthread_call_destroy(thread);
+    android_pthread_call_destroy();
     if (thread->is_detached) {
         free(thread);
     }
@@ -179,9 +178,6 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
         return ANDROID_EAGAIN;
     }
     t->is_detached = attr_sv.flags & ANDROID_PTHREAD_ATTR_FLAG_DETACHED;
-    memset(t->tls, 0, sizeof(void *) * ANDROID_BIONIC_TLS_SLOTS);
-    t->tls[ANDROID_TLS_SLOT_SELF] = (void *)t->tls;
-    t->tls[ANDROID_TLS_SLOT_THREAD_ID] = (void *)t;
     t->is_main_thread = FALSE;
     t->start_func = start_routine;
     t->start_arg = arg;
@@ -258,6 +254,9 @@ int android_pthread_detach(android_pthread_t thid) {
     if (!thrd->is_detached) {
         return ANDROID_EINVAL;
     }
+    if (thrd->is_main_thread) {
+        return ANDROID_EINVAL;
+    }
     if (InterlockedCompareExchange(&thrd->is_joined, 1, 0)) {
         if (thrd->thread != NULL) {
             CloseHandle(thrd->thread);
@@ -277,6 +276,9 @@ int android_pthread_join(android_pthread_t thid, void **ret_val) {
         return ANDROID_EINVAL;
     }
     if (thrd->is_detached) {
+        return ANDROID_EINVAL;
+    }
+    if (thrd->is_main_thread) {
         return ANDROID_EINVAL;
     }
     if (InterlockedCompareExchange(&thrd->is_joined, 1, 0) == 0) {

@@ -11,7 +11,7 @@
 
 int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_function)(void *)) {
 #ifdef _WIN32
-    int i;
+    DWORD tls_index;
 #else
     pthread_key_t _key;
     int ret;
@@ -21,14 +21,13 @@ int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_fun
         return ANDROID_EINVAL;
     }
 #ifdef _WIN32
-    for (i = 5; i < ANDROID_BIONIC_TLS_SLOTS; ++i) {
-        if (InterlockedCompareExchange(&tls_free[i], 1, 0) == 0) {
-            *key = i;
-            InterlockedExchangePointer(&tls_destructors[i], (void *)destructor_function);
-            return 0;
-        }
+    tls_index = TlsAlloc();
+    if (tls_index == TLS_OUT_OF_INDEXES) {
+        return ANDROID_EAGAIN;
     }
-    return ANDROID_EAGAIN;
+    *key = (android_pthread_key_t)tls_index;
+    android_pthread_destructors_push(tls_index, destructor_function);
+    return 0;
 #else
     ret = pthread_key_create(&_key, destructor_function);
     *key = (android_pthread_key_t)(_key & 0xffffffff);
@@ -38,14 +37,14 @@ int android_pthread_key_create(android_pthread_key_t *key, void (*destructor_fun
 
 int android_pthread_key_delete(android_pthread_key_t key) {
 #ifdef _WIN32
-    if (key >= ANDROID_BIONIC_TLS_SLOTS || key < 0) {
+    if (key == TLS_OUT_OF_INDEXES) {
         return ANDROID_EINVAL;
     }
-    if (InterlockedCompareExchange(&tls_free[key], 0, 1) == 1) {
-        InterlockedExchangePointer(&tls_destructors[key], NULL);
-        return 0;
+    if (!TlsFree((DWORD)key)) {
+        return ANDROID_EINVAL;
     }
-    return ANDROID_EINVAL;
+    android_pthread_destructors_remove((DWORD)key);
+    return 0;
 #else
     return pthread_key_delete((pthread_key_t)key);
 #endif
@@ -53,25 +52,10 @@ int android_pthread_key_delete(android_pthread_key_t key) {
 
 void *android_pthread_getspecific(android_pthread_key_t key) {
 #ifdef _WIN32
-    void *ret = NULL;
-    android_pthread_internal_t *thread;
-
-    if (key >= ANDROID_BIONIC_TLS_SLOTS || key < 0) {
-        puts("android_pthread_getspecific fail");
+    if (key == TLS_OUT_OF_INDEXES) {
         return NULL;
     }
-    thread = (android_pthread_internal_t *)TlsGetValue(android_thread_storage);
-    if (thread == NULL) {
-        puts("android_pthread_getspecific fail");
-        return NULL;
-    }
-    if (InterlockedCompareExchange(&tls_free[key], 1, 1) == 1) {
-        ANDROID_MEMBAR_FULL();
-        ret = thread->tls[key];
-    }
-    /* puts("android_pthread_getspecific success");
-    printf("%p\n", ret); */
-    return ret;
+    return TlsGetValue((DWORD)key);
 #else
     return pthread_getspecific((pthread_key_t)key);
 #endif
@@ -79,21 +63,13 @@ void *android_pthread_getspecific(android_pthread_key_t key) {
 
 int android_pthread_setspecific(android_pthread_key_t key, const void *ptr) {
 #ifdef _WIN32
-    android_pthread_internal_t *thread;
-
-    if (key >= ANDROID_BIONIC_TLS_SLOTS || key < 0) {
+    if (key == TLS_OUT_OF_INDEXES) {
         return ANDROID_EINVAL;
     }
-    thread = (android_pthread_internal_t *)TlsGetValue(android_thread_storage);
-    if (thread == NULL) {
-        return ANDROID_EAGAIN;
+    if (!TlsSetValue((DWORD)key, (void *)ptr)) {
+        return ANDROID_EINVAL;
     }
-    if (InterlockedCompareExchange(&tls_free[key], 1, 1) == 1) {
-        thread->tls[key] = (void *)ptr;
-        ANDROID_MEMBAR_FULL();
-        return 0;
-    }
-    return ANDROID_EINVAL;
+    return 0;
 #else
     return pthread_setspecific((pthread_key_t)key, ptr);
 #endif
