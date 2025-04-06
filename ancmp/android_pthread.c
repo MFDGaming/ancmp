@@ -108,15 +108,15 @@ static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
     void *errno_alloc;
 
     if (!TlsSetValue(android_thread_storage, lpParam)) {
-        return (void *)ANDROID_EACCES;
+        return ANDROID_EACCES;
     }
     errno_alloc = calloc(1, sizeof(int));
     if (!errno_alloc) {
-        return (void *)ANDROID_EACCES;
+        return ANDROID_EACCES;
     }
     if (!TlsSetValue(android_errno_key, errno_alloc)) {
         free(errno_alloc);
-        return (void *)ANDROID_EACCES;
+        return ANDROID_EACCES;
     }
     thread->tls[ANDROID_TLS_SLOT_ERRNO] = errno_alloc;
     ret = (DWORD)thread->start_func(thread->start_arg);
