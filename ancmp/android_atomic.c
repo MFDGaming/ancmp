@@ -23,9 +23,17 @@ int android_atomic_swap(int _new, volatile int *addr) {
 }
 
 int android_atomic_dec(volatile int *addr) {
-    int old;
-    do {
-        old = *addr;
-    } while (android_atomic_cmpxchg(old, old-1, addr));
-    return old;
+#if defined(_WIN32) && defined(_MSC_VER)
+    return InterlockedDecrement((LONG volatile *)addr) + 1;
+#else
+    return __sync_fetch_and_sub(addr, 1);
+#endif
+}
+
+int android_atomic_inc(volatile int *addr) {
+#if defined(_WIN32) && defined(_MSC_VER)
+    return InterlockedIncrement((LONG volatile *)addr) - 1;
+#else
+    return __sync_fetch_and_add(addr, 1);
+#endif
 }

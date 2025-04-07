@@ -10,6 +10,7 @@
 #include <sys/syscall.h>
 #endif
 #include "android_errno.h"
+#include "android_thread_id.h"
 
 void android_normal_lock(android_pthread_mutex_t *mutex, int shared) {
     const int unlocked           = shared | ANDROID_MUTEX_STATE_BITS_UNLOCKED;
@@ -105,11 +106,7 @@ int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
         }
         return ANDROID_EBUSY;
     }
-#ifdef _WIN32
-    tid = GetCurrentThreadId();
-#else
-    tid = syscall(SYS_gettid);
-#endif
+    tid = android_thread_id_get_current();
     if (tid == ANDROID_MUTEX_OWNER_FROM_BITS(mvalue)) {
         return android_recursive_increment(mutex, mvalue, mtype);
     }
@@ -134,11 +131,7 @@ int android_pthread_mutex_lock(android_pthread_mutex_t *mutex) {
         android_normal_lock(mutex, shared);
         return 0;
     }
-#ifdef _WIN32
-    tid = GetCurrentThreadId();
-#else
-    tid = syscall(SYS_gettid);
-#endif
+    tid = android_thread_id_get_current();
     if (tid == ANDROID_MUTEX_OWNER_FROM_BITS(mvalue)) {
         return android_recursive_increment(mutex, mvalue, mtype);
     }
@@ -188,11 +181,7 @@ int android_pthread_mutex_unlock(android_pthread_mutex_t *mutex) {
         android_normal_unlock(mutex, shared);
         return 0;
     }
-#ifdef _WIN32
-    tid = GetCurrentThreadId();
-#else
-    tid = syscall(SYS_gettid);
-#endif
+    tid = android_thread_id_get_current();
     if (tid != ANDROID_MUTEX_OWNER_FROM_BITS(mvalue)) {
         return ANDROID_EPERM;
     }

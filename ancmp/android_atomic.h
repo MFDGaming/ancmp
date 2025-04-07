@@ -15,4 +15,6 @@ int android_atomic_swap(int _new, volatile int *addr);
 
 int android_atomic_dec(volatile int *addr);
 
+int android_atomic_inc(volatile int *addr);
+
 #endif

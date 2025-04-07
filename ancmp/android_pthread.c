@@ -6,6 +6,7 @@
 #include <string.h>
 #include "android_tls.h"
 #include "android_atomic.h"
+#include "android_thread_id.h"
 #ifdef _WIN32
 #include <windows.h>
 #include "android_pthread_threads.h"
@@ -105,6 +106,11 @@ static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
     android_pthread_internal_t *thread = (android_pthread_internal_t *)lpParam;
     DWORD ret;
     void *errno_alloc;
+    int thread_id = android_thread_id_acquire();
+
+    if (thread_id == -1) {
+        return ANDROID_EACCES;
+    }
 
     if (!TlsSetValue(android_thread_storage, lpParam)) {
         return ANDROID_EACCES;
@@ -119,6 +125,7 @@ static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
     }
 
     ret = (DWORD)thread->start_func(thread->start_arg);
+    android_reusable_thread_id_push(thread_id);
     android_pthread_call_destroy();
     if (thread->is_detached) {
         free(thread);
@@ -140,7 +147,14 @@ static void *thread_wrapper(void *arg) {
     android_pthread_wrapper_args_t args = *(android_pthread_wrapper_args_t *)arg;
     void *errno_alloc;
     void *ret;
+    int thread_id = android_thread_id_acquire();
+
     free(arg);
+
+    if (thread_id == -1) {
+        return (void *)ANDROID_EACCES;
+    }
+    
     errno_alloc = calloc(1, sizeof(int));
     if (!errno_alloc) {
         return (void *)ANDROID_EACCES;
@@ -150,6 +164,7 @@ static void *thread_wrapper(void *arg) {
         return (void *)ANDROID_EACCES;
     }
     ret = args.start_routine(args.arg);
+    android_reusable_thread_id_push(thread_id);
     if (errno_alloc != NULL) {
         free(errno_alloc);
     }

@@ -62,6 +62,7 @@
 #include "hooks.h"
 #include "android_futex.h"
 #include "android_errno.h"
+#include "android_thread_id.h"
 
 #define ALLOW_SYMBOLS_FROM_MAIN 1
 #define SO_MAX 128
@@ -2117,12 +2118,18 @@ static void parse_preloads(const char *path, char *delim)
 }
 
 void android_linker_init(void) {
+#ifdef _WIN32
+    WSADATA wsaData;
+#endif
+    if (!android_thread_id_init()) {
+        puts("android_thread_id_init failed");
+        exit(1);
+    }
     if (!android_errno_init()) {
         puts("android_errno_init failed");
         exit(1);
     }
 #ifdef _WIN32
-    WSADATA wsaData;
     if(!memmap_init(1024*1024*100, 4096)) {
         puts("memmap_init failed");
         exit(1);
