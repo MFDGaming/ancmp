@@ -1,5 +1,6 @@
 #include "android_thread_id.h"
 #include "android_atomic.h"
+#include <stdlib.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -43,7 +44,7 @@ int android_thread_id_init(void) {
     if (pthread_key_create(&android_thread_id_storage, NULL) != 0) {
         return 0;
     }
-    if (pthread_setspecific(android_thread_id_storage, 1) != 0) {
+    if (pthread_setspecific(android_thread_id_storage, (void *)1) != 0) {
         pthread_key_delete(android_thread_id_storage);
         return 0;
     }
