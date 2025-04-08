@@ -8,30 +8,29 @@
 #include <time.h>
 #endif
 
-volatile int android_thread_id = 2;
 
-typedef struct _android_reusable_thread_id_t {
-    struct _android_reusable_thread_id_t *next;
-    int thread_id;
-} android_reusable_thread_id_t;
+#if defined(_WIN32) && defined(_MSC_VER)
+#define ANDROID_THREAD_ID_LIST_TYPE unsigned long
+#else
+#define ANDROID_THREAD_ID_LIST_TYPE unsigned int
+#endif
 
-android_reusable_thread_id_t *android_reusable_thread_ids = NULL;
+#define ANDROID_THREAD_ID_SHIFT (sizeof(ANDROID_THREAD_ID_LIST_TYPE) + 1)
+#define ANDROID_THREAD_ID_MASK ((1 << ANDROID_THREAD_ID_SHIFT) - 1)
+#define ANDROID_THREAD_ID_LIST_SIZE (0x10000 >> ANDROID_THREAD_ID_SHIFT)
+
+volatile ANDROID_THREAD_ID_LIST_TYPE android_thread_id_free_list[ANDROID_THREAD_ID_LIST_SIZE];
 
 #ifdef _WIN32
-HANDLE android_reusable_thread_id_mutex;
 DWORD android_thread_id_storage;
 #else
-pthread_mutex_t android_reusable_thread_id_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_key_t android_thread_id_storage;
 #endif
 
-
 int android_thread_id_init(void) {
+    memset((void *)android_thread_id_free_list, 0xff, sizeof(android_thread_id_free_list));
+    android_thread_id_alloc(1);
 #ifdef _WIN32
-    android_reusable_thread_id_mutex = CreateMutex(NULL, FALSE, NULL);
-    if (android_reusable_thread_id_mutex == NULL) {
-        return 0;
-    }
     android_thread_id_storage = TlsAlloc();
     if (android_thread_id_storage == TLS_OUT_OF_INDEXES) {
         return 0;
@@ -52,55 +51,32 @@ int android_thread_id_init(void) {
     return 1;
 }
 
-int android_reusable_thread_id_pop(void) {
-    int thread_id = -1;
-#ifdef _WIN32
-    WaitForSingleObject(android_reusable_thread_id_mutex, INFINITE);
-#else
-    pthread_mutex_lock(&android_reusable_thread_id_mutex);
-#endif
-    if (android_reusable_thread_ids != NULL) {
-        android_reusable_thread_id_t *current = android_reusable_thread_ids;
-        android_reusable_thread_ids = android_reusable_thread_ids->next;
-        thread_id = current->thread_id;
-        free(current);
-    }
-#ifdef _WIN32
-    ReleaseMutex(android_reusable_thread_id_mutex);
-#else
-    pthread_mutex_unlock(&android_reusable_thread_id_mutex);
-#endif
-    return thread_id;
-}
+int android_thread_id_alloc(int thread_id) {
+    int old_value, new_value;
+    do {
+        old_value = android_thread_id_free_list[thread_id >> ANDROID_THREAD_ID_SHIFT];
+        
+        if ((old_value & (1 << (thread_id & ANDROID_THREAD_ID_MASK))) == 0) {
+            return 0;
+        }
+        new_value = old_value & ~(1 << (thread_id & ANDROID_THREAD_ID_MASK));
 
-int android_reusable_thread_id_push(int thread_id) {
-    android_reusable_thread_id_t *entry = (android_reusable_thread_id_t *)malloc(sizeof(android_reusable_thread_id_t));
-    if (!entry) {
-        return 0;
-    }
-    entry->thread_id = thread_id;
-#ifdef _WIN32
-    WaitForSingleObject(android_reusable_thread_id_mutex, INFINITE);
-#else
-    pthread_mutex_lock(&android_reusable_thread_id_mutex);
-#endif
-    entry->next = android_reusable_thread_ids;
-    android_reusable_thread_ids = entry;
-#ifdef _WIN32
-    ReleaseMutex(android_reusable_thread_id_mutex);
-#else
-    pthread_mutex_unlock(&android_reusable_thread_id_mutex);
-#endif
+    } while (android_atomic_cmpxchg(old_value, new_value, (volatile int *)&android_thread_id_free_list[thread_id >> ANDROID_THREAD_ID_SHIFT]));
     return 1;
 }
-#include <stdio.h>
-int android_thread_id_new(void) {
-    int thread_id = android_atomic_inc(&android_thread_id);
-    if (thread_id <= 0xffff) {
-        return thread_id;
+
+void android_thread_id_free(int thread_id) {
+    android_atomic_or(1 << (thread_id & ANDROID_THREAD_ID_MASK), (volatile int *)&android_thread_id_free_list[thread_id >> ANDROID_THREAD_ID_SHIFT]);
+}
+
+int android_thread_id_find_free(void) {
+    int thread_id;
+    for (thread_id = 2; thread_id <= 0xffff; ++thread_id) {
+        if (android_thread_id_alloc(thread_id)) {
+            return thread_id;
+        }
     }
-    android_atomic_swap(0x10000, &android_thread_id);
-    return android_reusable_thread_id_pop();
+    return -1;
 }
 
 int android_thread_id_acquire(void) {
@@ -111,7 +87,7 @@ int android_thread_id_acquire(void) {
     ts.tv_nsec = 0;
 #endif
     for (i = 0; i < 10; ++i) {
-        int thread_id = android_thread_id_new();
+        int thread_id = android_thread_id_find_free();
         if (thread_id != -1) {
 #ifdef _WIN32
             TlsSetValue(android_thread_id_storage, (void *)thread_id);

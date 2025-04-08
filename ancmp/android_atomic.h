@@ -17,4 +17,8 @@ int android_atomic_dec(volatile int *addr);
 
 int android_atomic_inc(volatile int *addr);
 
+int android_atomic_or(int _mask, volatile int *addr);
+
+int android_atomic_and(int _mask, volatile int *addr);
+
 #endif

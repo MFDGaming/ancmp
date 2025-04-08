@@ -125,7 +125,7 @@ static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
     }
 
     ret = (DWORD)thread->start_func(thread->start_arg);
-    android_reusable_thread_id_push(thread_id);
+    android_thread_id_free(thread_id);
     android_pthread_call_destroy();
     if (thread->is_detached) {
         free(thread);
