@@ -164,7 +164,7 @@ static void *thread_wrapper(void *arg) {
         return (void *)ANDROID_EACCES;
     }
     ret = args.start_routine(args.arg);
-    android_reusable_thread_id_push(thread_id);
+    android_thread_id_free(thread_id);
     if (errno_alloc != NULL) {
         free(errno_alloc);
     }
