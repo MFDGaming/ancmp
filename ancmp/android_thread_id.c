@@ -1,6 +1,7 @@
 #include "android_thread_id.h"
 #include "android_atomic.h"
 #include <stdlib.h>
+#include <string.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
