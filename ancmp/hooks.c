@@ -54,6 +54,8 @@
 #include "linker_format.h"
 #include "tzcode/android_strftime.h"
 #include "android_sprint.h"
+#include "android_cxa_guard.h"
+#include "android_operator_new.h"
 
 typedef struct {
     char *name;
@@ -1398,6 +1400,54 @@ static hook_t hooks[] = {
     {
         "rmdir",
         (void *)android_rmdir
+    },
+    {
+        "__dso_handle",
+        (void *)&android_dso_handle
+    },
+    {
+        "__cxa_guard_acquire",
+        (void *)android_cxa_guard_acquire
+    },
+    {
+        "__cxa_guard_release",
+        (void *)android_cxa_guard_release
+    },
+    {
+        "__cxa_guard_abort",
+        (void *)android_cxa_guard_abort
+    },
+    {
+        "_Znwj",
+        (void *)android_operator_new
+    },
+    {
+        "_Znaj",
+        (void *)android_operator_new_arr
+    },
+    {
+        "_ZdlPv",
+        (void *)android_operator_delete
+    },
+    {
+        "_ZdaPv",
+        (void *)android_operator_delete_arr
+    },
+    {
+        "_ZnwjRKSt9nothrow_t",
+        (void *)android_operator_new_nothrow
+    },
+    {
+        "_ZnajRKSt9nothrow_t",
+        (void *)android_operator_new_arr_nothrow
+    },
+    {
+        "_ZdlPvRKSt9nothrow_t",
+        (void *)android_operator_delete_nothrow
+    },
+    {
+        "_ZdaPvRKSt9nothrow_t",
+        (void *)android_operator_delete_arr_nothrow
     },
     {
         "pread",

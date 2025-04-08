@@ -13,6 +13,10 @@ typedef struct _android_cxa_atexit_t {
     int called;
 } android_cxa_atexit_t;
 
+static long android_dso_handle_d = 0xd50;
+
+void *android_dso_handle = (void *)&android_dso_handle_d;
+
 static android_pthread_mutex_t lock = ANDROID_PTHREAD_MUTEX_INITIALIZER;
 
 static android_cxa_atexit_t *android_cxa_atexit_arr = NULL;
