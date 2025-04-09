@@ -32,7 +32,7 @@ int memmap_init(size_t map_len, size_t pg_len) {
             puts("failed to allocate");
             return 0;
         }
-        free_table = malloc(page_count);
+        free_table = (unsigned char *)calloc(page_count, 1);
         if (!free_table) {
 #ifdef _WIN32
             VirtualFree(memory_map, 0, MEM_RELEASE);
@@ -41,7 +41,6 @@ int memmap_init(size_t map_len, size_t pg_len) {
 #endif
             return 0;
         }
-        memset(free_table, 0, page_count);
         is_initialized = 1;
         return 1;
     }
@@ -49,17 +48,15 @@ int memmap_init(size_t map_len, size_t pg_len) {
 }
 
 static long find_free_off(size_t pg_n) {
-    long ret = 0;
     size_t cnt = 0;
     size_t i;
     for (i = 0; i < page_count; ++i) {
-        if (cnt == pg_n) {
-            return ret;
-        }
         if (!free_table[i]) {
             ++cnt;
+            if (cnt == pg_n) {
+                return i - (pg_n - 1);
+            }
         } else {
-            ret = i + 1;
             cnt = 0;
         }
     }
@@ -81,6 +78,9 @@ void *memmap_alloc(void *addr, size_t len, unsigned char overwrite) {
     size_t pg_n = (len / page_size) + ((len % page_size) ? 1 : 0);
     long off = -1;
     void *ret = NULL;
+    if (len == 0) {
+        return NULL;
+    }
     if (!overwrite) {
         android_pthread_mutex_lock(&mapper_mtx);
         off = find_free_off(pg_n);
@@ -105,7 +105,7 @@ void *memmap_alloc(void *addr, size_t len, unsigned char overwrite) {
 int memmap_dealloc(void *addr, size_t len) {
     size_t pg_n;
 
-    if ((uintptr_t)addr < (uintptr_t)memory_map || (uintptr_t)addr+len > (uintptr_t)memory_map+alloc_size) {
+    if (len == 0 || (uintptr_t)addr < (uintptr_t)memory_map || (uintptr_t)addr+len > (uintptr_t)memory_map+alloc_size) {
         return 0;
     }
     pg_n = (len / page_size) + ((len % page_size) ? 1 : 0);
