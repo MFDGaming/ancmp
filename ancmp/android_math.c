@@ -99,3 +99,43 @@ FLOAT_ABI_FIX float android_ldexpf(float x, int exp) {
 FLOAT_ABI_FIX float android_tanf(float x) {
     return (float)tan((double)x);
 }
+
+FLOAT_ABI_FIX double android_cosh(double x) {
+    return cosh(x);
+}
+
+FLOAT_ABI_FIX double android_tan(double x) {
+    return tan(x);
+}
+
+FLOAT_ABI_FIX double android_tanh(double x) {
+    return tanh(x);
+}
+
+FLOAT_ABI_FIX double android_asin(double x) {
+    return asin(x);
+}
+
+FLOAT_ABI_FIX double android_log(double x) {
+    return log(x);
+}
+
+FLOAT_ABI_FIX double android_sinh(double x) {
+    return sinh(x);
+}
+
+FLOAT_ABI_FIX double android_acos(double x) {
+    return acos(x);
+}
+
+FLOAT_ABI_FIX double android_exp(double x) {
+    return exp(x);
+}
+
+FLOAT_ABI_FIX double android_frexp(double x, int *exp) {
+    return frexp(x, exp);
+}
+
+FLOAT_ABI_FIX double android_log10(double x) {
+    return log10(x);
+}

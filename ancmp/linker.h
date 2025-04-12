@@ -37,6 +37,8 @@
 #else
 #if defined(__arm__) || defined(_M_ARM) 
 #define ANDROID_ARM_LINKER
+#else
+#error Unsupported architecture. Only ARM and x86 are presently supported.
 #endif
 #endif
 

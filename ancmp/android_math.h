@@ -51,4 +51,24 @@ float android_ldexpf(float x, int exp) FLOAT_ABI_FIX;
 
 float android_tanf(float x) FLOAT_ABI_FIX;
 
+double android_cosh(double x) FLOAT_ABI_FIX;
+
+double android_tan(double x) FLOAT_ABI_FIX;
+
+double android_tanh(double x) FLOAT_ABI_FIX;
+
+double android_asin(double x) FLOAT_ABI_FIX;
+
+double android_log(double x) FLOAT_ABI_FIX;
+
+double android_sinh(double x) FLOAT_ABI_FIX;
+
+double android_acos(double x) FLOAT_ABI_FIX;
+
+double android_exp(double x) FLOAT_ABI_FIX;
+
+double android_frexp(double x, int *exp) FLOAT_ABI_FIX;
+
+double android_log10(double x) FLOAT_ABI_FIX;
+
 #endif

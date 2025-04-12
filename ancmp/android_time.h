@@ -49,6 +49,8 @@ typedef int android_clockid_t;
 
 struct tm *android_localtime_r(const long *timep, struct tm *result);
 
+struct tm *android_localtime(const android_time_t *timep);
+
 int android_clock_gettime(android_clockid_t clk_id, android_timespec_t *tp);
 
 int android_gettimeofday(android_timeval_t *tp, android_timezone_t *tzp);
@@ -73,6 +75,7 @@ android_time_t android_mktime(struct tm *timeptr);
 #define ANDROID_CLOCK_MONOTONIC CLOCK_MONOTONIC
 
 #define android_localtime_r localtime_r
+#define android_localtime localtime
 #define android_clock_gettime clock_gettime
 #define android_gettimeofday gettimeofday
 #define android_nanosleep nanosleep

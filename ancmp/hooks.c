@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <time.h>
 #include <wchar.h>
+#include "android_fnmatch.h"
 #include "android_pthread.h"
 #include "android_math.h"
 #include "android_io.h"
@@ -482,6 +483,22 @@ FLOAT_ABI_FIX int android_isnanf(float x) {
     return (exp == 0xFF) && (frac != 0);
 }
 
+FLOAT_ABI_FIX double android_nearbyint(double x) {
+    double intpart;
+    double fracpart = modf(x, &intpart);
+
+    if (fabs(fracpart) < 0.5) {
+        return intpart;
+    } else if (fabs(fracpart) > 0.5) {
+        return x > 0.0 ? ceil(x) : floor(x);
+    } else {
+        if (fmod(intpart, 2.0) == 0.0)
+            return intpart;
+        else
+            return x > 0.0 ? intpart + 1.0 : intpart - 1.0;
+    }
+}
+
 void android_assert2(const char *__file, int __line, const char *__function, const char *__msg) {
     printf("Assertion failed: %s\nFile: %s\nLine: %d\nFunction: %s\n", __msg, __file, __line, __function);
     abort();
@@ -708,6 +725,46 @@ static hook_t math_hooks[] = {
         (void *)android_tanf
     },
     {
+        "cosh",
+        (void *)android_cosh
+    },
+    {
+        "tan",
+        (void *)android_tan
+    },
+    {
+        "tanh",
+        (void *)android_tanh
+    },
+    {
+        "asin",
+        (void *)android_asin
+    },
+    {
+        "log",
+        (void *)android_log
+    },
+    {
+        "sinh",
+        (void *)android_sinh
+    },
+    {
+        "acos",
+        (void *)android_acos
+    },
+    {
+        "exp",
+        (void *)android_exp
+    },
+    {
+        "frexp",
+        (void *)android_frexp
+    },
+    {
+        "log10",
+        (void *)android_log10
+    },
+    {
         (char *)NULL,
         (void *)NULL
     }
@@ -759,6 +816,10 @@ static hook_t hooks[] = {
         (void *)android_div
     },
     {
+        "nearbyint",
+        (void *)android_nearbyint
+    },
+    {
         "strcasecmp",
         (void *)android_strcasecmp
     },
@@ -769,6 +830,14 @@ static hook_t hooks[] = {
     {
         "strncasecmp",
         (void *)android_strncasecmp
+    },
+    {
+        "strncat",
+        (void *)android_strncat
+    },
+    {
+        "strncmp",
+        (void *)android_strncmp
     },
     {
         "__errno",
@@ -853,6 +922,10 @@ static hook_t hooks[] = {
     {
         "_tolower_tab_",
         (void *)&android_tolower_tab
+    },
+    {
+        "_toupper_tab_",
+        (void *)&android_toupper_tab
     },
     {
         "_ctype_",
@@ -1091,6 +1164,14 @@ static hook_t hooks[] = {
         (void *)android_localtime_r
     },
     {
+        "localtime",
+        (void *)android_localtime
+    },
+    {
+        "fnmatch",
+        (void *)android_fnmatch
+    },
+    {
         "fsync",
         (void *)android_fsync
     },
@@ -1184,6 +1265,14 @@ static hook_t hooks[] = {
     {
         "wcscmp",
         (void *)android_wcscmp
+    },
+    {
+        "wcscpy",
+        (void *)android_wcscpy
+    },
+    {
+        "wcscat",
+        (void *)android_wcscat
     },
     {
         "wcslen",
@@ -1508,6 +1597,10 @@ static hook_t hooks[] = {
     {
         "atoi",
         (void *)atoi
+    },
+    {
+        "atol",
+        (void *)atol
     },
     {
         "raise",

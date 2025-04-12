@@ -112,6 +112,11 @@ struct tm *android_localtime_r(const android_time_t *timep, struct tm *result) {
     return result;
 }
 
+struct tm *android_localtime(const android_time_t *timep) {
+    static android_tm_t tm;
+    return android_localtime_r(timep, (struct tm *)&tm);
+}
+
 int android_clock_gettime(android_clockid_t clk_id, android_timespec_t *tp) {
     LARGE_INTEGER freq = {0};
     LARGE_INTEGER now;
