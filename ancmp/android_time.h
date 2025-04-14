@@ -3,18 +3,11 @@
 
 #include <time.h>
 
-typedef long android_time_t;
-
-typedef struct {
-    android_time_t  time;
-    unsigned short  millitm;
-    short           timezone;
-    short           dstflag;
-} android_timeb_t;
-
 #ifdef _WIN32
 #define ANDROID_CLOCK_REALTIME 0
 #define ANDROID_CLOCK_MONOTONIC 1
+
+typedef long android_time_t;
 
 typedef struct {
     android_time_t tv_sec;
@@ -66,6 +59,7 @@ android_time_t android_mktime(struct tm *timeptr);
 #else
 #include <sys/time.h>
 
+#define android_time_t time_t
 #define android_clockid_t clockid_t
 #define android_timespec_t struct timespec
 #define android_timeval_t struct timeval
@@ -83,6 +77,13 @@ android_time_t android_mktime(struct tm *timeptr);
 #define android_gmtime gmtime
 #define android_mktime mktime
 #endif
+
+typedef struct {
+    android_time_t  time;
+    unsigned short  millitm;
+    short           timezone;
+    short           dstflag;
+} android_timeb_t;
 
 int android_ftime(android_timeb_t *tp);
 
