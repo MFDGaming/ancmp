@@ -158,6 +158,7 @@ void android_div(div_t *ret, int numerator, int denominator) {
     ret->quot = numerator/denominator;
     ret->rem = numerator%denominator;
 }
+SYSV_WRAPPER(android_div, 3);
 
 static uint64_t seed48[3];
 
@@ -813,7 +814,11 @@ static hook_t hooks[] = {
     },
     {
         "div",
+#ifdef _WIN32
+        (void *)GET_SYSV_WRAPPER(android_div)
+#else
         (void *)android_div
+#endif
     },
     {
         "nearbyint",
