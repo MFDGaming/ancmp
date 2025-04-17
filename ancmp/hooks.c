@@ -587,7 +587,7 @@ static hook_t aeabi_hooks[] = {
         "__aeabi_uldiv",
         (void *)android_aeabi_uldiv
     },
-#if !defined(_MSC_VER) && ANDROID_ARM_LINKER
+#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
     {
         "__aeabi_idivmod",
         (void *)android_aeabi_idivmod

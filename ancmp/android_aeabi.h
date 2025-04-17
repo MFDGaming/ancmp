@@ -4,6 +4,7 @@
 #include "ancmp_stdint.h"
 #include "android_linker_defs.h"
 #include "abi_fix.h"
+#include <stdlib.h>
 
 int android_aeabi_atexit(void *object, void (*destructor)(void *), void *dso_handle);
 
@@ -45,7 +46,7 @@ int64_t android_aeabi_ldiv(int64_t numerator, int64_t denominator);
 
 uint64_t android_aeabi_uldiv(uint64_t numerator, uint64_t denominator);
 
-#if !defined(_MSC_VER) && ANDROID_ARM_LINKER
+#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
 
 void android_aeabi_idivmod(int32_t numerator, int32_t denominator);
 

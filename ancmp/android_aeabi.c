@@ -82,7 +82,7 @@ uint64_t android_aeabi_uldiv(uint64_t numerator, uint64_t denominator) {
     return numerator / denominator;
 }
 
-#if !defined(_MSC_VER) && ANDROID_ARM_LINKER
+#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
 
 void android_aeabi_idivmod(int32_t numerator, int32_t denominator) {
     int32_t quot = numerator / denominator;
