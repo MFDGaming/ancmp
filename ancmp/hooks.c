@@ -32,6 +32,7 @@
 #include "android_errno.h"
 #include "android_time.h"
 #include "wchar/android_wchar.h"
+#include "android_aeabi.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -504,6 +505,111 @@ void android_assert2(const char *__file, int __line, const char *__function, con
     printf("Assertion failed: %s\nFile: %s\nLine: %d\nFunction: %s\n", __msg, __file, __line, __function);
     abort();
 }
+
+static hook_t aeabi_hooks[] = {
+    {
+        "__aeabi_atexit",
+        (void *)android_aeabi_atexit
+    },
+    {
+        "__aeabi_memcpy8",
+        (void *)android_aeabi_memcpy8
+    },
+    {
+        "__aeabi_memcpy4",
+        (void *)android_aeabi_memcpy4
+    },
+    {
+        "__aeabi_memcpy",
+        (void *)android_aeabi_memcpy
+    },
+    {
+        "__aeabi_memmove8",
+        (void *)android_aeabi_memmove8
+    },
+    {
+        "__aeabi_memmove4",
+        (void *)android_aeabi_memmove4
+    },
+    {
+        "__aeabi_memmove",
+        (void *)android_aeabi_memmove
+    },
+    {
+        "__aeabi_memset8",
+        (void *)android_aeabi_memset8
+    },
+    {
+        "__aeabi_memset4",
+        (void *)android_aeabi_memset4
+    },
+    {
+        "__aeabi_memset",
+        (void *)android_aeabi_memset
+    },
+    {
+        "__aeabi_memclr8",
+        (void *)android_aeabi_memclr8
+    },
+    {
+        "__aeabi_memclr4",
+        (void *)android_aeabi_memclr4
+    },
+    {
+        "__aeabi_memclr",
+        (void *)android_aeabi_memclr
+    },
+    {
+        "__aeabi_ul2f",
+        (void *)android_aeabi_ul2f
+    },
+    {
+        "__aeabi_ul2d",
+        (void *)android_aeabi_ul2d
+    },
+    {
+        "__aeabi_d2ulz",
+        (void *)android_aeabi_d2ulz
+    },
+    {
+        "__aeabi_idiv",
+        (void *)android_aeabi_idiv
+    },
+    {
+        "__aeabi_uidiv",
+        (void *)android_aeabi_uidiv
+    },
+    {
+        "__aeabi_ldiv",
+        (void *)android_aeabi_ldiv
+    },
+    {
+        "__aeabi_uldiv",
+        (void *)android_aeabi_uldiv
+    },
+#if !defined(_MSC_VER) && ANDROID_ARM_LINKER
+    {
+        "__aeabi_idivmod",
+        (void *)android_aeabi_idivmod
+    },
+    {
+        "__aeabi_uidivmod",
+        (void *)android_aeabi_uidivmod
+    },
+    {
+        "__aeabi_ldivmod",
+        (void *)android_aeabi_ldivmod
+    },
+    {
+        "__aeabi_uldivmod",
+        (void *)android_aeabi_uldivmod
+    },
+#endif
+    {
+        (char *)NULL,
+        (void *)NULL
+    }
+};
 
 static hook_t pthread_hooks[] = {
     {
@@ -1685,6 +1791,11 @@ void *get_hooked_symbol(char *name) {
         }
     }
     for (hook = &math_hooks[0]; hook->name != NULL; ++hook) {
+        if (strcmp(name, hook->name) == 0) {
+            return hook->addr;
+        }
+    }
+    for (hook = &aeabi_hooks[0]; hook->name != NULL; ++hook) {
         if (strcmp(name, hook->name) == 0) {
             return hook->addr;
         }

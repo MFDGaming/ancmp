@@ -31,16 +31,7 @@
 
 #include <sys/types.h>
 #include "android_elf.h"
-
-#if defined(__i386__) || defined(_M_IX86)
-#define ANDROID_X86_LINKER
-#else
-#if defined(__arm__) || defined(_M_ARM) 
-#define ANDROID_ARM_LINKER
-#else
-#error Unsupported architecture. Only ARM and x86 are presently supported.
-#endif
-#endif
+#include "android_linker_defs.h"
 
 #undef PAGE_MASK
 #undef PAGE_SIZE
