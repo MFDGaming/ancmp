@@ -1320,7 +1320,7 @@ static hook_t hooks[] = {
     },
 #ifdef ANDROID_ARM_LINKER
     {
-        "dl_iterate_phdr",
+        "dl_unwind_find_exidx",
         (void *)android_dl_unwind_find_exidx
     },
 #else
