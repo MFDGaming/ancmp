@@ -58,6 +58,7 @@
 #include "android_sprint.h"
 #include "android_cxa_guard.h"
 #include "android_operator_new.h"
+#include "android_arc4random.h"
 
 typedef struct {
     char *name;
@@ -1652,6 +1653,30 @@ static hook_t hooks[] = {
     {
         "_ZdaPvRKSt9nothrow_t",
         (void *)android_operator_delete_arr_nothrow
+    },
+    {
+        "__arc4_getbyte",
+        (void *)android_arc4_getbyte
+    },
+    {
+        "arc4random_stir",
+        (void *)android_arc4random_stir
+    },
+    {
+        "arc4random_addrandom",
+        (void *)android_arc4random_addrandom
+    },
+    {
+        "arc4random",
+        (void *)android_arc4random
+    },
+    {
+        "arc4random_buf",
+        (void *)android_arc4random_buf
+    },
+    {
+        "arc4random_uniform",
+        (void *)android_arc4random_uniform
     },
     {
         "pread",
