@@ -150,6 +150,8 @@ int android_errno_init(void);
 
 int *android_errno(void);
 
+int android_strerror_r(int errnum, char *strerrbuf, size_t buflen);
+
 char *android_strerror(int errnum);
 
 #endif

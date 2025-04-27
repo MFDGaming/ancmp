@@ -939,6 +939,10 @@ static hook_t hooks[] = {
         (void *)android_strerror
     },
     {
+        "strerror_r",
+        (void *)android_strerror_r
+    },
+    {
         "strncasecmp",
         (void *)android_strncasecmp
     },
@@ -1656,6 +1660,10 @@ static hook_t hooks[] = {
     {
         "strtol",
         (void *)strtol
+    },
+    {
+        "strtoul",
+        (void *)strtoul
     },
     {
         "calloc",

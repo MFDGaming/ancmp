@@ -1338,6 +1338,141 @@ int no_to_native(int android_no) {
     return no;
 }
 
+static const char *errnum_to_str(int errnum) {
+    switch (errnum) {
+        case ANDROID_EPERM: return "Operation not permitted";
+        case ANDROID_ENOENT: return "No such file or directory";
+        case ANDROID_ESRCH: return "No such process";
+        case ANDROID_EINTR: return "Interrupted system call";
+        case ANDROID_EIO: return "I/O error";
+        case ANDROID_ENXIO: return "No such device or address";
+        case ANDROID_E2BIG: return "Argument list too long";
+        case ANDROID_ENOEXEC: return "Exec format error";
+        case ANDROID_EBADF: return "Bad file descriptor";
+        case ANDROID_ECHILD: return "No child processes";
+        case ANDROID_EAGAIN: return "Resource temporarily unavailable";
+        case ANDROID_ENOMEM: return "Out of memory";
+        case ANDROID_EACCES: return "Permission denied";
+        case ANDROID_EFAULT: return "Bad address";
+        case ANDROID_ENOTBLK: return "Block device required";
+        case ANDROID_EBUSY: return "Device or resource busy";
+        case ANDROID_EEXIST: return "File exists";
+        case ANDROID_EXDEV: return "Invalid cross-device link";
+        case ANDROID_ENODEV: return "No such device";
+        case ANDROID_ENOTDIR: return "Not a directory";
+        case ANDROID_EISDIR: return "Is a directory";
+        case ANDROID_EINVAL: return "Invalid argument";
+        case ANDROID_ENFILE: return "File table overflow";
+        case ANDROID_EMFILE: return "Too many open files";
+        case ANDROID_ENOTTY: return "Inappropriate I/O control operation";
+        case ANDROID_ETXTBSY: return "Text file busy";
+        case ANDROID_EFBIG: return "File too large";
+        case ANDROID_ENOSPC: return "No space left on device";
+        case ANDROID_ESPIPE: return "Illegal seek";
+        case ANDROID_EROFS: return "Read-only file system";
+        case ANDROID_EMLINK: return "Too many links";
+        case ANDROID_EPIPE: return "Broken pipe";
+        case ANDROID_EDOM: return "Numerical argument out of domain";
+        case ANDROID_ERANGE: return "Numerical result out of range";
+        case ANDROID_EDEADLK: return "Resource deadlock avoided";
+        case ANDROID_ENAMETOOLONG: return "File name too long";
+        case ANDROID_ENOLCK: return "No locks available";
+        case ANDROID_ENOSYS: return "Function not implemented";
+        case ANDROID_ENOTEMPTY: return "Directory not empty";
+        case ANDROID_ELOOP: return "Too many symbolic links encountered";
+        case ANDROID_ENOMSG: return "No message of desired type";
+        case ANDROID_EIDRM: return "Identifier removed";
+        case ANDROID_ECHRNG: return "Channel number out of range";
+        case ANDROID_EL2NSYNC: return "Level 2 not synchronized";
+        case ANDROID_EL3HLT: return "Level 3 halted";
+        case ANDROID_EL3RST: return "Level 3 reset";
+        case ANDROID_ELNRNG: return "Link number out of range";
+        case ANDROID_EUNATCH: return "Protocol driver not attached";
+        case ANDROID_ENOCSI: return "No CSI structure available";
+        case ANDROID_EL2HLT: return "Level 2 halted";
+        case ANDROID_EBADE: return "Invalid exchange";
+        case ANDROID_EBADR: return "Bad request descriptor";
+        case ANDROID_EXFULL: return "Exchange full";
+        case ANDROID_ENOANO: return "No anode";
+        case ANDROID_EBADRQC: return "Bad request code";
+        case ANDROID_EBADSLT: return "Bad slot";
+        case ANDROID_EBFONT: return "Bad font file format";
+        case ANDROID_ENOSTR: return "Device not a stream";
+        case ANDROID_ENODATA: return "No data available";
+        case ANDROID_ETIME: return "Timer expired";
+        case ANDROID_ENOSR: return "Out of streams resources";
+        case ANDROID_ENONET: return "Machine is not on the network";
+        case ANDROID_ENOPKG: return "Package not installed";
+        case ANDROID_EREMOTE: return "Object is remote";
+        case ANDROID_ENOLINK: return "Link has been severed";
+        case ANDROID_EADV: return "Advertise error";
+        case ANDROID_ESRMNT: return "Srmount error";
+        case ANDROID_ECOMM: return "Communication error on send";
+        case ANDROID_EPROTO: return "Protocol error";
+        case ANDROID_EMULTIHOP: return "Multihop attempted";
+        case ANDROID_EDOTDOT: return "RFS specific error";
+        case ANDROID_EBADMSG: return "Bad message";
+        case ANDROID_EOVERFLOW: return "Value too large for defined data type";
+        case ANDROID_ENOTUNIQ: return "Name not unique on network";
+        case ANDROID_EBADFD: return "File descriptor in bad state";
+        case ANDROID_EREMCHG: return "Remote address changed";
+        case ANDROID_ELIBACC: return "Can not access a needed shared library";
+        case ANDROID_ELIBBAD: return "Accessing a corrupted shared library";
+        case ANDROID_ELIBSCN: return "Lib section in a.out corrupted";
+        case ANDROID_ELIBMAX: return "Attempting to link in too many shared libraries";
+        case ANDROID_ELIBEXEC: return "Cannot exec a shared library directly";
+        case ANDROID_EILSEQ: return "Illegal byte sequence";
+        case ANDROID_ERESTART: return "Interrupted system call should be restarted";
+        case ANDROID_ESTRPIPE: return "Streams pipe error";
+        case ANDROID_EUSERS: return "Too many users";
+        case ANDROID_ENOTSOCK: return "Not a socket";
+        case ANDROID_EDESTADDRREQ: return "Destination address required";
+        case ANDROID_EMSGSIZE: return "Message too long";
+        case ANDROID_EPROTOTYPE: return "Protocol wrong type for socket";
+        case ANDROID_ENOPROTOOPT: return "Protocol not available";
+        case ANDROID_EPROTONOSUPPORT: return "Protocol not supported";
+        case ANDROID_ESOCKTNOSUPPORT: return "Socket type not supported";
+        case ANDROID_EOPNOTSUPP: return "Operation not supported on transport endpoint";
+        case ANDROID_EPFNOSUPPORT: return "Protocol family not supported";
+        case ANDROID_EAFNOSUPPORT: return "Address family not supported by protocol";
+        case ANDROID_EADDRINUSE: return "Address already in use";
+        case ANDROID_EADDRNOTAVAIL: return "Cannot assign requested address";
+        case ANDROID_ENETDOWN: return "Network is down";
+        case ANDROID_ENETUNREACH: return "Network is unreachable";
+        case ANDROID_ENETRESET: return "Network dropped connection because of reset";
+        case ANDROID_ECONNABORTED: return "Software caused connection abort";
+        case ANDROID_ECONNRESET: return "Connection reset by peer";
+        case ANDROID_ENOBUFS: return "No buffer space available";
+        case ANDROID_EISCONN: return "Transport endpoint is already connected";
+        case ANDROID_ENOTCONN: return "Transport endpoint is not connected";
+        case ANDROID_ESHUTDOWN: return "Cannot send after transport endpoint shutdown";
+        case ANDROID_ETOOMANYREFS: return "Too many references: cannot splice";
+        case ANDROID_ETIMEDOUT: return "Operation timed out";
+        case ANDROID_ECONNREFUSED: return "Connection refused";
+        case ANDROID_EHOSTDOWN: return "Host is down";
+        case ANDROID_EHOSTUNREACH: return "No route to host";
+        case ANDROID_EALREADY: return "Operation already in progress";
+        case ANDROID_EINPROGRESS: return "Operation now in progress";
+        case ANDROID_ESTALE: return "Stale file handle";
+        case ANDROID_EUCLEAN: return "Structure needs cleaning";
+        case ANDROID_ENOTNAM: return "Not a XENIX named type file";
+        case ANDROID_ENAVAIL: return "No XENIX semaphores available";
+        case ANDROID_EISNAM: return "Is a named type file";
+        case ANDROID_EREMOTEIO: return "Remote I/O error";
+        case ANDROID_EDQUOT: return "Disk quota exceeded";
+        case ANDROID_ENOMEDIUM: return "No medium found";
+        case ANDROID_EMEDIUMTYPE: return "Wrong medium type";
+        case ANDROID_ECANCELED: return "Operation canceled";
+        case ANDROID_ENOKEY: return "Required key not available";
+        case ANDROID_EKEYEXPIRED: return "Key has expired";
+        case ANDROID_EKEYREVOKED: return "Key has been revoked";
+        case ANDROID_EKEYREJECTED: return "Key was rejected by service";
+        case ANDROID_EOWNERDEAD: return "Owner died";
+        case ANDROID_ENOTRECOVERABLE: return "State not recoverable";
+        default: return "Unknown error";
+    }
+}
+
 #ifdef _WIN32
 DWORD android_errno_key;
 #else
@@ -1388,6 +1523,21 @@ int *android_errno(void) {
     return ret;
 }
 
+int android_strerror_r(int errnum, char *strerrbuf, size_t buflen) {
+    if (buflen < 2) {
+        return ANDROID_ERANGE;
+    }
+    --buflen;
+    const char *err_str = errnum_to_str(errnum);
+    size_t err_str_len = strlen(err_str);
+    size_t copy_size = (buflen > err_str_len) ? err_str_len : buflen;
+    memcpy(strerrbuf, err_str, copy_size);
+    strerrbuf[copy_size] = '\0';
+    return (copy_size == err_str_len) ? 0 : ANDROID_ERANGE;
+}
+
 char *android_strerror(int errnum) {
-    return strerror(no_to_native(errnum));
+    static char buf[256];
+	(void)android_strerror_r(errnum, buf, sizeof(buf));
+	return (buf);
 }
