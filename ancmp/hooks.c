@@ -878,6 +878,414 @@ static hook_t math_hooks[] = {
     }
 };
 
+static hook_t string_hooks[] = {
+    {
+        "bcopy",
+        (void *)android_bcopy
+    },
+    {
+        "index",
+        (void *)android_index
+    },
+    {
+        "memccpy",
+        (void *)android_memccpy
+    },
+    {
+        "memchr",
+        (void *)android_memchr
+    },
+    {
+        "memcmp",
+        (void *)android_memcmp
+    },
+    {
+        "memcpy",
+        (void *)android_memcpy
+    },
+    {
+        "memmem",
+        (void *)android_memmem
+    },
+    {
+        "memmove",
+        (void *)android_memmove
+    },
+    {
+        "memrchr",
+        (void *)android_memrchr
+    },
+    {
+        "memset",
+        (void *)android_memset
+    },
+    {
+        "memswap",
+        (void *)android_memswap
+    },
+    {
+        "strcasecmp",
+        (void *)android_strcasecmp
+    },
+    {
+        "strncasecmp",
+        (void *)android_strncasecmp
+    },
+    {
+        "strcasestr",
+        (void *)android_strcasestr
+    },
+    {
+        "strcat",
+        (void *)android_strcat
+    },
+    {
+        "strchr",
+        (void *)android_strchr
+    },
+    {
+        "strcmp",
+        (void *)android_strcmp
+    },
+    {
+        "strcoll",
+        (void *)android_strcoll
+    },
+    {
+        "strcpy",
+        (void *)android_strcpy
+    },
+    {
+        "strcspn",
+        (void *)android_strcspn
+    },
+    {
+        "strdup",
+        (void *)android_strdup
+    },
+    {
+        "strlcat",
+        (void *)android_strlcat
+    },
+    {
+        "strlcpy",
+        (void *)android_strlcpy
+    },
+    {
+        "strlen",
+        (void *)android_strlen
+    },
+    {
+        "strncat",
+        (void *)android_strncat
+    },
+    {
+        "strncmp",
+        (void *)android_strncmp
+    },
+    {
+        "strncpy",
+        (void *)android_strncpy
+    },
+    {
+        "strndup",
+        (void *)android_strndup
+    },
+    {
+        "strnlen",
+        (void *)android_strnlen
+    },
+    {
+        "strpbrk",
+        (void *)android_strpbrk
+    },
+    {
+        "strrchr",
+        (void *)android_strrchr
+    },
+    {
+        "strsep",
+        (void *)android_strsep
+    },
+    {
+        "strspn",
+        (void *)android_strspn
+    },
+    {
+        "strstr",
+        (void *)android_strstr
+    },
+    {
+        "strtok",
+        (void *)android_strtok
+    },
+    {
+        "strtotimeval",
+        (void *)android_strtotimeval
+    },
+    {
+        "strxfrm",
+        (void *)android_strxfrm
+    },
+    {
+        "strerror",
+        (void *)android_strerror
+    },
+    {
+        "strerror_r",
+        (void *)android_strerror_r
+    },
+    {
+        (char *)NULL,
+        (void *)NULL
+    }
+};
+
+static hook_t wchar_hooks[] = {
+    {
+        "wcschr",
+        (void *)android_wcschr
+    },
+    {
+        "wcsdup",
+        (void *)android_wcsdup
+    },
+    {
+        "wcsncat",
+        (void *)android_wcsncat
+    },
+    {
+        "wcsrchr",
+        (void *)android_wcsrchr
+    },
+    {
+        "wmemchr",
+        (void *)android_wmemchr
+    },
+    {
+        "wcpcpy",
+        (void *)android_wcpcpy
+    },
+    {
+        "wcscmp",
+        (void *)android_wcscmp
+    },
+    {
+        "wcslcat",
+        (void *)android_wcslcat
+    },
+    {
+        "wcsncmp",
+        (void *)android_wcsncmp
+    },
+    {
+        "wcsspn",
+        (void *)android_wcsspn
+    },
+    {
+        "wmemcmp",
+        (void *)android_wmemcmp
+    },
+    {
+        "wcpncpy",
+        (void *)android_wcpncpy
+    },
+    {
+        "wcscoll",
+        (void *)android_wcscoll
+    },
+    {
+        "wcslcpy",
+        (void *)android_wcslcpy
+    },
+    {
+        "wcsncpy",
+        (void *)android_wcsncpy
+    },
+    {
+        "wcsstr",
+        (void *)android_wcsstr
+    },
+    {
+        "wmemcpy",
+        (void *)android_wmemcpy
+    },
+    {
+        "wcscasecmp",
+        (void *)android_wcscasecmp
+    },
+    {
+        "wcscpy",
+        (void *)android_wcscpy
+    },
+    {
+        "wcslen",
+        (void *)android_wcslen
+    },
+    {
+        "wcsnlen",
+        (void *)android_wcsnlen
+    },
+    {
+        "wcstok",
+        (void *)android_wcstok
+    },
+    {
+        "wmemmove",
+        (void *)android_wmemmove
+    },
+    {
+        "wcscat",
+        (void *)android_wcscat
+    },
+    {
+        "wcscspn",
+        (void *)android_wcscspn
+    },
+    {
+        "wcsncasecmp",
+        (void *)android_wcsncasecmp
+    },
+    {
+        "wcspbrk",
+        (void *)android_wcspbrk
+    },
+    {
+        "wcsxfrm",
+        (void *)android_wcsxfrm
+    },
+    {
+        "wmemset",
+        (void *)android_strerror_r
+    },
+    {
+        "iswalnum",
+        (void *)android_iswalnum
+    },
+    {
+        "iswalpha",
+        (void *)android_iswalpha
+    },
+    {
+        "iswcntrl",
+        (void *)android_iswcntrl
+    },
+    {
+        "iswdigit",
+        (void *)android_iswdigit
+    },
+    {
+        "iswgraph",
+        (void *)android_iswgraph
+    },
+    {
+        "iswlower",
+        (void *)android_iswlower
+    },
+    {
+        "iswprint",
+        (void *)android_iswprint
+    },
+    {
+        "iswpunct",
+        (void *)android_iswpunct
+    },
+    {
+        "iswspace",
+        (void *)android_iswspace
+    },
+    {
+        "iswupper",
+        (void *)android_iswupper
+    },
+    {
+        "iswxdigit",
+        (void *)android_iswxdigit
+    },
+    {
+        "iswctype",
+        (void *)android_iswctype
+    },
+    {
+        "wctype",
+        (void *)android_wctype
+    },
+    {
+        "wcwidth",
+        (void *)android_wcwidth
+    },
+    {
+        "towlower",
+        (void *)android_towlower
+    },
+    {
+        "towupper",
+        (void *)android_towupper
+    },
+    {
+        "wctob",
+        (void *)android_wctob
+    },
+    {
+        "btowc",
+        (void *)android_btowc
+    },
+    {
+        "wcrtomb",
+        (void *)android_wcrtomb
+    },
+    {
+        "mbrtowc",
+        (void *)android_mbrtowc
+    },
+    {
+        "wcsftime",
+        (void *)android_wcsftime
+    },
+    {
+        (char *)NULL,
+        (void *)NULL
+    }
+};
+
+static hook_t dlfcn_hooks[] = {
+    {
+        "dlopen",
+        (void *)android_dlopen
+    },
+    {
+        "dlclose",
+        (void *)android_dlclose
+    },
+    {
+        "dlsym",
+        (void *)android_dlsym
+    },
+    {
+        "dladdr",
+        (void *)android_dladdr
+    },
+    {
+        "dlerror",
+        (void *)android_dlerror
+    },
+#ifdef ANDROID_ARM_LINKER
+    {
+        "dl_unwind_find_exidx",
+        (void *)android_dl_unwind_find_exidx
+    },
+#else
+    {
+        "dl_iterate_phdr",
+        (void *)android_dl_iterate_phdr
+    },
+#endif
+    {
+        (char *)NULL,
+        (void *)NULL
+    }
+};
+
 static hook_t hooks[] = {
     {
         "__cxa_finalize",
@@ -930,30 +1338,6 @@ static hook_t hooks[] = {
     {
         "nearbyint",
         (void *)android_nearbyint
-    },
-    {
-        "strcasecmp",
-        (void *)android_strcasecmp
-    },
-    {
-        "strerror",
-        (void *)android_strerror
-    },
-    {
-        "strerror_r",
-        (void *)android_strerror_r
-    },
-    {
-        "strncasecmp",
-        (void *)android_strncasecmp
-    },
-    {
-        "strncat",
-        (void *)android_strncat
-    },
-    {
-        "strncmp",
-        (void *)android_strncmp
     },
     {
         "__errno",
@@ -1304,37 +1688,6 @@ static hook_t hooks[] = {
         (void *)android_geteuid
     },
     {
-        "dlopen",
-        (void *)android_dlopen
-    },
-    {
-        "dlclose",
-        (void *)android_dlclose
-    },
-    {
-        "dlsym",
-        (void *)android_dlsym
-    },
-    {
-        "dladdr",
-        (void *)android_dladdr
-    },
-    {
-        "dlerror",
-        (void *)android_dlerror
-    },
-#ifdef ANDROID_ARM_LINKER
-    {
-        "dl_unwind_find_exidx",
-        (void *)android_dl_unwind_find_exidx
-    },
-#else
-    {
-        "dl_iterate_phdr",
-        (void *)android_dl_iterate_phdr
-    },
-#endif
-    {
         "vsnprintf",
         (void *)android_vsnprintf
     },
@@ -1371,62 +1724,6 @@ static hook_t hooks[] = {
         (void *)android_mktime
     },
     {
-        "towupper",
-        (void *)android_towupper
-    },
-    {
-        "towlower",
-        (void *)android_towlower
-    },
-    {
-        "wcscmp",
-        (void *)android_wcscmp
-    },
-    {
-        "wcscpy",
-        (void *)android_wcscpy
-    },
-    {
-        "wcscat",
-        (void *)android_wcscat
-    },
-    {
-        "wcslen",
-        (void *)android_wcslen
-    },
-    {
-        "wcsncpy",
-        (void *)android_wcsncpy
-    },
-    {
-        "wcscoll",
-        (void *)android_wcscoll
-    },
-    {
-        "wcsxfrm",
-        (void *)android_wcsxfrm
-    },
-    {
-        "wmemcpy",
-        (void *)android_wmemcpy
-    },
-    {
-        "wmemmove",
-        (void *)android_wmemmove
-    },
-    {
-        "wmemset",
-        (void *)android_wmemset
-    },
-    {
-        "wmemchr",
-        (void *)android_wmemchr
-    },
-    {
-        "wmemcmp",
-        (void *)android_wmemcmp
-    },
-    {
         "strtoull",
         (void *)android_strtoull
     },
@@ -1461,138 +1758,6 @@ static hook_t hooks[] = {
     {
         "isxdigit",
         (void *)android_isxdigit
-    },
-    {
-        "iswalpha",
-        (void *)android_iswalpha
-    },
-    {
-        "iswcntrl",
-        (void *)android_iswcntrl
-    },
-    {
-        "iswdigit",
-        (void *)android_iswdigit
-    },
-    {
-        "iswlower",
-        (void *)android_iswlower
-    },
-    {
-        "iswprint",
-        (void *)android_iswprint
-    },
-    {
-        "iswpunct",
-        (void *)android_iswpunct
-    },
-    {
-        "iswspace",
-        (void *)android_iswspace
-    },
-    {
-        "iswupper",
-        (void *)android_iswupper
-    },
-    {
-        "iswxdigit",
-        (void *)android_iswxdigit
-    },
-    {
-        "iswctype",
-        (void *)android_iswctype
-    },
-    {
-        "wctype",
-        (void *)android_wctype
-    },
-    {
-        "wctob",
-        (void *)android_wctob
-    },
-    {
-        "btowc",
-        (void *)android_btowc
-    },
-    {
-        "wcrtomb",
-        (void *)android_wcrtomb
-    },
-    {
-        "mbrtowc",
-        (void *)android_mbrtowc
-    },
-    {
-        "wcsftime",
-        (void *)android_wcsftime
-    },
-    {
-        "strcat",
-        (void *)android_strcat
-    },
-    {
-        "strchr",
-        (void *)android_strchr
-    },
-    {
-        "strcmp",
-        (void *)android_strcmp
-    },
-    {
-        "strcpy",
-        (void *)android_strcpy
-    },
-    {
-        "strlen",
-        (void *)android_strlen
-    },
-    {
-        "strncpy",
-        (void *)android_strncpy
-    },
-    {
-        "strstr",
-        (void *)android_strstr
-    },
-    {
-        "strtok",
-        (void *)android_strtok
-    },
-    {
-        "strpbrk",
-        (void *)android_strpbrk
-    },
-    {
-        "strcoll",
-        (void *)android_strcoll
-    },
-    {
-        "strxfrm",
-        (void *)android_strxfrm
-    },
-    {
-        "strrchr",
-        (void *)android_strrchr
-    },
-    {
-        "memchr",
-        (void *)android_memchr
-    },
-    {
-        "memcmp",
-        (void *)android_memcmp
-    },
-    {
-        "memmove",
-        (void *)android_memmove
-    },
-    {
-        "memset",
-        (void *)android_memset
-    },
-    {
-        "memcpy",
-        (void *)android_memcpy
     },
     {
         "setlocale",
@@ -1814,6 +1979,21 @@ void *get_hooked_symbol(char *name) {
         }
     }
     for (hook = &hooks[0]; hook->name != NULL; ++hook) {
+        if (strcmp(name, hook->name) == 0) {
+            return hook->addr;
+        }
+    }
+    for (hook = &string_hooks[0]; hook->name != NULL; ++hook) {
+        if (strcmp(name, hook->name) == 0) {
+            return hook->addr;
+        }
+    }
+    for (hook = &wchar_hooks[0]; hook->name != NULL; ++hook) {
+        if (strcmp(name, hook->name) == 0) {
+            return hook->addr;
+        }
+    }
+    for (hook = &dlfcn_hooks[0]; hook->name != NULL; ++hook) {
         if (strcmp(name, hook->name) == 0) {
             return hook->addr;
         }
