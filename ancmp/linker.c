@@ -317,6 +317,9 @@ static soinfo *alloc_info(const char *name)
 static void free_info(soinfo *si)
 {
     soinfo *prev = NULL, *trav;
+    if (!si) {
+        return;
+    }
 
     TRACE("%5d name %s: freeing soinfo @ %p\n", pid, si->name, si);
 
@@ -334,7 +337,9 @@ static void free_info(soinfo *si)
     /* prev will never be NULL, because the first entry in solist is
        always the static libdl_info.
     */
-    prev->next = si->next;
+    if (prev) {
+        prev->next = si->next;
+    }
     if (si == sonext) sonext = prev;
     si->next = freelist;
     freelist = si;
@@ -1291,6 +1296,9 @@ static void call_destructors(soinfo *si);
 unsigned unload_library(soinfo *si)
 {
     unsigned *d;
+    if (!si) {
+        return 0;
+    }
     if (si->refcount == 1) {
         TRACE("%5d unloading '%s'\n", pid, si->name);
         call_destructors(si);
@@ -1309,25 +1317,26 @@ unsigned unload_library(soinfo *si)
                        pid, si->name, errno, strerror(errno));
 #endif
         }
+        if (si->dynamic) {
+            for(d = si->dynamic; *d; d += 2) {
+                if(d[0] == DT_NEEDED){
+                    soinfo *lsi = (soinfo *)d[1];
 
-        for(d = si->dynamic; *d; d += 2) {
-            if(d[0] == DT_NEEDED){
-                soinfo *lsi = (soinfo *)d[1];
+                    /* The next line will segfault if the we don't undo the
+                       PT_GNU_RELRO protections (see comments above and in
+                       link_image().
+                     */
+                    d[1] = 0;
 
-                /* The next line will segfault if the we don't undo the
-                   PT_GNU_RELRO protections (see comments above and in
-                   link_image().
-                 */
-                d[1] = 0;
-
-                if (validate_soinfo(lsi)) {
-                    TRACE("%5d %s needs to unload %s\n", pid,
-                          si->name, lsi->name);
-                    unload_library(lsi);
+                    if (validate_soinfo(lsi)) {
+                        TRACE("%5d %s needs to unload %s\n", pid,
+                              si->name, lsi->name);
+                        unload_library(lsi);
+                    }
+                    else
+                        DL_ERR("%5d %s: could not unload dependent library",
+                               pid, si->name);
                 }
-                else
-                    DL_ERR("%5d %s: could not unload dependent library",
-                           pid, si->name);
             }
         }
 
