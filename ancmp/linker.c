@@ -146,7 +146,6 @@ static char tmp_err_buf[768];
 static char __linker_dl_err_buf[768];
 
 void DL_ERR(const char *fmt, ...) {
-#if LINKER_DEBUG && TRACE_DEBUG
     va_list ap;
     va_list ap_copy;
     va_start(ap, fmt);
@@ -167,11 +166,12 @@ void DL_ERR(const char *fmt, ...) {
     va_end(ap_copy);
 #endif
     __linker_dl_err_buf[sizeof(__linker_dl_err_buf) - 1] = '\0';
+#if LINKER_DEBUG && TRACE_DEBUG
     printf("[linker] ERROR : ");
     vprintf(fmt, ap);
     printf("\n");
-    va_end(ap);
 #endif
+    va_end(ap);
 }
 
 const char *linker_get_error(void)
