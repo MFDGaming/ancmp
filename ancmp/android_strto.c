@@ -1,6 +1,6 @@
 #include "android_strto.h"
 #include <errno.h>
-#include "android_ctypes.h"
+#include "android_ctype.h"
 
 uintmax_t android_strtoumax(const char *nptr, char **endptr, int base) {
 	const char *s;

@@ -21,7 +21,7 @@
 #include "../android_sprint.h"
 #include "../android_time.h"
 #include "../ancmp_stdint.h"
-#include "../android_ctypes.h"
+#include "../android_ctype.h"
 
 typedef int64_t android_time64_t;
 

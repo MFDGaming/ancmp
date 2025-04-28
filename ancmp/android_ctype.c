@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "android_ctypes.h"
+#include "android_ctype.h"
 
 /** Internal implementation detail. Do not use. */
 #define ANDROID_U 0x01

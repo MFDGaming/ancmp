@@ -28,7 +28,7 @@
 
 #include "android_strtotimeval.h"
 #include "../android_strto.h"
-#include "../android_ctypes.h"
+#include "../android_ctype.h"
 
 char *android_strtotimeval(const char *str, android_timeval_t *ts) {
     int n;

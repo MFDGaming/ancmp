@@ -1,5 +1,5 @@
 #include "android_fnmatch.h"
-#include "android_ctypes.h"
+#include "android_ctype.h"
 #include <stdlib.h>
 #include "string/android_string.h"
 #include <limits.h>

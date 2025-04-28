@@ -15,7 +15,7 @@
 #include "android_pthread.h"
 #include "android_math.h"
 #include "android_io.h"
-#include "android_ctypes.h"
+#include "android_ctype.h"
 #include "android_stat.h"
 #include "android_socket.h"
 #include "android_dirent.h"
@@ -1286,6 +1286,89 @@ static hook_t dlfcn_hooks[] = {
     }
 };
 
+static hook_t ctype_hooks[] = {
+    {
+        "_ctype_",
+        (void *)&android_ctype
+    },
+    {
+        "_tolower_tab_",
+        (void *)&android_tolower_tab
+    },
+    {
+        "_toupper_tab_",
+        (void *)&android_toupper_tab
+    },
+    {
+        "tolower",
+        (void *)android_tolower
+    },
+    {
+        "toupper",
+        (void *)android_toupper
+    },
+    {
+        "isalnum",
+        (void *)android_isalnum
+    },
+    {
+        "isalpha",
+        (void *)android_isalpha
+    },
+    {
+        "iscntrl",
+        (void *)android_iscntrl
+    },
+    {
+        "isdigit",
+        (void *)android_isdigit
+    },
+    {
+        "isgraph",
+        (void *)android_isgraph
+    },
+    {
+        "islower",
+        (void *)android_islower
+    },
+    {
+        "isprint",
+        (void *)android_isprint
+    },
+    {
+        "ispunct",
+        (void *)android_ispunct
+    },
+    {
+        "isspace",
+        (void *)android_isspace
+    },
+    {
+        "isupper",
+        (void *)android_isupper
+    },
+    {
+        "isxdigit",
+        (void *)android_isxdigit
+    },
+    {
+        "isblank",
+        (void *)android_isblank
+    },
+    {
+        "isascii",
+        (void *)android_isascii
+    },
+    {
+        "toascii",
+        (void *)android_toascii
+    },
+    {
+        (char *)NULL,
+        (void *)NULL
+    }
+};
+
 static hook_t hooks[] = {
     {
         "__cxa_finalize",
@@ -1342,14 +1425,6 @@ static hook_t hooks[] = {
     {
         "__errno",
         (void *)android_errno
-    },
-    {
-        "toupper",
-        (void *)android_toupper
-    },
-    {
-        "tolower",
-        (void *)android_tolower
     },
     {
         "fflush",
@@ -1418,18 +1493,6 @@ static hook_t hooks[] = {
     {
         "__sF",
         (void *)&android_sf
-    },
-    {
-        "_tolower_tab_",
-        (void *)&android_tolower_tab
-    },
-    {
-        "_toupper_tab_",
-        (void *)&android_toupper_tab
-    },
-    {
-        "_ctype_",
-        (void *)&android_ctype
     },
     {
         "gettimeofday",
@@ -1728,38 +1791,6 @@ static hook_t hooks[] = {
         (void *)android_strtoull
     },
     {
-        "isalpha",
-        (void *)android_isalpha
-    },
-    {
-        "iscntrl",
-        (void *)android_iscntrl
-    },
-    {
-        "islower",
-        (void *)android_islower
-    },
-    {
-        "isprint",
-        (void *)android_isprint
-    },
-    {
-        "ispunct",
-        (void *)android_ispunct
-    },
-    {
-        "isspace",
-        (void *)android_isspace
-    },
-    {
-        "isupper",
-        (void *)android_isupper
-    },
-    {
-        "isxdigit",
-        (void *)android_isxdigit
-    },
-    {
         "setlocale",
         (void *)android_setlocale
     },
@@ -1969,6 +2000,13 @@ void add_custom_hook(char *name, void *addr) {
     custom_hooks[custom_hooks_size++].addr = addr;
 }
 
+#define ANCMP_HOOKS_CHECK_AND_RETURN(x, name, hook) \
+    for (hook = &x[0]; hook->name != NULL; ++hook) { \
+        if (strcmp(name, hook->name) == 0) { \
+            return hook->addr; \
+        } \
+    }
+
 void *get_hooked_symbol(char *name) {
     int i;
     hook_t *hook;
@@ -1978,40 +2016,13 @@ void *get_hooked_symbol(char *name) {
             return custom_hooks[i].addr;
         }
     }
-    for (hook = &hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
-    for (hook = &string_hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
-    for (hook = &wchar_hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
-    for (hook = &dlfcn_hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
-    for (hook = &pthread_hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
-    for (hook = &math_hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
-    for (hook = &aeabi_hooks[0]; hook->name != NULL; ++hook) {
-        if (strcmp(name, hook->name) == 0) {
-            return hook->addr;
-        }
-    }
+    ANCMP_HOOKS_CHECK_AND_RETURN(hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(string_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(wchar_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(dlfcn_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(ctype_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(pthread_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(math_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(aeabi_hooks, name, hook);
     return NULL;
 }

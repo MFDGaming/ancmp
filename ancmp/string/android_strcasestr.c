@@ -33,7 +33,7 @@
  */
 
 #include "android_strcasestr.h"
-#include "../android_ctypes.h"
+#include "../android_ctype.h"
 #include "android_strcasecmp.h"
 #include "android_strlen.h"
 

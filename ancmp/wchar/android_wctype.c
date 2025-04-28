@@ -1,5 +1,5 @@
 #include "android_wctype.h"
-#include "../android_ctypes.h"
+#include "../android_ctype.h"
 #include "../string/android_string.h"
 #include <stdio.h>
 #include "../tzcode/android_strftime.h"
