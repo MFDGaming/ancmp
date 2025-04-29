@@ -1965,13 +1965,10 @@ static int link_image(soinfo *si, unsigned wr_offset)
         for(i = 0; ldpreload_names[i] != NULL; i++) {
             soinfo *lsi = find_library(ldpreload_names[i]);
             if(lsi == 0) {
-#if 0
                 android_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
                 DL_ERR("%5d could not load needed library '%s' for '%s' (%s)",
                        pid, ldpreload_names[i], si->name, tmp_err_buf);
                 goto fail;
-#endif
-                continue;
             }
             lsi->refcount++;
             preloads[i] = lsi;
@@ -1986,13 +1983,10 @@ static int link_image(soinfo *si, unsigned wr_offset)
             lsi = find_library(si->strtab + d[1]);
             
             if(lsi == 0) {
-#if 0
                 android_strlcpy(tmp_err_buf, linker_get_error(), sizeof(tmp_err_buf));
                 DL_ERR("%5d could not load needed library '%s' for '%s' (%s)",
                        pid, si->strtab + d[1], si->name, tmp_err_buf);
                 goto fail;
-#endif
-                continue;
             }
             /* Save the soinfo of the loaded DT_NEEDED library in the payload
                of the DT_NEEDED entry itself, so that we can retrieve the
@@ -2151,12 +2145,20 @@ void android_linker_init(void) {
         puts("android_threads_init failed");
         exit(1);
     }
+    struct soinfo *so_libc = android_library_create("libc.so");
+    struct soinfo *so_libstdcpp = android_library_create("libstdc++.so");
+    struct soinfo *so_libm = android_library_create("libm.so");
+
     WSAStartup(MAKEWORD(2,2), &wsaData);
 #endif
 }
 
 struct soinfo *android_library_create(const char *name) {
-    return alloc_info(name);
+    struct soinfo *so = alloc_info(name);
+    if (so) {
+        so->flags = FLAG_LINKED;
+    }
+    return so;
 }
 
 int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, size_t count) {
