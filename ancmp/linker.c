@@ -2155,6 +2155,120 @@ void android_linker_init(void) {
 #endif
 }
 
+struct soinfo *android_library_create(const char *name) {
+    return alloc_info(name);
+}
+
+int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, size_t count) {
+    size_t i;
+    char *strtab = NULL;
+    Elf32_Word strtab_new_add = 0;
+    Elf32_Word strtab_size = 0;
+    unsigned nchain, nbucket;
+    unsigned *chain, *bucket;
+    size_t old_count = 0;
+    if (so->nchain) {
+        old_count = so->nchain - 1;
+    }
+    nchain = 1 + count + old_count;
+    nbucket = nchain / 2;
+    if (nbucket == 0) nbucket = 1;
+
+    Elf32_Sym *symtab = (Elf32_Sym *)calloc(1 + count + old_count, sizeof(Elf32_Sym));
+    
+    if (!symtab || count == 0) {
+        return 0;
+    }
+
+    chain = (unsigned *)calloc(nchain, sizeof(unsigned));
+    if (!chain) {
+        free(symtab);
+        return 0;
+    }
+    bucket = (unsigned *)calloc(nbucket, sizeof(unsigned));
+    if (!bucket) {
+        free(chain);
+        free(symtab);
+        return 0;
+    }
+    
+    for (i = 0; i < count; ++i) {
+        size_t symtab_off = 1 + old_count + i;
+        strtab_new_add += strlen(symbols[i].name) + 1;
+        symtab[symtab_off].st_value = (Elf32_Addr)symbols[i].addr;
+        symtab[symtab_off].st_shndx = 1;
+        symtab[symtab_off].st_info = STB_GLOBAL << 4;
+    }
+    if (so->symtab && old_count != 0) {
+        strtab_size = so->symtab[0].st_name;
+    }
+    strtab = (char *)malloc(strtab_size + strtab_new_add);
+    if (!strtab) {
+        free(symtab);
+        free(chain);
+        free(bucket);
+        return 0;
+    }
+    if (strtab_size) {
+        memcpy(strtab, so->strtab, strtab_size);
+    }
+    
+    for (i = 0; i < count; ++i) {
+        size_t symtab_off = 1 + old_count + i;
+        char *name = symbols[i].name;
+        size_t len = strlen(name);
+        memcpy(&strtab[strtab_size], name, len);
+        symtab[symtab_off].st_name = strtab_size;
+        strtab[strtab_size + len] = '\0';
+        strtab_size += len + 1;
+    }
+
+    symtab[0].st_name = strtab_size;
+
+    if (old_count && so->symtab) {
+        memcpy(&symtab[1], &so->symtab[1], old_count * sizeof(Elf32_Sym));
+    }
+
+    if (so->symtab) {
+        free(so->symtab);
+    }
+    if (so->strtab) {
+        free((void *)so->strtab);
+    }
+    if (so->bucket) {
+        free(so->bucket);
+    }
+    if (so->chain) {
+        free(so->chain);
+    }
+    so->symtab = symtab;
+    so->strtab = strtab;
+    so->chain = chain;
+    so->bucket = bucket;
+    so->nchain = nchain;
+    so->nbucket = nbucket;
+
+    for (i = 1; i < so->nchain; ++i) {
+        const char *name = &so->strtab[symtab[i].st_name];
+        unsigned h = elfhash(name);
+        size_t b = h % so->nbucket;
+    
+        if (so->bucket[b] == 0) {
+            so->bucket[b] = i;
+        } else {
+            size_t curr = so->bucket[b];
+            while (so->chain[curr] != 0) {
+                curr = so->chain[curr];
+            }
+            so->chain[curr] = i;
+        }
+    
+        so->chain[i] = 0;
+    }
+
+    return 1;
+}
+
 /*
  * This code is called after the linker has linked itself and
  * fixed it's own GOT. It is safe to make references to externs

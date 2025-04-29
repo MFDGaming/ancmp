@@ -43,6 +43,11 @@ const char *addr_to_name(unsigned addr);
 
 /* magic shared structures that GDB knows about */
 
+typedef struct {
+    char *name;
+    void *addr;
+} android_symbol_t;
+
 struct link_map
 {
     uintptr_t l_addr;
@@ -220,5 +225,9 @@ int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *), vo
 #endif
 
 void android_linker_init(void);
+
+struct soinfo *android_library_create(const char *name);
+
+int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, size_t count);
 
 #endif
