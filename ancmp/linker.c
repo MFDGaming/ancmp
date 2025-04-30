@@ -2153,12 +2153,34 @@ void android_linker_init(void) {
 #endif
 }
 
+static unsigned stub_bucket = 0;
+
 struct soinfo *android_library_create(const char *name) {
     struct soinfo *so = alloc_info(name);
     if (so) {
+        so->bucket = &stub_bucket;
+        so->nbucket = 1;
         so->flags = FLAG_LINKED;
     }
     return so;
+}
+
+void android_library_destroy(struct soinfo *so) {
+    if (so->chain) {
+        free(so->chain);
+    }
+    if (so->bucket && so->bucket != &stub_bucket) {
+        free(so->bucket);
+    }
+    if (so->symtab) {
+        free(so->symtab);
+    }
+    if (so->strtab) {
+        free((void *)so->strtab);
+    }
+    if (so) {
+        free_info(so);
+    }
 }
 
 int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, size_t count) {
@@ -2237,7 +2259,7 @@ int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, si
     if (so->strtab) {
         free((void *)so->strtab);
     }
-    if (so->bucket) {
+    if (so->bucket && so->bucket != &stub_bucket) {
         free(so->bucket);
     }
     if (so->chain) {

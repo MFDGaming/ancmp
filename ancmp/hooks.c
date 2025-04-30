@@ -1248,44 +1248,6 @@ static hook_t wchar_hooks[] = {
     }
 };
 
-static hook_t dlfcn_hooks[] = {
-    {
-        "dlopen",
-        (void *)android_dlopen
-    },
-    {
-        "dlclose",
-        (void *)android_dlclose
-    },
-    {
-        "dlsym",
-        (void *)android_dlsym
-    },
-    {
-        "dladdr",
-        (void *)android_dladdr
-    },
-    {
-        "dlerror",
-        (void *)android_dlerror
-    },
-#ifdef ANDROID_ARM_LINKER
-    {
-        "dl_unwind_find_exidx",
-        (void *)android_dl_unwind_find_exidx
-    },
-#else
-    {
-        "dl_iterate_phdr",
-        (void *)android_dl_iterate_phdr
-    },
-#endif
-    {
-        (char *)NULL,
-        (void *)NULL
-    }
-};
-
 static hook_t ctype_hooks[] = {
     {
         "_ctype_",
@@ -2019,7 +1981,6 @@ void *get_hooked_symbol(char *name) {
     ANCMP_HOOKS_CHECK_AND_RETURN(hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(string_hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(wchar_hooks, name, hook);
-    ANCMP_HOOKS_CHECK_AND_RETURN(dlfcn_hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(ctype_hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(pthread_hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(math_hooks, name, hook);

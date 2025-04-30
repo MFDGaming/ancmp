@@ -228,6 +228,8 @@ void android_linker_init(void);
 
 struct soinfo *android_library_create(const char *name);
 
+void android_library_destroy(struct soinfo *so);
+
 int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, size_t count);
 
 #endif
