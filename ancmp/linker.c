@@ -2121,6 +2121,7 @@ static void parse_preloads(const char *path, char *delim)
 }
 
 void android_linker_init(void) {
+    struct soinfo *so_libc, *so_libstdcpp, *so_libm;
 #ifdef _WIN32
     WSADATA wsaData;
 #endif
@@ -2145,12 +2146,12 @@ void android_linker_init(void) {
         puts("android_threads_init failed");
         exit(1);
     }
-    struct soinfo *so_libc = android_library_create("libc.so");
-    struct soinfo *so_libstdcpp = android_library_create("libstdc++.so");
-    struct soinfo *so_libm = android_library_create("libm.so");
 
     WSAStartup(MAKEWORD(2,2), &wsaData);
 #endif
+    so_libc = android_library_create("libc.so");
+    so_libstdcpp = android_library_create("libstdc++.so");
+    so_libm = android_library_create("libm.so");
 }
 
 static unsigned stub_bucket = 0;
