@@ -102,7 +102,7 @@
         "pop %eax \n" \
         "ret      $0x4 \n" \
     ); \
-    void SYSV_WRAPPER_##FUNC();
+    extern void SYSV_WRAPPER_##FUNC(void);
 
 #define SYSV_WRAPPER_2(FUNC) \
     __asm__( \
@@ -117,7 +117,7 @@
         "add $4, %esp \n" \
         "ret      $0x4 \n" \
     ); \
-    void SYSV_WRAPPER_##FUNC();
+    extern void SYSV_WRAPPER_##FUNC(void);
 
 #define SYSV_WRAPPER_3(FUNC) \
     __asm__( \
@@ -134,7 +134,7 @@
         "add $8, %esp \n" \
         "ret      $0x4 \n" \
     ); \
-    void SYSV_WRAPPER_##FUNC();
+    extern void SYSV_WRAPPER_##FUNC(void);
 
 #define SYSV_WRAPPER_4(FUNC) \
     __asm__( \
@@ -153,7 +153,7 @@
         "add $12, %esp \n" \
         "ret      $0x4 \n" \
     ); \
-    void SYSV_WRAPPER_##FUNC();
+    extern void SYSV_WRAPPER_##FUNC(void);
 
 #define SYSV_WRAPPER_5(FUNC) \
     __asm__( \
@@ -174,7 +174,7 @@
         "add $16, %esp \n" \
         "ret      $0x4 \n" \
     ); \
-    void SYSV_WRAPPER_##FUNC();
+    extern void SYSV_WRAPPER_##FUNC(void);
 
 #define SYSV_WRAPPER_6(FUNC) \
     __asm__( \
@@ -197,7 +197,7 @@
         "add $20, %esp \n" \
         "ret      $0x4 \n" \
     ); \
-    void SYSV_WRAPPER_##FUNC();
+    extern void SYSV_WRAPPER_##FUNC(void);
 
 #endif
 

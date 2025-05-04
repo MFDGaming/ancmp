@@ -25,7 +25,6 @@ int android_pthread_setname_np(android_pthread_t thread, const char *name) {
 
 int android_pthread_once(android_pthread_once_t *once_control, void (*init_routine)(void)) {
     android_pthread_once_t *ocptr = once_control;
-    android_pthread_once_t value;
 #define ONCE_INITIALIZING           (1 << 0)
 #define ONCE_COMPLETED              (1 << 1)
     if ((*ocptr & ONCE_COMPLETED) != 0) {

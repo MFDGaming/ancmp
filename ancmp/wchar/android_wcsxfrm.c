@@ -31,21 +31,21 @@
 #include "android_wcsncpy.h"
 
 size_t android_wcsxfrm(android_wchar_t *dest, const android_wchar_t *src, size_t len) {
-    int prim, sec, l;
     size_t slen;
-    char *mbsrc, *s, *ss;
-    if (*src == L'\0') {
-        if (len != 0)
-            *dest = L'\0';
+    
+    if (*src == 0) {
+        if (len != 0) {
+            *dest = 0;
+        }
         return (0);
     }
     slen = android_wcslen(src);
     if (len > 0) {
-        if (slen < len)
+        if (slen < len) {
             android_wcscpy(dest, src);
-        else {
+        } else {
             android_wcsncpy(dest, src, len - 1);
-            dest[len - 1] = L'\0';
+            dest[len - 1] = 0;
         }
     }
     return (slen);

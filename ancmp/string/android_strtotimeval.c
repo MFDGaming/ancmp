@@ -31,25 +31,23 @@
 #include "../android_ctype.h"
 
 char *android_strtotimeval(const char *str, android_timeval_t *ts) {
-    int n;
-    char *s, *s0;
-    long  fs;	/* Fractional seconds */
+    char *s;
+    long fs;
     ts->tv_sec = android_strtoumax(str, &s, 10);
     fs = 0;
-    if ( *s == '.' ) {
-	int  count;
-        s0 = s+1;
-	/* read up to 6 digits */
-	fs    = 0;
-	count = 0;
-	while ( *s && android_isdigit(*s) )
-	{
-            if ( ++count < 7 )
-	        fs = fs*10 + (*s - '0');
-	    s++;
-	}
-	for ( ; count < 6; count++ )
-	    fs *= 10;
+    if (*s == '.') {
+	    int count;
+	    fs = 0;
+	    count = 0;
+	    while (*s && android_isdigit(*s)) {
+            if (++count < 7) {
+	            fs = fs * 10 + (*s - '0');
+            }
+	        ++s;
+	    }
+	    for (; count < 6; count++) {
+	        fs *= 10;
+        }
     }
     ts->tv_usec = fs;
     return s;

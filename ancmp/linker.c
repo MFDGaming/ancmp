@@ -612,18 +612,19 @@ static void dump(soinfo *si)
     }
 }
 #endif
-
+#if 0
 static const char *sopaths[] = {
     "/vendor/lib",
     "/system/lib",
     0
 };
+#endif
 
 static int _open_lib(const char *name)
 {
     int fd;
+    #if 0
     struct stat filestat;
-#if 0
     if ((stat(name, &filestat) >= 0) && S_ISREG(filestat.st_mode)) {
 #endif
         if ((fd = open(name, O_RDONLY)) >= 0)
@@ -1308,9 +1309,9 @@ unsigned unload_library(soinfo *si)
          * in link_image. This is needed to undo the DT_NEEDED hack below.
          */
         if ((si->gnu_relro_start != 0) && (si->gnu_relro_len != 0)) {
+#ifndef _WIN32
             Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
             unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
-#ifndef _WIN32
             if (mprotect((void *) start, len, PROT_READ | PROT_WRITE) < 0)
                 DL_ERR("%5d %s: could not undo GNU_RELRO protections. "
                        "Expect a crash soon. errno=%d (%s)",
@@ -2043,9 +2044,9 @@ static int link_image(soinfo *si, unsigned wr_offset)
 #endif
 
     if (si->gnu_relro_start != 0 && si->gnu_relro_len != 0) {
+#ifndef _WIN32
         Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
         unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
-#ifndef _WIN32
         if (mprotect((void *) start, len, PROT_READ | PROT_WRITE) < 0) {
             DL_ERR("%5d GNU_RELRO mprotect of library '%s' failed: %d (%s)\n",
                    pid, si->name, errno, strerror(errno));
@@ -2121,7 +2122,6 @@ static void parse_preloads(const char *path, char *delim)
 }
 
 void android_linker_init(void) {
-    struct soinfo *so_libc, *so_libstdcpp, *so_libm;
 #ifdef _WIN32
     WSADATA wsaData;
 #endif
@@ -2149,9 +2149,9 @@ void android_linker_init(void) {
 
     WSAStartup(MAKEWORD(2,2), &wsaData);
 #endif
-    so_libc = android_library_create("libc.so");
-    so_libstdcpp = android_library_create("libstdc++.so");
-    so_libm = android_library_create("libm.so");
+    (void)android_library_create("libc.so");
+    (void)android_library_create("libstdc++.so");
+    (void)android_library_create("libm.so");
 }
 
 static unsigned stub_bucket = 0;

@@ -160,7 +160,7 @@ void android_div(div_t *ret, int numerator, int denominator) {
     ret->quot = numerator/denominator;
     ret->rem = numerator%denominator;
 }
-SYSV_WRAPPER(android_div, 3);
+SYSV_WRAPPER(android_div, 3)
 
 static uint64_t seed48[3];
 

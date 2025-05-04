@@ -90,7 +90,7 @@ int android_pthread_mutex_destroy(android_pthread_mutex_t *mutex) {
 }
 
 int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
-    int mvalue, mtype, tid, oldv, shared;
+    int mvalue, mtype, tid, shared;
     if (mutex == NULL) {
         return ANDROID_EINVAL;
     }
@@ -120,7 +120,7 @@ int android_pthread_mutex_trylock(android_pthread_mutex_t *mutex) {
 }
 
 int android_pthread_mutex_lock(android_pthread_mutex_t *mutex) {
-    int mvalue, mtype, tid, new_lock_type, shared;
+    int mvalue, mtype, tid, shared;
     if (mutex == NULL) {
         return ANDROID_EINVAL;
     }
@@ -169,7 +169,7 @@ int android_pthread_mutex_lock(android_pthread_mutex_t *mutex) {
 }
 
 int android_pthread_mutex_unlock(android_pthread_mutex_t *mutex) {
-    int mvalue, mtype, tid, oldv, shared;
+    int mvalue, mtype, tid, shared;
 
     if (mutex == NULL) {
         return ANDROID_EINVAL;

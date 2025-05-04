@@ -31,15 +31,15 @@
 #include "android_bcopy.h"
 
 void *android_memmove(void *dst, const void *src, size_t n) {
-  const char *p = src;
-  char *q = dst;
-  /* We can use the optimized memcpy if the destination is below the
-   * source (i.e. q < p), or if it is completely over it (i.e. q >= p+n).
-   */
-  if ((q < p) || ((size_t)(q - p) >= n)) {
-    return android_memcpy(dst, src, n);
-  } else {
-    android_bcopy(src, dst, n);
-    return dst;
-  }
+    const char *p = src;
+    char *q = dst;
+    /* We can use the optimized memcpy if the destination is below the
+     * source (i.e. q < p), or if it is completely over it (i.e. q >= p+n).
+     */
+    if ((q < p) || ((size_t)(q - p) >= n)) {
+        return android_memcpy(dst, src, n);
+    } else {
+        android_bcopy(src, dst, n);
+        return dst;
+    }
 }

@@ -102,7 +102,7 @@ static void arc4_init(void) {
 }
 
 static void arc4_stir(void) {
-	int i, fd;
+	int i;
 	union {
 		android_timeval_t tv;
 		unsigned int rnd[128 / sizeof(unsigned int)];

@@ -42,7 +42,6 @@ int android_cxa_atexit(void (*func)(void *), void *arg, void *dso) {
 }
 
 void android_cxa_finalize(void *dso) {
-    android_cxa_atexit_t *current;
     for (;;) {
         android_cxa_atexit_t *entry;
 

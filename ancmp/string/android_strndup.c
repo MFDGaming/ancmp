@@ -41,4 +41,4 @@ char *android_strndup(const char *s, size_t n) {
         copy[n] = 0;
     }
     return copy;
- }
+}

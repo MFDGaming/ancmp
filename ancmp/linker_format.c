@@ -386,6 +386,10 @@ format_integer(char *buffer, size_t buffsize, uint64_t value, int base, int isSi
     format_number(buffer, buffsize, value, base, "0123456789");
 }
 
+#if 0
+
+/* unused */
+
 /* Write an octal into a buffer, assumes buffsize > 2 */
 static void
 format_octal(char *buffer, size_t buffsize, uint64_t value, int isSigned)
@@ -399,6 +403,8 @@ format_decimal(char *buffer, size_t buffsize, uint64_t value, int isSigned)
 {
     format_integer(buffer, buffsize, value, 10, isSigned);
 }
+
+#endif
 
 /* Write an hexadecimal into a buffer, isCap is true for capital alphas.
  * Assumes bufsize > 2 */
@@ -421,9 +427,12 @@ out_vformat(Out *o, const char *format, va_list args)
         int mm;
         int padZero = 0;
         int padLeft = 0;
+#if 0
+        /* unused */
         char sign = '\0';
-        int width = -1;
         int prec  = -1;
+#endif
+        int width = -1;
         size_t bytelen = sizeof(int);
         const char*  str;
         int slen;
@@ -470,7 +479,10 @@ out_vformat(Out *o, const char *format, va_list args)
                 continue;
             }
             else if (c == ' ' || c == '+') {
+#if 0
+                /* unused */
                 sign = c;
+#endif
                 continue;
             }
             break;
@@ -485,7 +497,10 @@ out_vformat(Out *o, const char *format, va_list args)
 
         /* parse precision */
         if (c == '.') {
+#if 0
+            /* unused */
             prec = (int)parse_decimal(format, &nn);
+#endif
             c = format[nn++];
         }
 
