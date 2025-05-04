@@ -2192,6 +2192,7 @@ int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, si
     unsigned nchain, nbucket;
     unsigned *chain, *bucket;
     size_t old_count = 0;
+    Elf32_Sym *symtab;
     if (so->nchain) {
         old_count = so->nchain - 1;
     }
@@ -2199,7 +2200,7 @@ int android_library_add_symbols(struct soinfo *so, android_symbol_t *symbols, si
     nbucket = nchain / 2;
     if (nbucket == 0) nbucket = 1;
 
-    Elf32_Sym *symtab = (Elf32_Sym *)calloc(1 + count + old_count, sizeof(Elf32_Sym));
+    symtab = (Elf32_Sym *)calloc(1 + count + old_count, sizeof(Elf32_Sym));
     
     if (!symtab || count == 0) {
         return 0;

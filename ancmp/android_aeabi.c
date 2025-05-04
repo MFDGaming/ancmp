@@ -2,6 +2,8 @@
 #include "android_cxa.h"
 #include "string/android_string.h"
 
+#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
+
 int android_aeabi_atexit(void *object, void (*destructor)(void *), void *dso_handle) {
     return android_cxa_atexit(destructor, object, dso_handle);
 }
@@ -81,8 +83,6 @@ int64_t android_aeabi_ldiv(int64_t numerator, int64_t denominator) {
 uint64_t android_aeabi_uldiv(uint64_t numerator, uint64_t denominator) {
     return numerator / denominator;
 }
-
-#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
 
 void android_aeabi_idivmod(int32_t numerator, int32_t denominator) {
     int32_t quot = numerator / denominator;

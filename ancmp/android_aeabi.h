@@ -6,6 +6,8 @@
 #include "abi_fix.h"
 #include <stdlib.h>
 
+#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
+
 int android_aeabi_atexit(void *object, void (*destructor)(void *), void *dso_handle);
 
 void android_aeabi_memcpy8(void *dest, const void *src, size_t n);
@@ -45,8 +47,6 @@ uint32_t android_aeabi_uidiv(uint32_t numerator, uint32_t denominator);
 int64_t android_aeabi_ldiv(int64_t numerator, int64_t denominator);
 
 uint64_t android_aeabi_uldiv(uint64_t numerator, uint64_t denominator);
-
-#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
 
 void android_aeabi_idivmod(int32_t numerator, int32_t denominator);
 

@@ -508,6 +508,7 @@ void android_assert2(const char *__file, int __line, const char *__function, con
 }
 
 static hook_t aeabi_hooks[] = {
+#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
     {
         "__aeabi_atexit",
         (void *)android_aeabi_atexit
@@ -588,7 +589,6 @@ static hook_t aeabi_hooks[] = {
         "__aeabi_uldiv",
         (void *)android_aeabi_uldiv
     },
-#if !defined(_MSC_VER) && defined(ANDROID_ARM_LINKER)
     {
         "__aeabi_idivmod",
         (void *)android_aeabi_idivmod

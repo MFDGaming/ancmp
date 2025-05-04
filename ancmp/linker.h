@@ -30,6 +30,7 @@
 #define ANCMP_LINKER_H
 
 #include <sys/types.h>
+#include <stdlib.h>
 #include "android_elf.h"
 #include "android_linker_defs.h"
 

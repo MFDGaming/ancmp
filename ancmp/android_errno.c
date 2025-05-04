@@ -1524,13 +1524,16 @@ int *android_errno(void) {
 }
 
 int android_strerror_r(int errnum, char *strerrbuf, size_t buflen) {
+    const char *err_str;
+    size_t err_str_len, copy_size;
+
     if (buflen < 2) {
         return ANDROID_ERANGE;
     }
     --buflen;
-    const char *err_str = errnum_to_str(errnum);
-    size_t err_str_len = strlen(err_str);
-    size_t copy_size = (buflen > err_str_len) ? err_str_len : buflen;
+    err_str = errnum_to_str(errnum);
+    err_str_len = strlen(err_str);
+    copy_size = (buflen > err_str_len) ? err_str_len : buflen;
     memcpy(strerrbuf, err_str, copy_size);
     strerrbuf[copy_size] = '\0';
     return (copy_size == err_str_len) ? 0 : ANDROID_ERANGE;
