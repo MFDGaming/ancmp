@@ -6,3 +6,4 @@ settings.json
 vc98/Debug
 vc98/*.plg
 vc98/*.ncb
+vc98/*.opt
