@@ -206,6 +206,9 @@
 #define GET_SYSV_WRAPPER(FUNC) SYSV_WRAPPER_##FUNC
 
 #define EXTERN_SYSV_WRAPPER(FUNC) extern void SYSV_WRAPPER_##FUNC();
+
+void sysv_call_func(void *func, void *ret, int argc, ...);
+
 #else
 #define SYSV_WRAPPER(FUNC, ARG_CNT)
 
