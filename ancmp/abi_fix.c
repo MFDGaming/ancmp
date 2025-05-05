@@ -6,16 +6,22 @@
 void sysv_call_func(void *func, void *ret, int argc, ...) {
     int i;
     va_list ap;
-    void **args = (void **)malloc(argc * sizeof(void *));
-    if (!args) {
-        return;
-    }
-    va_start(ap, argc);
-    for (i = 0; i < argc; ++i) {
-        args[(argc - 1) - i] = va_arg(ap, void *);
+    void **args = NULL;
+    if (argc) {
+        args = (void **)malloc(argc * sizeof(void *));
+        if (!args) {
+            return;
+        }
+        va_start(ap, argc);
+        for (i = 0; i < argc; ++i) {
+            args[(argc - 1) - i] = va_arg(ap, void *);
+        }
+        va_end(ap);
     }
 #if defined(_MSC_VER)
     __asm {
+        cmp argc, 0
+        je sysv_wrapper_skip_null
         mov eax, args
         sub eax, 4
     sysv_wrapper_start:
@@ -23,6 +29,7 @@ void sysv_call_func(void *func, void *ret, int argc, ...) {
         push [eax]
         cmp eax, args
         jne sysv_wrapper_start
+    sysv_wrapper_skip_null:
         push ret
         mov eax, func
         call eax
@@ -31,8 +38,9 @@ void sysv_call_func(void *func, void *ret, int argc, ...) {
         add esp, eax
     }
 #else
-    va_end(ap);
     asm volatile (
+        "cmp $0, %0\n"
+        "je sysv_wrapper_skip_null\n"
         "mov %1, %%eax\n"
         "sub $4, %%eax\n"
         "sysv_wrapper_start:\n"
@@ -40,6 +48,7 @@ void sysv_call_func(void *func, void *ret, int argc, ...) {
         "push (%%eax)\n"
         "cmp %1, %%eax\n"
         "jne sysv_wrapper_start\n"
+        "sysv_wrapper_skip_null:\n"
         "push %3\n"
         "call *%2\n"
         "mov %0, %%eax\n"
