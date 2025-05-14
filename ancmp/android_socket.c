@@ -356,6 +356,40 @@ int sock_to_native(int type) {
     return -1;
 }
 
+int sock_to_android(int type) {
+#ifdef SOCK_STREAM
+    if (type == SOCK_STREAM) {
+        return ANDROID_SOCK_STREAM;
+    }
+#endif
+#ifdef SOCK_DGRAM
+    if (type == SOCK_DGRAM) {
+        return ANDROID_SOCK_DGRAM;
+    }
+#endif
+#ifdef SOCK_RAW
+    if (type == SOCK_RAW) {
+        return ANDROID_SOCK_RAW;
+    }
+#endif
+#ifdef SOCK_RDM
+    if (type == SOCK_RDM) {
+        return ANDROID_SOCK_RDM;
+    }
+#endif
+#ifdef SOCK_SEQPACKET
+    if (type == SOCK_SEQPACKET) {
+        return ANDROID_SOCK_SEQPACKET;
+    }
+#endif
+#ifdef SOCK_PACKET
+    if (type == SOCK_PACKET) {
+        return ANDROID_SOCK_PACKET;
+    }
+#endif
+    return -1;
+}
+
 int ipproto_to_native(int protocol) {
 #ifdef IPPROTO_IP
     if (protocol == ANDROID_IPPROTO_IP) {
@@ -450,6 +484,105 @@ int ipproto_to_native(int protocol) {
 #ifdef IPPROTO_RAW
     if (protocol == ANDROID_IPPROTO_RAW) {
         return IPPROTO_RAW;
+    }
+#endif
+    return -1;
+}
+
+int ipproto_to_android(int protocol) {
+#ifdef IPPROTO_IP
+    if (protocol == IPPROTO_IP) {
+        return ANDROID_IPPROTO_IP;
+    }
+#endif
+#ifdef IPPROTO_ICMP
+    if (protocol == IPPROTO_ICMP) {
+        return ANDROID_IPPROTO_ICMP;
+    }
+#endif
+#ifdef IPPROTO_IGMP
+    if (protocol == IPPROTO_IGMP) {
+        return ANDROID_IPPROTO_IGMP;
+    }
+    #endif
+#ifdef IPPROTO_IPIP
+    if (protocol == IPPROTO_IPIP) {
+        return ANDROID_IPPROTO_IPIP;
+    }
+#endif
+#ifdef IPPROTO_TCP
+    if (protocol == IPPROTO_TCP) {
+        return ANDROID_IPPROTO_TCP;
+    }
+#endif
+#ifdef IPPROTO_EGP
+    if (protocol == IPPROTO_EGP) {
+        return ANDROID_IPPROTO_EGP;
+    }
+#endif
+#ifdef IPPROTO_PUP
+    if (protocol == IPPROTO_PUP) {
+        return ANDROID_IPPROTO_PUP;
+    }
+#endif
+#ifdef IPPROTO_UDP
+    if (protocol == IPPROTO_UDP) {
+        return ANDROID_IPPROTO_UDP;
+    }
+#endif
+#ifdef IPPROTO_IDP
+    if (protocol == IPPROTO_IDP) {
+        return ANDROID_IPPROTO_IDP;
+    }
+#endif
+#ifdef IPPROTO_DCCP
+    if (protocol == IPPROTO_DCCP) {
+        return ANDROID_IPPROTO_DCCP;
+    }
+#endif
+#ifdef IPPROTO_RSVP
+    if (protocol == IPPROTO_RSVP) {
+        return ANDROID_IPPROTO_RSVP;
+    }
+#endif
+#ifdef IPPROTO_GRE
+    if (protocol == IPPROTO_GRE) {
+        return ANDROID_IPPROTO_GRE;
+    }
+#endif
+#ifdef IPPROTO_IPV6
+    if (protocol == IPPROTO_IPV6) {
+        return ANDROID_IPPROTO_IPV6;
+    }
+#endif
+#ifdef IPPROTO_ESP
+    if (protocol == IPPROTO_ESP) {
+        return ANDROID_IPPROTO_ESP;
+    }
+#endif
+#ifdef IPPROTO_AH
+    if (protocol == IPPROTO_AH) {
+        return ANDROID_IPPROTO_AH;
+    }
+#endif
+#ifdef IPPROTO_PIM
+    if (protocol == IPPROTO_PIM) {
+        return ANDROID_IPPROTO_PIM;
+    }
+#endif
+#ifdef IPPROTO_COMP
+    if (protocol == IPPROTO_COMP) {
+        return ANDROID_IPPROTO_COMP;
+    }
+#endif
+#ifdef IPPROTO_SCTP
+    if (protocol == IPPROTO_SCTP) {
+        return ANDROID_IPPROTO_SCTP;
+    }
+#endif
+#ifdef IPPROTO_RAW
+    if (protocol == IPPROTO_RAW) {
+        return ANDROID_IPPROTO_RAW;
     }
 #endif
     return -1;

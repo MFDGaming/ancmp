@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
+#include "inet/android_inet.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
@@ -372,6 +373,17 @@ static android_hostent_t android_host = {
     h_addr_list
 };
 
+typedef struct _android_addrinfo_t {
+	int	ai_flags;
+	int	ai_family;
+	int	ai_socktype;
+	int	ai_protocol;
+	size_t ai_addrlen;
+	char *ai_canonname;
+	struct sockaddr *ai_addr;
+	struct _android_addrinfo_t *ai_next;
+} android_addrinfo_t;
+
 #ifdef HAS_GETADDRINFO
 android_hostent_t *android_gethostbyname(const char *name) {
     struct addrinfo *info;
@@ -412,7 +424,27 @@ android_hostent_t *android_gethostbyname(const char *name) {
     }
     return NULL;
 }
+
+int android_getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) {
+    struct addrinfo h = *hints;
+    h.ai_family = af_to_native(h.ai_family);
+    h.ai_socktype = af_to_native(h.ai_socktype);
+    h.ai_protocol = ipproto_to_native(h.ai_protocol);
+    int ret = getaddrinfo(node, service, hints, res);
+    struct addrinfo *addr;
+    for (addr = *res; addr != NULL; addr = addr->ai_next) {
+        addr->ai_family = af_to_android(addr->ai_family);
+        addr->ai_socktype = sock_to_android(addr->ai_socktype);
+        addr->ai_protocol = ipproto_to_android(addr->ai_protocol);
+    }
+    return ret;
+}
+
 #else
+int android_getaddrinfo(const char *node, const char *service, const android_addrinfo_t *hints, android_addrinfo_t **res) {
+    *res = (android_addrinfo_t *)NULL;
+    return -1;
+}
 #define android_gethostbyname gethostbyname
 #endif
 
@@ -1835,6 +1867,14 @@ static hook_t hooks[] = {
     {
         "arc4random_uniform",
         (void *)android_arc4random_uniform
+    },
+    {
+        "getaddrinfo",
+        (void *)android_getaddrinfo
+    },
+    {
+        "inet_ntop",
+        (void *)android_inet_ntop
     },
     {
         "pread",

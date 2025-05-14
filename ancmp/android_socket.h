@@ -223,7 +223,11 @@ int af_to_android(int domain);
 
 int sock_to_native(int type);
 
+int sock_to_android(int type);
+
 int ipproto_to_native(int protocol);
+
+int ipproto_to_android(int protocol);
 
 int so_to_native(int option_name);
 
