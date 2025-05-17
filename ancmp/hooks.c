@@ -427,11 +427,15 @@ android_hostent_t *android_gethostbyname(const char *name) {
 
 int android_getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) {
     struct addrinfo h = *hints;
+    int ret;
+    struct addrinfo *addr;
+
     h.ai_family = af_to_native(h.ai_family);
     h.ai_socktype = af_to_native(h.ai_socktype);
     h.ai_protocol = ipproto_to_native(h.ai_protocol);
-    int ret = getaddrinfo(node, service, hints, res);
-    struct addrinfo *addr;
+
+    ret = getaddrinfo(node, service, hints, res);
+
     for (addr = *res; addr != NULL; addr = addr->ai_next) {
         addr->ai_family = af_to_android(addr->ai_family);
         addr->ai_socktype = sock_to_android(addr->ai_socktype);
@@ -440,11 +444,28 @@ int android_getaddrinfo(const char *node, const char *service, const struct addr
     return ret;
 }
 
+void android_freeaddrinfo(struct addrinfo *res) {
+    if (res) {
+        struct addrinfo *addr;
+        for (addr = res; addr != NULL; addr = addr->ai_next) {
+            addr->ai_family = af_to_native(addr->ai_family);
+            addr->ai_socktype = sock_to_native(addr->ai_socktype);
+            addr->ai_protocol = ipproto_to_native(addr->ai_protocol);
+        }
+        freeaddrinfo(res);
+    }
+}
+
 #else
 int android_getaddrinfo(const char *node, const char *service, const android_addrinfo_t *hints, android_addrinfo_t **res) {
     *res = (android_addrinfo_t *)NULL;
     return -1;
 }
+
+void android_freeaddrinfo(android_addrinfo_t *res) {
+
+}
+
 #define android_gethostbyname gethostbyname
 #endif
 
@@ -1871,6 +1892,10 @@ static hook_t hooks[] = {
     {
         "getaddrinfo",
         (void *)android_getaddrinfo
+    },
+    {
+        "freeaddrinfo",
+        (void *)android_freeaddrinfo
     },
     {
         "inet_ntop",

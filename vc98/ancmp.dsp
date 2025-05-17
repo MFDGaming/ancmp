@@ -63,8 +63,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ  /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANCMP_NO_STDINT" /D LINKER_DEBUG=0 /YX /FD /GZ  /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "ANCMP_NO_STDINT" /D LINKER_DEBUG=0 /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -72,7 +72,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"Debug\ancmp.lib"
+# ADD LIB32 /nologo
 
 !ENDIF 
 
@@ -657,6 +657,22 @@ SOURCE=..\ancmp\tzcode\android_tz.c
 # Begin Source File
 
 SOURCE=..\ancmp\tzcode\android_tz.h
+# End Source File
+# End Group
+# Begin Group "inet"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\ancmp\inet\android_inet.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ancmp\inet\android_inet_ntop.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ancmp\inet\android_inet_ntop.h
 # End Source File
 # End Group
 # Begin Source File

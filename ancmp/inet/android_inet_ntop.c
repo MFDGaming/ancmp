@@ -21,12 +21,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "../string/android_string.h"
+#include "../android_sprint.h"
 
 static const char *android_inet_ntop4(const unsigned char *src, char *dst, size_t size) {
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof("255.255.255.255")];
 	int l;
-	l = snprintf(tmp, size, fmt, src[0], src[1], src[2], src[3]);
+	l = android_snprintf(tmp, size, fmt, src[0], src[1], src[2], src[3]);
 	if (l <= 0 || (size_t)l >= size) {
 		errno = ENOSPC;
 		return (NULL);
@@ -96,7 +97,7 @@ static const char *android_inet_ntop6(const unsigned char *src, char *dst, size_
 			tp += android_strlen(tp);
 			break;
 		}
-		advance = snprintf(tp, ep - tp, "%x", words[i]);
+		advance = android_snprintf(tp, ep - tp, "%x", words[i]);
 		if (advance <= 0 || advance >= ep - tp)
 			return (NULL);
 		tp += advance;
@@ -126,7 +127,7 @@ const char *android_inet_ntop(int af, const void *src, char *dst, size_t size) {
 	case ANDROID_AF_INET6:
 		return (android_inet_ntop6(src, dst, size));
 	default:
-		errno = EAFNOSUPPORT;
+		errno = ENOSYS;
 		return (NULL);
 	}
 	/* NOTREACHED */
