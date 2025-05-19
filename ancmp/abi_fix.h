@@ -92,111 +92,105 @@
 #else
 
 #define SYSV_WRAPPER_1(FUNC) \
-    __asm__( \
-        ".globl " SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC " \n" \
-        SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC ": \n" \
-        "mov      4(%esp), %eax \n" \
-        "push %eax \n" \
-        "call " SYSV_WRAPPER_US #FUNC " \n" \
-        "pop %eax \n" \
-        "ret      $0x4 \n" \
-    ); \
-    extern void SYSV_WRAPPER_##FUNC(void);
+    void __attribute__((naked)) SYSV_WRAPPER_##FUNC() { \
+        __asm__( \
+            "mov      4(%esp), %eax \n" \
+            "push %eax \n" \
+            "call " SYSV_WRAPPER_US #FUNC " \n" \
+            "pop %eax \n" \
+            "ret      $0x4 \n" \
+        ); \
+    }
 
 #define SYSV_WRAPPER_2(FUNC) \
-    __asm__( \
-        ".globl " SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC " \n" \
-        SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC ": \n" \
-        "mov      8(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      8(%esp), %eax \n" \
-        "push %eax \n" \
-        "call " SYSV_WRAPPER_US #FUNC " \n" \
-        "pop %eax \n" \
-        "add $4, %esp \n" \
-        "ret      $0x4 \n" \
-    ); \
-    extern void SYSV_WRAPPER_##FUNC(void);
+    void __attribute__((naked)) SYSV_WRAPPER_##FUNC() { \
+        __asm__( \
+            "mov      8(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      8(%esp), %eax \n" \
+            "push %eax \n" \
+            "call " SYSV_WRAPPER_US #FUNC " \n" \
+            "pop %eax \n" \
+            "add $4, %esp \n" \
+            "ret      $0x4 \n" \
+        ); \
+    }
 
 #define SYSV_WRAPPER_3(FUNC) \
-    __asm__( \
-        ".globl " SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC " \n" \
-        SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC ": \n" \
-        "mov      12(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      12(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      12(%esp), %eax \n" \
-        "push %eax \n" \
-        "call " SYSV_WRAPPER_US #FUNC " \n" \
-        "pop %eax \n" \
-        "add $8, %esp \n" \
-        "ret      $0x4 \n" \
-    ); \
-    extern void SYSV_WRAPPER_##FUNC(void);
+    void __attribute__((naked)) SYSV_WRAPPER_##FUNC() { \
+        __asm__( \
+            "mov      12(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      12(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      12(%esp), %eax \n" \
+            "push %eax \n" \
+            "call " SYSV_WRAPPER_US #FUNC " \n" \
+            "pop %eax \n" \
+            "add $8, %esp \n" \
+            "ret      $0x4 \n" \
+        ); \
+    }
 
 #define SYSV_WRAPPER_4(FUNC) \
-    __asm__( \
-        ".globl " SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC " \n" \
-        SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC ": \n" \
-        "mov      16(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      16(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      16(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      16(%esp), %eax \n" \
-        "push %eax \n" \
-        "call " SYSV_WRAPPER_US #FUNC " \n" \
-        "pop %eax \n" \
-        "add $12, %esp \n" \
-        "ret      $0x4 \n" \
-    ); \
-    extern void SYSV_WRAPPER_##FUNC(void);
+    void __attribute__((naked)) SYSV_WRAPPER_##FUNC() { \
+        __asm__( \
+            "mov      16(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      16(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      16(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      16(%esp), %eax \n" \
+            "push %eax \n" \
+            "call " SYSV_WRAPPER_US #FUNC " \n" \
+            "pop %eax \n" \
+            "add $12, %esp \n" \
+            "ret      $0x4 \n" \
+        ); \
+    }
 
 #define SYSV_WRAPPER_5(FUNC) \
-    __asm__( \
-        ".globl " SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC " \n" \
-        SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC ": \n" \
-        "mov      20(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      20(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      20(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      20(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      20(%esp), %eax \n" \
-        "push %eax \n" \
-        "call " SYSV_WRAPPER_US #FUNC " \n" \
-        "pop %eax \n" \
-        "add $16, %esp \n" \
-        "ret      $0x4 \n" \
-    ); \
-    extern void SYSV_WRAPPER_##FUNC(void);
+    void __attribute__((naked)) SYSV_WRAPPER_##FUNC() { \
+        __asm__( \
+            "mov      20(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      20(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      20(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      20(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      20(%esp), %eax \n" \
+            "push %eax \n" \
+            "call " SYSV_WRAPPER_US #FUNC " \n" \
+            "pop %eax \n" \
+            "add $16, %esp \n" \
+            "ret      $0x4 \n" \
+        ); \
+    }
 
 #define SYSV_WRAPPER_6(FUNC) \
-    __asm__( \
-        ".globl " SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC " \n" \
-        SYSV_WRAPPER_US "SYSV_WRAPPER_" #FUNC ": \n" \
-        "mov      24(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      24(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      24(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      24(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      24(%esp), %eax \n" \
-        "push %eax \n" \
-        "mov      24(%esp), %eax \n" \
-        "push %eax \n" \
-        "call " SYSV_WRAPPER_US #FUNC " \n" \
-        "pop %eax \n" \
-        "add $20, %esp \n" \
-        "ret      $0x4 \n" \
-    ); \
-    extern void SYSV_WRAPPER_##FUNC(void);
+    void __attribute__((naked)) SYSV_WRAPPER_##FUNC() { \
+        __asm__( \
+            "mov      24(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      24(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      24(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      24(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      24(%esp), %eax \n" \
+            "push %eax \n" \
+            "mov      24(%esp), %eax \n" \
+            "push %eax \n" \
+            "call " SYSV_WRAPPER_US #FUNC " \n" \
+            "pop %eax \n" \
+            "add $20, %esp \n" \
+            "ret      $0x4 \n" \
+        ); \
+    }
 
 #endif
 
