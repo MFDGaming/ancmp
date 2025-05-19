@@ -54,8 +54,7 @@
         __asm push [esp+16] \
         __asm push [esp+16] \
         __asm push [esp+16] \
-        __asm mov eax, dword ptr [esp+16] \
-        __asm push eax \
+        __asm push [esp+16] \
         __asm call FUNC \
         __asm pop eax \
         __asm add esp, 12 \
