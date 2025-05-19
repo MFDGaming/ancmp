@@ -426,15 +426,19 @@ android_hostent_t *android_gethostbyname(const char *name) {
 }
 
 int android_getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) {
-    struct addrinfo h = *hints;
+    struct addrinfo h;
+    struct addrinfo *hp = NULL;
     int ret;
     struct addrinfo *addr;
+    if (hints) {
+        h = *hints;
+        h.ai_family = af_to_native(h.ai_family);
+        h.ai_socktype = af_to_native(h.ai_socktype);
+        h.ai_protocol = ipproto_to_native(h.ai_protocol);
+        hp = &h;
+    }
 
-    h.ai_family = af_to_native(h.ai_family);
-    h.ai_socktype = af_to_native(h.ai_socktype);
-    h.ai_protocol = ipproto_to_native(h.ai_protocol);
-
-    ret = getaddrinfo(node, service, hints, res);
+    ret = getaddrinfo(node, service, hp, res);
 
     for (addr = *res; addr != NULL; addr = addr->ai_next) {
         addr->ai_family = af_to_android(addr->ai_family);
