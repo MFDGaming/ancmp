@@ -70,4 +70,12 @@ size_t android_mbrtowc(android_wchar_t *pwc, const char *s, size_t n, android_mb
 
 size_t android_wcsftime(android_wchar_t *wcs, size_t maxsize, const android_wchar_t *format,  const struct tm *timptr);
 
+size_t android_wcsrtombs(char *dst, const android_wchar_t **src, size_t len, android_mbstate_t *ps);
+
+size_t android_wcstombs(char *dst, const android_wchar_t *src, size_t len);
+
+size_t android_mbsrtowcs(android_wchar_t *dst, const char **src, size_t len, android_mbstate_t *ps);
+
+size_t android_mbstowcs(android_wchar_t *dst, const char *src, size_t len);
+
 #endif

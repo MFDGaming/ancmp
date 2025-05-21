@@ -387,8 +387,22 @@ typedef struct _android_addrinfo_t {
 #ifdef HAS_GETADDRINFO
 android_hostent_t *android_gethostbyname(const char *name) {
     struct addrinfo *info;
+    struct addrinfo hints;
+    size_t cnl;
+
+    if (!name) {
+        return NULL;
+    }
+
+    memset(&hints, 0, sizeof(hints));
     
-    if(getaddrinfo(name, NULL, NULL, &info) == 0) {
+    hints.ai_flags = AI_CANONNAME;
+
+    cnl = strlen(name) + 1;
+    memcpy(h_name, name, cnl <= 256 ? cnl : 256);
+    h_name[255] = '\0';
+    
+    if(getaddrinfo(name, NULL, &hints, &info) == 0) {
         int i;
         struct addrinfo *original_info = info;
         for (i = 0; (i < 34) && (info != NULL); (++i), (info = info->ai_next)) {
@@ -406,7 +420,7 @@ android_hostent_t *android_gethostbyname(const char *name) {
             }
 
             if (info->ai_canonname) {
-                size_t cnl = strlen(info->ai_canonname) + 1;
+                cnl = strlen(info->ai_canonname) + 1;
                 memcpy(h_aliases_storage[i], info->ai_canonname, cnl <= 256 ? cnl : 256);
                 h_aliases_storage[i][255] = '\0';
             } else {
@@ -414,7 +428,7 @@ android_hostent_t *android_gethostbyname(const char *name) {
             }
             h_aliases[i] = h_aliases_storage[i];
 
-            memcpy(h_addr_list_storage[i], info->ai_addr, info->ai_addrlen);
+            memcpy(h_addr_list_storage[i], &((struct sockaddr_in *)info->ai_addr)->sin_addr, sizeof(struct in_addr));
             h_addr_list[i] = h_addr_list_storage[i];
         }
         freeaddrinfo(original_info);
@@ -1298,6 +1312,22 @@ static hook_t wchar_hooks[] = {
     {
         "wcsftime",
         (void *)android_wcsftime
+    },
+    {
+        "wcsrtombs",
+        (void *)android_wcsrtombs
+    },
+    {
+        "wcstombs",
+        (void *)android_wcstombs
+    },
+    {
+        "mbsrtowcs",
+        (void *)android_mbsrtowcs
+    },
+    {
+        "mbstowcs",
+        (void *)android_mbstowcs
     },
     {
         (char *)NULL,

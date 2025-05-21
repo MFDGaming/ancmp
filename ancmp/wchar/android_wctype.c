@@ -125,3 +125,37 @@ size_t android_mbrtowc(android_wchar_t *pwc, const char *s, size_t n, android_mb
 size_t android_wcsftime(android_wchar_t *wcs, size_t maxsize, const android_wchar_t *format,  const struct tm *timptr) {
     return android_strftime((char*)wcs, maxsize, (const char*)format, timptr);
 }
+
+size_t android_wcsrtombs(char *dst, const android_wchar_t **src, size_t len, android_mbstate_t *ps) {
+    const char *s = (const char *)*src;
+    const char *s2 = android_memchr(s, 0, len);
+    if (s2 != NULL) {
+        len = (s2 - s) + 1;
+    }
+    if (dst != NULL) {
+        android_memcpy(dst, s, len);
+    }
+    *src = (android_wchar_t *)(s + len);
+    return len;
+}
+
+size_t android_wcstombs(char *dst, const android_wchar_t *src, size_t len) {
+    return android_wcsrtombs(dst, &src, len, NULL);
+}
+
+size_t android_mbsrtowcs(android_wchar_t *dst, const char **src, size_t len, android_mbstate_t *ps) {
+    const char *s = *src;
+    const char *s2 = android_memchr(s, 0, len);
+    if (s2 != NULL) {
+        len = (size_t)(s2 - s) + 1U;
+    }
+    if (dst) {
+        android_memcpy((char *)dst, s, len);
+    }
+    *src = s + len;
+    return len;
+}
+
+size_t android_mbstowcs(android_wchar_t *dst, const char *src, size_t len) {
+    return android_mbsrtowcs(dst, &src, len, NULL);
+}
