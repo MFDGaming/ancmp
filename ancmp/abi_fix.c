@@ -20,6 +20,9 @@ void sysv_call_func(void *func, void *ret, int argc, ...) {
     }
 #if defined(_MSC_VER)
     __asm {
+        push ebx
+        mov ebx, esp
+        and esp, 0xFFFFFFF0
         cmp argc, 0
         je sysv_wrapper_skip_null
         mov eax, args
@@ -33,12 +36,14 @@ void sysv_call_func(void *func, void *ret, int argc, ...) {
         push ret
         mov eax, func
         call eax
-        mov eax, argc
-        shl eax, 2
-        add esp, eax
+        mov esp, ebx
+        pop ebx
     }
 #else
     asm volatile (
+        "push %%ebx\n"
+        "mov %%esp, %%ebx\n"
+        "and $0xFFFFFFF0, %%esp\n"
         "cmp $0, %0\n"
         "je sysv_wrapper_skip_null\n"
         "mov %1, %%eax\n"
@@ -51,12 +56,11 @@ void sysv_call_func(void *func, void *ret, int argc, ...) {
         "sysv_wrapper_skip_null:\n"
         "push %3\n"
         "call *%2\n"
-        "mov %0, %%eax\n"
-        "shl $2, %%eax\n"
-        "add %%eax, %%esp\n"
+        "mov %%ebx, %%esp\n"
+        "pop %%ebx\n"
         :
         : "r"(argc), "r"(args), "r"(func), "r"(ret)
-        : "eax"
+        : "eax", "ebx"
     );
 #endif
 }
