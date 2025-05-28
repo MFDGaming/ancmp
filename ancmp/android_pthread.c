@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <sched.h>
 #endif
+#include "abi_fix.h"
 
 int android_pthread_equal(android_pthread_t one, android_pthread_t two) {
     return (one == two ? 1 : 0);
@@ -103,7 +104,7 @@ static void android_pthread_call_destroy(void) {
 
 static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
     android_pthread_internal_t *thread = (android_pthread_internal_t *)lpParam;
-    DWORD ret;
+    DWORD ret = 0;
     void *errno_alloc;
     int thread_id = android_thread_id_acquire();
 
@@ -123,7 +124,8 @@ static DWORD WINAPI thread_wrapper(LPVOID lpParam) {
         return ANDROID_EACCES;
     }
 
-    ret = (DWORD)thread->start_func(thread->start_arg);
+    call_with_custom_stack(thread->start_func, (int *)&ret, thread->stack_size, 1, thread->start_arg);
+
     android_thread_id_free(thread_id);
     android_pthread_call_destroy();
     if (thread->is_detached) {
@@ -196,6 +198,7 @@ int android_pthread_create(android_pthread_t *thread_out, android_pthread_attr_t
     t->start_func = start_routine;
     t->start_arg = arg;
     t->is_joined = 0;
+    t->stack_size = attr_sv.stack_size;
 
     t->thread = CreateThread(NULL, attr_sv.stack_size, thread_wrapper, (void *)t, CREATE_SUSPENDED, NULL);
     if (t->thread == NULL) {

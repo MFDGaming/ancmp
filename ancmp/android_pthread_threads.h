@@ -20,6 +20,7 @@ typedef struct {
     void *(*start_func)(void *);
     void *start_arg;
     LONG is_joined;
+    size_t stack_size;
 } android_pthread_internal_t;
 
 extern android_pthread_destructor_t *android_pthread_destructors;

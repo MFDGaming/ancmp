@@ -1,6 +1,8 @@
 #ifndef ANCMP_ABI_FIX_H
 #define ANCMP_ABI_FIX_H
 
+#include <stdlib.h>
+
 #ifndef _WIN32
 #ifdef __arm__
 #define FLOAT_ABI_FIX __attribute__((pcs("aapcs")))
@@ -200,7 +202,9 @@
 
 #define EXTERN_SYSV_WRAPPER(FUNC) extern void SYSV_WRAPPER_##FUNC();
 
-void sysv_call_func(void *func, void *ret, int argc, ...);
+void sysv_call_func(void *func, void *retval, int argc, ...);
+
+void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc, ...);
 
 #else
 #define SYSV_WRAPPER(FUNC, ARG_CNT)

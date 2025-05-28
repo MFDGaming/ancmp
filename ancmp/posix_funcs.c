@@ -53,9 +53,9 @@ long pread(int fd, void *buf, size_t count, off_t offset)
     memset(&overlapped, 0, sizeof(OVERLAPPED));
 
     overlapped.OffsetHigh = (sizeof(off_t) <= sizeof(DWORD)) ?
-                    (DWORD)0 : (DWORD)((offset >> 32) & 0xFFFFFFFFL);
+                    (DWORD)0 : (DWORD)(((LONGLONG)offset >> 32) & 0xFFFFFFFFL);
     overlapped.Offset = (sizeof(off_t) <= sizeof(DWORD)) ?
-                    (DWORD)offset : (DWORD)(offset & 0xFFFFFFFFL);
+                    (DWORD)offset : (DWORD)((LONGLONG)offset & 0xFFFFFFFFL);
 
     file = (HANDLE)_get_osfhandle(fd);
     if (file == INVALID_HANDLE_VALUE) {
