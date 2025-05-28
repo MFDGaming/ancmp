@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #if defined(__i386__) || defined(_M_IX86)
-#include <windows.h>
 
 void sysv_call_func(void *func, void *retval, int argc, ...) {
     int i;
@@ -65,6 +64,9 @@ void sysv_call_func(void *func, void *retval, int argc, ...) {
     );
 #endif
 }
+
+#ifdef _WIN32
+#include <windows.h>
 
 void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc, ...) {
     int i;
@@ -144,4 +146,6 @@ void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc
         *retval = rv;
     }
 }
+#endif
+
 #endif
