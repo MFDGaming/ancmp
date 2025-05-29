@@ -63,6 +63,9 @@ void sysv_call_func(void *func, void *retval, int argc, ...) {
         : "eax", "ebx", "memory"
     );
 #endif
+    if (args) {
+        free(args);
+    }
 }
 
 #ifdef _WIN32
@@ -144,6 +147,9 @@ void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc
     VirtualFree(stack, 0, MEM_RELEASE);
     if (retval) {
         *retval = rv;
+    }
+    if (args) {
+        free(args);
     }
 }
 #endif
