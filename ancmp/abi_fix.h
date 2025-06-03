@@ -204,9 +204,7 @@
 
 void sysv_call_func(void *func, void *retval, int argc, ...);
 
-#ifdef _WIN32
 void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc, ...);
-#endif
 
 #else
 #define SYSV_WRAPPER(FUNC, ARG_CNT)
