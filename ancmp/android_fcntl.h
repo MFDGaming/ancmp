@@ -41,7 +41,7 @@ int android_open(const char *pathname, int flags, ...);
 #else
 #include <fcntl.h>
 #define android_fcntl fcntl
-#define android_open open
+#define android_open (int (*)(const char *, int, ...))open
 #endif
 
 #endif

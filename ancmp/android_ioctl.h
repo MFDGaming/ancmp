@@ -70,7 +70,7 @@ typedef struct {
 #ifdef _WIN32
 int android_ioctl(int fd, unsigned long request, ...);
 #else
-#define android_ioctl ioctl
+#define android_ioctl (int (*)(int, int, ...))ioctl
 #endif
 
 #endif
