@@ -41,10 +41,13 @@
 void *android_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 
 int android_munmap(void *addr, size_t length);
+
+int android_mprotect(void *addr, size_t length, int prot);
 #else
 #include <sys/mman.h>
 #define android_mmap mmap
 #define android_munmap munmap
+#define android_mprotect mprotect
 #endif
 
 #endif

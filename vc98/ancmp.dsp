@@ -829,14 +829,6 @@ SOURCE=..\ancmp\android_math.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\ancmp\android_memmap.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\ancmp\android_memmap.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\ancmp\android_mmap.c
 # End Source File
 # Begin Source File

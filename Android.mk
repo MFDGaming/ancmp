@@ -90,7 +90,6 @@ LOCAL_SRC_FILES := \
     ./ancmp/android_ioctl.c \
     ./ancmp/android_logd.c \
     ./ancmp/android_math.c \
-    ./ancmp/android_memmap.c \
     ./ancmp/android_mmap.c \
     ./ancmp/android_operator_new.c \
     ./ancmp/android_posix_types.c \

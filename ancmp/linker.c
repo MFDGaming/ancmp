@@ -31,7 +31,6 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
-#include "android_memmap.h"
 #include <direct.h>
 #include <io.h>
 #include <process.h>
@@ -836,7 +835,7 @@ get_lib_extents(int fd, const char *name, void *__hdr, unsigned *total_sz)
 static int reserve_mem_region(soinfo *si)
 {
 #ifdef _WIN32
-    void *base = memmap_alloc((void *)si->base, si->size, 1);
+    void *base = VirtualAlloc((void *)si->base, si->size, MEM_COMMIT | MEM_RESERVE, PAGE_NOACCESS);
     if (base == NULL) {
 #else
     void *base = mmap((void *)si->base, si->size, PROT_NONE,
@@ -853,7 +852,7 @@ static int reserve_mem_region(soinfo *si)
               "not at 0x%08x", pid, (si->base ? "" : "non-"),
               si->name, (unsigned)base, si->base);
 #ifdef _WIN32
-        memmap_dealloc(base, si->size);
+        VirtualFree((void *)base, si->size, MEM_RELEASE);
 #else
         munmap(base, si->size);
 #endif
@@ -876,7 +875,7 @@ static int alloc_mem_region(soinfo *si)
     */
 
 #ifdef _WIN32
-    base = memmap_alloc(NULL, si->size, 0);
+    base = VirtualAlloc(NULL, si->size, MEM_COMMIT | MEM_RESERVE, PAGE_NOACCESS);
     if (base == NULL) {
 #else
     base = mmap(NULL, si->size, PROT_NONE,
@@ -900,9 +899,19 @@ err:
 }
 
 #define MAYBE_MAP_FLAG(x,from,to)    (((x) & (from)) ? (to) : 0)
+#ifdef _WIN32
+#define PFLAGS_TO_PROT(x)           (((x & PF_X) && (x & PF_W)) ? PAGE_EXECUTE_READWRITE : \
+                                        (((x & PF_X) && (x & PF_R)) ? PAGE_EXECUTE_READ : \
+                                            (((x & PF_W)) ? PAGE_READWRITE : \
+                                                (((x & PF_R)) ? PAGE_READONLY : PAGE_NOACCESS \
+                                            ) \
+                                        ) \
+                                    ))
+#else
 #define PFLAGS_TO_PROT(x)            (MAYBE_MAP_FLAG((x), PF_X, PROT_EXEC) | \
                                       MAYBE_MAP_FLAG((x), PF_R, PROT_READ) | \
                                       MAYBE_MAP_FLAG((x), PF_W, PROT_WRITE))
+#endif
 /* load_segments
  *
  *     This function loads all the loadable (PT_LOAD) segments into memory
@@ -930,6 +939,9 @@ load_segments(int fd, void *header, soinfo *si)
     unsigned char *extra_base;
     unsigned extra_len;
     unsigned total_sz = 0;
+#ifdef _WIN32
+    DWORD old_protect;
+#endif
 
     si->wrprotect_start = 0xffffffff;
     si->wrprotect_end = 0;
@@ -949,28 +961,34 @@ load_segments(int fd, void *header, soinfo *si)
             TRACE("[ %d - Trying to load segment from '%s' @ 0x%08x "
                   "(0x%08x). p_vaddr=0x%08x p_offset=0x%08x ]\n", pid, si->name,
                   (unsigned)tmp, len, phdr->p_vaddr, phdr->p_offset);
+            pbase = (unsigned char *)tmp;
 #ifdef _WIN32
-            pbase = memmap_alloc((void *)tmp, len, 1);
-            if (pbase) {
-                pread(fd, pbase, len, phdr->p_offset & (~PAGE_MASK));
-            }
-            if (pbase == NULL) {
+            if (!VirtualProtect((void *)tmp, len, PAGE_READWRITE, &old_protect)) {
 #else
-            pbase = mmap((void *)tmp, len, PFLAGS_TO_PROT(phdr->p_flags),
-                         MAP_PRIVATE | MAP_FIXED, fd,
-                         phdr->p_offset & (~PAGE_MASK));
-            if (pbase == MAP_FAILED) {
+            if (mprotect((void *)tmp, len, PROT_READ | PROT_WRITE) != 0) {
 #endif
-                DL_ERR("%d failed to map segment from '%s' @ 0x%08x (0x%08x). "
+                DL_ERR("%d failed to change segment protection from '%s' @ 0x%08x (0x%08x). "
                       "p_vaddr=0x%08x p_offset=0x%08x", pid, si->name,
                       (unsigned)tmp, len, phdr->p_vaddr, phdr->p_offset);
                 goto fail;
             }
+            pread(fd, pbase, len, phdr->p_offset & (~PAGE_MASK));
 
             /* If 'len' didn't end on page boundary, and it's a writable
              * segment, zero-fill the rest. */
             if ((len & PAGE_MASK) && (phdr->p_flags & PF_W))
                 memset((void *)(pbase + len), 0, PAGE_SIZE - (len & PAGE_MASK));
+
+#ifdef _WIN32
+            if (!VirtualProtect((void *)tmp, len, PFLAGS_TO_PROT(phdr->p_flags), &old_protect)) {
+#else
+            if (mprotect((void *)tmp, len, PFLAGS_TO_PROT(phdr->p_flags)) != 0) {           
+#endif
+                DL_ERR("%d failed to change segment protection from '%s' @ 0x%08x (0x%08x). "
+                      "p_vaddr=0x%08x p_offset=0x%08x", pid, si->name,
+                      (unsigned)tmp, len, phdr->p_vaddr, phdr->p_offset);
+                goto fail;
+            }
 
             /* Check to see if we need to extend the map for this segment to
              * cover the diff between filesz and memsz (i.e. for bss).
@@ -1012,17 +1030,13 @@ load_segments(int fd, void *header, soinfo *si)
                  * (though we can probably accomplish the same thing with
                  * mprotect).
                  */
+                extra_base = (unsigned char *)tmp;
 #ifdef _WIN32
-                extra_base = memmap_alloc((void *)tmp, extra_len, 1);
-                if (extra_base == NULL) {
+            if (!VirtualProtect((void *)tmp, extra_len, PFLAGS_TO_PROT(phdr->p_flags), &old_protect)) {
 #else
-                extra_base = mmap((void *)tmp, extra_len,
-                                  PFLAGS_TO_PROT(phdr->p_flags),
-                                  MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
-                                  -1, 0);
-                if (extra_base == MAP_FAILED) {
+            if (mprotect((void *)tmp, extra_len, PFLAGS_TO_PROT(phdr->p_flags)) != 0) {           
 #endif
-                    DL_ERR("[ %5d - failed to extend segment from '%s' @ 0x%08x"
+                    DL_ERR("[ %5d - failed to change segment extention permission from '%s' @ 0x%08x"
                            " (0x%08x) ]", pid, si->name, (unsigned)tmp,
                           extra_len);
                     goto fail;
@@ -1052,7 +1066,9 @@ load_segments(int fd, void *header, soinfo *si)
                     si->wrprotect_start = (unsigned)pbase;
                 if (((unsigned)pbase + len) > si->wrprotect_end)
                     si->wrprotect_end = (unsigned)pbase + len;
-#ifndef _WIN32
+#ifdef _WIN32
+                VirtualProtect(pbase, len, PFLAGS_TO_PROT(phdr->p_flags | PF_W), &old_protect);
+#else
                 mprotect(pbase, len,
                          PFLAGS_TO_PROT(phdr->p_flags) | PROT_WRITE);
 #endif
@@ -1106,7 +1122,7 @@ fail:
      * all the pages in the range, irrespective of how they got there.
      */
 #ifdef _WIN32
-    memmap_dealloc((void *)si->base, si->size);
+    VirtualFree((void *)si->base, si->size, MEM_RELEASE);
 #else
     munmap((void *)si->base, si->size);
 #endif
@@ -1244,7 +1260,7 @@ init_library(soinfo *si)
             ** if no additional libraries have moved it since we updated it.
             */
 #ifdef _WIN32
-        memmap_dealloc((void *)si->base, si->size);
+        VirtualFree((void *)si->base, si->size, MEM_RELEASE);
 #else
         munmap((void *)si->base, si->size);
 #endif
@@ -1309,14 +1325,18 @@ unsigned unload_library(soinfo *si)
          * in link_image. This is needed to undo the DT_NEEDED hack below.
          */
         if ((si->gnu_relro_start != 0) && (si->gnu_relro_len != 0)) {
-#ifndef _WIN32
             Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
             unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
+#ifdef _WIN32
+            DWORD old_protect;
+            if (!VirtualProtect((void *)start, len, PAGE_READWRITE, &old_protect))
+#else
+            
             if (mprotect((void *) start, len, PROT_READ | PROT_WRITE) < 0)
+#endif
                 DL_ERR("%5d %s: could not undo GNU_RELRO protections. "
                        "Expect a crash soon. errno=%d (%s)",
                        pid, si->name, errno, strerror(errno));
-#endif
         }
         if (si->dynamic) {
             for(d = si->dynamic; *d; d += 2) {
@@ -1342,7 +1362,7 @@ unsigned unload_library(soinfo *si)
         }
 
 #ifdef _WIN32
-        memmap_dealloc((char *)si->base, si->size);
+        VirtualFree((void *)si->base, si->size, MEM_RELEASE);
 #else
         munmap((char *)si->base, si->size);
 #endif
@@ -1810,6 +1830,9 @@ static int link_image(soinfo *si, unsigned wr_offset)
                  * protected */
                 if (!(phdr->p_flags & PF_W)) {
                     unsigned _end;
+#ifdef _WIN32
+                    DWORD old_protect;
+#endif
 
                     if (si->base + phdr->p_vaddr < si->wrprotect_start)
                         si->wrprotect_start = si->base + phdr->p_vaddr;
@@ -1822,7 +1845,9 @@ static int link_image(soinfo *si, unsigned wr_offset)
                      * However, we will remember what range of addresses
                      * should be write protected.
                      */
-#ifndef _WIN32
+#ifdef _WIN32
+                    VirtualProtect((void *)(si->base + phdr->p_vaddr), phdr->p_memsz, PFLAGS_TO_PROT(phdr->p_flags | PF_W), &old_protect);
+#else
                     mprotect((void *) (si->base + phdr->p_vaddr),
                              phdr->p_memsz,
                              PFLAGS_TO_PROT(phdr->p_flags) | PROT_WRITE);
@@ -2034,25 +2059,33 @@ static int link_image(soinfo *si, unsigned wr_offset)
      * the program headers again and mprotect all the read-only segments.
      * To prevent re-scanning the program header, we would have to build a
      * list of loadable segments in si, and then scan that instead. */
-#ifndef _WIN32
+
     if (si->wrprotect_start != 0xffffffff && si->wrprotect_end != 0) {
+#ifdef _WIN32
+        DWORD old_protect;
+        VirtualProtect((void *)si->wrprotect_start, si->wrprotect_end - si->wrprotect_start, PAGE_EXECUTE_READ, &old_protect);
+#else
         mprotect((void *)si->wrprotect_start,
                  si->wrprotect_end - si->wrprotect_start,
-                 PROT_READ | PROT_EXEC | PROT_WRITE);
-    }
+                 PROT_READ | PROT_EXEC);
 #endif
+    }
+
 #endif
 
     if (si->gnu_relro_start != 0 && si->gnu_relro_len != 0) {
-#ifndef _WIN32
         Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
         unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
+#ifdef _WIN32
+        DWORD old_protect;
+        if (!VirtualProtect((void *)start, len, PAGE_READWRITE, &old_protect)) {
+#else
         if (mprotect((void *) start, len, PROT_READ | PROT_WRITE) < 0) {
+#endif
             DL_ERR("%5d GNU_RELRO mprotect of library '%s' failed: %d (%s)\n",
                    pid, si->name, errno, strerror(errno));
             goto fail;
         }
-#endif
     }
 
     /* If this is a SET?ID program, dup /dev/null to opened stdin,
@@ -2134,10 +2167,6 @@ void android_linker_init(void) {
         exit(1);
     }
 #ifdef _WIN32
-    if(!memmap_init(1024*1024*100, 4096)) {
-        puts("memmap_init failed");
-        exit(1);
-    }
     if (!android_futex_init()) {
         puts("android_futex_init failed");
         exit(1);

@@ -1664,6 +1664,10 @@ static hook_t hooks[] = {
         (void *)android_munmap
     },
     {
+        "mprotect",
+        (void *)android_mprotect
+    },
+    {
         "close",
         (void *)android_close
     },
