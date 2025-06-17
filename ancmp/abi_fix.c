@@ -24,9 +24,17 @@ void sysv_call_func(void *func, void *retval, int argc, ...) {
     }
 #if defined(_MSC_VER)
     __asm {
+        push eax
+        push ecx
+        push edx
         push ebx
         mov ebx, esp
+        mov eax, args_end
+        sub eax, args
+        add eax, 4
+        sub esp, eax
         and esp, 0xFFFFFFF0
+        add esp, eax
         mov eax, args
         cmp eax, 0
         je sysv_wrapper_loop_end
@@ -40,12 +48,23 @@ void sysv_call_func(void *func, void *retval, int argc, ...) {
         call func
         mov esp, ebx
         pop ebx
+        pop edx
+        pop ecx
+        pop eax
     }
 #else
     asm volatile (
+        "push %%eax \n"
+        "push %%ecx \n"
+        "push %%edx \n"
         "push %%ebx \n"
         "mov %%esp, %%ebx \n"
+        "mov %[args_end], %%eax \n"
+        "sub %[args], %%eax \n"
+        "add $4, %%eax \n"
+        "sub %%eax, %%esp \n"
         "and $0xFFFFFFF0, %%esp \n"
+        "add %%eax, %%esp \n"
         "mov %[args], %%eax \n"
         "cmp $0, %%eax \n"
         "je sysv_wrapper_loop_end \n"
@@ -59,6 +78,9 @@ void sysv_call_func(void *func, void *retval, int argc, ...) {
         "call *%[func] \n"
         "mov %%ebx, %%esp \n"
         "pop %%ebx \n"
+        "pop %%edx \n"
+        "pop %%ecx \n"
+        "pop %%eax \n"
         :
         : [args]"r"(args), [args_end]"r"(args_end), [func]"r"(func), [retval]"r"(retval)
         : "eax", "ebx", "memory"
