@@ -801,6 +801,10 @@ static hook_t pthread_hooks[] = {
         (void *)android_pthread_setname_np
     },
     {
+        "pthread_mutexattr_settype",
+        (void *)android_pthread_mutexattr_settype
+    },
+    {
         (char *)NULL,
         (void *)NULL
     }
@@ -942,6 +946,10 @@ static hook_t math_hooks[] = {
     {
         "log10",
         (void *)android_log10
+    },
+    {
+        "log10f",
+        (void *)android_log10f
     },
     {
         (char *)NULL,
@@ -2022,6 +2030,10 @@ static hook_t hooks[] = {
     {
         "lseek",
         (void *)lseek
+    },
+    {
+        "qsort",
+        (void *)qsort
     },
     {
         (char *)NULL,

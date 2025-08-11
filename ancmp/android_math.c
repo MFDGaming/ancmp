@@ -139,3 +139,7 @@ FLOAT_ABI_FIX double android_frexp(double x, int *exp) {
 FLOAT_ABI_FIX double android_log10(double x) {
     return log10(x);
 }
+
+FLOAT_ABI_FIX float android_log10f(float x) {
+    return (float)log10((double)x);
+}
