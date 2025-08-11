@@ -60,6 +60,7 @@
 #include "android_cxa_guard.h"
 #include "android_operator_new.h"
 #include "android_arc4random.h"
+#include "android_semaphore.h"
 
 typedef struct {
     char *name;
@@ -677,6 +678,53 @@ static hook_t aeabi_hooks[] = {
         (void *)android_aeabi_uldivmod
     },
 #endif
+    {
+        (char *)NULL,
+        (void *)NULL
+    }
+};
+
+static hook_t semaphore_hooks[] = {
+    {
+        "sem_init",
+        (void *)android_sem_init
+    },
+    {
+        "sem_destroy",
+        (void *)android_sem_destroy
+    },
+    {
+        "sem_open",
+        (void *)android_sem_open
+    },
+    {
+        "sem_close",
+        (void *)android_sem_close
+    },
+    {
+        "sem_unlink",
+        (void *)android_sem_unlink
+    },
+    {
+        "sem_wait",
+        (void *)android_sem_wait
+    },
+    {
+        "sem_timedwait",
+        (void *)android_sem_timedwait
+    },
+    {
+        "sem_post",
+        (void *)android_sem_post
+    },
+    {
+        "sem_trywait",
+        (void *)android_sem_trywait
+    },
+    {
+        "sem_getvalue",
+        (void *)android_sem_getvalue
+    },
     {
         (char *)NULL,
         (void *)NULL
@@ -2100,5 +2148,6 @@ void *get_hooked_symbol(char *name) {
     ANCMP_HOOKS_CHECK_AND_RETURN(pthread_hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(math_hooks, name, hook);
     ANCMP_HOOKS_CHECK_AND_RETURN(aeabi_hooks, name, hook);
+    ANCMP_HOOKS_CHECK_AND_RETURN(semaphore_hooks, name, hook);
     return NULL;
 }
