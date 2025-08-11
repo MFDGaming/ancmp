@@ -488,6 +488,10 @@ void android_freeaddrinfo(android_addrinfo_t *res) {
 #define android_gethostbyname gethostbyname
 #endif
 
+int android_setpriority(int which, int who, int prio) {
+    return 0;
+}
+
 FLOAT_ABI_FIX double android_strtod(const char *nptr, char **endptr) {
     return strtod(nptr, endptr);
 }
@@ -1994,6 +1998,10 @@ static hook_t hooks[] = {
     {
         "inet_ntop",
         (void *)android_inet_ntop
+    },
+    {
+        "setpriority",
+        (void *)android_setpriority
     },
     {
         "pread",
