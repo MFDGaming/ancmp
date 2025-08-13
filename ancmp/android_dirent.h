@@ -14,11 +14,17 @@
 #define ANDROID_DT_WHT         14
 
 typedef struct {
-    uint64_t          d_ino;
-    int64_t           d_off;
-    unsigned short    d_reclen;
-    unsigned char     d_type;
-    char              d_name[256];
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } d_ino;
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } d_off;
+    unsigned short d_reclen;
+    unsigned char d_type;
+    char d_name[256];
 } android_dirent_t;
 
 #ifdef _WIN32

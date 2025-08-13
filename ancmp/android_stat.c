@@ -4,13 +4,13 @@
 #include <stdio.h>
 
 static void native_to_android(struct stat *from, android_stat_t *to) {
-    to->st_dev = from->st_dev;
+    *(uint64_t *)&to->st_dev = from->st_dev;
     to->st_nlink = from->st_nlink;
     to->st_uid = from->st_uid;
     to->st_gid = from->st_gid;
-    to->st_rdev = from->st_rdev;
-    to->st_size = from->st_size;
-    to->st_ino = from->st_ino;
+    *(uint64_t *)&to->st_rdev = from->st_rdev;
+    *(int64_t *)&to->st_size = from->st_size;
+    *(uint64_t *)&to->st_ino = from->st_ino;
     to->__st_ino = from->st_ino;
 #ifdef _WIN32
     to->st_mode = 0;
@@ -39,7 +39,7 @@ static void native_to_android(struct stat *from, android_stat_t *to) {
     to->_st_mtime_nsec = 0;
     to->_st_ctime_nsec = 0;
     to->st_blksize = 4096;
-    to->st_blocks = (((from->st_size / to->st_blksize) + ((from->st_size % to->st_blksize) ? 1 : 0)) * to->st_blksize) / 512;
+    *(uint64_t *)&to->st_blocks = (((from->st_size / to->st_blksize) + ((from->st_size % to->st_blksize) ? 1 : 0)) * to->st_blksize) / 512;
 #else
     to->st_mode = s_to_android(from->st_mode);
     to->_st_atime = from->st_atim.tv_sec;
@@ -49,7 +49,7 @@ static void native_to_android(struct stat *from, android_stat_t *to) {
     to->_st_mtime_nsec = from->st_mtim.tv_nsec;
     to->_st_ctime_nsec = from->st_ctim.tv_nsec;
     to->st_blksize = from->st_blksize;
-    to->st_blocks = from->st_blocks;
+    *(uint64_t *)&to->st_blocks = from->st_blocks;
 #endif
 }
 #ifndef _WIN32

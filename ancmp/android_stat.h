@@ -36,7 +36,10 @@
 #define ANDROID_S_ISSOCK(m) (((m) & ANDROID_S_IFMT) == ANDROID_S_IFSOCK)
 
 typedef struct {
-    uint64_t st_dev;
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } st_dev;
     unsigned char __pad0[4];
 
     unsigned long __st_ino;
@@ -46,12 +49,21 @@ typedef struct {
     unsigned int st_uid;
     unsigned int st_gid;
 
-    uint64_t st_rdev;
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } st_rdev;
     unsigned char __pad3[4];
 
-    int64_t st_size;
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } st_size;
     unsigned long st_blksize;
-    uint64_t st_blocks;
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } st_blocks;
 
     unsigned long _st_atime;
     unsigned long _st_atime_nsec;
@@ -62,7 +74,10 @@ typedef struct {
     unsigned long _st_ctime;
     unsigned long _st_ctime_nsec;
 
-    uint64_t st_ino;
+    struct {
+        uint32_t l;
+        uint32_t h;
+    } st_ino;
 } android_stat_t;
 
 int s_to_native(int mode);

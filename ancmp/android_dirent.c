@@ -77,8 +77,8 @@ android_dirent_t *android_readdir(android_DIR *dirp) {
         }
     }
 
-    entry.d_ino = 0;
-    entry.d_off = 0;
+    *(uint64_t *)&entry.d_ino = 0;
+    *(int64_t *)&entry.d_off = 0;
     entry.d_reclen = sizeof(android_dirent_t);
     entry.d_type = (dirp->findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? ANDROID_DT_DIR : ANDROID_DT_REG;
 
@@ -96,10 +96,10 @@ android_dirent_t *android_readdir(DIR *dirp) {
     if (tmp) {
         strncpy(ret.d_name, tmp->d_name, sizeof(ret.d_name) - 1);
         ret.d_name[sizeof(ret.d_name) - 1] = '\0';
-        ret.d_ino = tmp->d_ino;
+        *(uint64_t *)&ret.d_ino = tmp->d_ino;
         ret.d_reclen = sizeof(android_dirent_t);
         ret.d_type = tmp->d_type;
-        ret.d_off = tmp->d_off;
+        *(int64_t *)&ret.d_off = tmp->d_off;
         return &ret;
     }
     return NULL;
