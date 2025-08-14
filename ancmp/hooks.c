@@ -75,9 +75,6 @@ void *android_stack_chk_guard = (void *)android_stack_chk_guard_location;
 
 int android_mkdir(const char *pathname, int mode) {
     BOOL ret = CreateDirectory(pathname, NULL);
-    if (!ret) {
-        printf("\x1b[31mFailed to mkdir %s due to %lu\x1b[0m\n", pathname, GetLastError());
-    }
     return ret ? 0 : -1;
 }
 
@@ -153,12 +150,10 @@ char *android_inet_ntoa(uint32_t addr) {
 }
 
 uint32_t android_inet_addr(char *addr) {
-    puts("android_inet_addr");
     return inet_addr(addr);
 }
 
 void android_div(div_t *ret, int numerator, int denominator) {
-    puts("android_div");
     ret->quot = numerator/denominator;
     ret->rem = numerator%denominator;
 }
@@ -171,25 +166,21 @@ static const uint64_t addend = 0xB;
 static const uint64_t mask = ((uint64_t)1 << 48) - 1;
 
 void android_srand48(long seedval) {
-    puts("android_srand48");
     seed48[0] = (seedval ^ multiplier) & mask;
     seed48[1] = 0x330E;
     seed48[2] = 0x0;
 }
 
 long android_lrand48(void) {
-    puts("android_lrand48");
     seed48[0] = (multiplier * seed48[0] + addend) & mask;
     return (long)(seed48[0] >> 16) & 0x7FFFFFFF;
 }
 
 FLOAT_ABI_FIX double android_drand48(void) {
-    puts("android_drand48");
     return (double)android_lrand48() / (1 << 31);
 }
 
 long android_syscall(long number, ...) {
-    puts("android_syscall");
     return -1;
 }
 
@@ -220,17 +211,14 @@ typedef struct {
 typedef unsigned int  android_nfds_t;
 
 int android_poll(android_pollfd_t *fds, android_nfds_t nfds, long timeout) {
-    puts("android_poll");
     return -1;
 }
 
 int android_sigaction(int signum, void *act, void *oldact) {
-    puts("android_sigaction");
     return -1;
 }
 
 int android_sched_yield(void) {
-    puts("android_sched_yield");
     Sleep(0);
     return 0;
 }
@@ -238,11 +226,9 @@ int android_sched_yield(void) {
 int android_fsync(int fd) {
     HANDLE hFile = (HANDLE)_get_osfhandle(fd);
     if (hFile == INVALID_HANDLE_VALUE) {
-        puts("android_fsync failed");
         return -1;
     }
     if (!FlushFileBuffers(hFile)) {
-        puts("android_fsync failed");
         return -1;
     }
     return 0;
@@ -251,18 +237,15 @@ int android_fsync(int fd) {
 int android_fdatasync(int fd) {
     HANDLE hFile = (HANDLE)_get_osfhandle(fd);
     if (hFile == INVALID_HANDLE_VALUE) {
-        puts("android_fdatasync failed");
         return -1;
     }
     if (!FlushFileBuffers(hFile)) {
-        puts("android_fdatasync failed");
         return -1;
     }
     return 0;
 }
 
 int android_geteuid(void) {
-    puts("android_geteuid");
     return 0;
 }
 
@@ -280,33 +263,21 @@ int android_remove(const char *pathname) {
             ret = DeleteFile(pathname);
         }
     }
-    if (!ret) {
-        printf("\x1b[31mFailed to remove %s due to %lu\x1b[0m\n", pathname, GetLastError());
-    }
     return ret ? 0 : -1;
 }
 
 int android_rename(const char *oldpath, const char *newpath) {
     BOOL ret = MoveFileEx(oldpath, newpath, MOVEFILE_REPLACE_EXISTING);
-    if (!ret ) {
-        printf("\x1b[31mFailed to rename %s to %s due to %lu\x1b[0m\n", oldpath, newpath, GetLastError());
-    }
     return ret ? 0 : -1;
 }
 
 int android_unlink(const char *pathname) {
     BOOL ret = DeleteFile(pathname);
-    if (!ret) {
-        printf("\x1b[31mFailed to unlink %s due to %lu\x1b[0m\n", pathname, GetLastError());
-    }
     return ret ? 0 : -1;
 }
 
 int android_rmdir(const char *pathname) {
     BOOL ret = RemoveDirectory(pathname);
-    if (!ret) {
-        printf("\x1b[31mFailed to remove directory %s due to %lu\x1b[0m\n", pathname, GetLastError());
-    }
     return ret ? 0 : -1;
 }
 

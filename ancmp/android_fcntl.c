@@ -19,7 +19,6 @@ static int check_nonblocksock(SOCKET sock) {
     u_long mode;
     int result = ioctlsocket(sock, FIONBIO, &mode);
     if (result != 0) {
-        /* printf("Error in ioctlsocket: %d\n", WSAGetLastError()); */
         return 0;
     }
     return (mode != 0);
@@ -140,7 +139,6 @@ int android_fcntl(int fd, int op, ...) {
             }
         }
     }
-    puts("fcntl success");
     va_end(args);
     return ret;
 }
@@ -153,11 +151,6 @@ int android_open(const char *pathname, int flags, ...) {
 
     if ((attr != -1 && (attr & FILE_ATTRIBUTE_DIRECTORY))) {
         HANDLE dir = CreateFile(pathname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
-        if (dir != INVALID_HANDLE_VALUE) {
-            printf("\x1b[32mSuccessfully ran open() for dir %s\x1b[0m\n", pathname);
-        } else {
-            printf("\x1b[31mFailed to run open() for %s dir due to %d\x1b[0m\n", pathname, errno);
-        }
         return _open_osfhandle((intptr_t)dir, _O_RDONLY);
     }
     if (flags & ANDROID_O_APPEND) {
@@ -196,11 +189,6 @@ int android_open(const char *pathname, int flags, ...) {
         fd = _open(pathname, real_flags, real_mode);
     } else {
         fd = _open(pathname, real_flags);
-    }
-    if (fd != -1) {
-        printf("\x1b[32mSuccessfully ran open() for %s\x1b[0m\n", pathname);
-    } else {
-        printf("\x1b[31mFailed to run open() for %s due to %d\x1b[0m\n", pathname, errno);
     }
     va_end(args);
     return fd;
