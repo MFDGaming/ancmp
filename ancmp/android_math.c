@@ -143,3 +143,23 @@ FLOAT_ABI_FIX double android_log10(double x) {
 FLOAT_ABI_FIX float android_log10f(float x) {
     return (float)log10((double)x);
 }
+
+FLOAT_ABI_FIX float android_acosf(float x) {
+    return (float)acos((double)x);
+}
+
+FLOAT_ABI_FIX float android_expf(float x) {
+    return (float)exp((double)x);
+}
+
+FLOAT_ABI_FIX float android_asinf(float x) {
+    return (float)asin((double)x);
+}
+
+FLOAT_ABI_FIX float android_exp2f(float x) {
+    return (float)exp2((double)x);
+}
+
+FLOAT_ABI_FIX double android_exp2(double x) {
+    return exp2(x);
+}

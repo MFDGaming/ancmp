@@ -1004,6 +1004,26 @@ static hook_t math_hooks[] = {
         (void *)android_log10f
     },
     {
+        "acosf",
+        (void *)android_acosf
+    },
+    {
+        "expf",
+        (void *)android_expf
+    },
+    {
+        "asinf",
+        (void *)android_asinf
+    },
+    {
+        "exp2f",
+        (void *)android_exp2f
+    },
+    {
+        "exp2",
+        (void *)android_exp2
+    },
+    {
         (char *)NULL,
         (void *)NULL
     }

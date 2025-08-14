@@ -73,4 +73,14 @@ double android_log10(double x) FLOAT_ABI_FIX;
 
 float android_log10f(float x) FLOAT_ABI_FIX;
 
+float android_acosf(float x) FLOAT_ABI_FIX;
+
+float android_expf(float x) FLOAT_ABI_FIX;
+
+float android_asinf(float x) FLOAT_ABI_FIX;
+
+float android_exp2f(float x) FLOAT_ABI_FIX;
+
+double android_exp2(double x) FLOAT_ABI_FIX;
+
 #endif
