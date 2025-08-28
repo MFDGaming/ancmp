@@ -94,22 +94,23 @@ void sysv_call_func(void *func, void *retval, int argc, ...) {
 void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc, ...) {
     int i;
     va_list ap;
-    unsigned long *stack = NULL, *stack_top = NULL;
+    char *stack = NULL;
+    long *stack_top = NULL;
     int rv = 0;
 
-    stack = (unsigned long *)calloc(stack_size, 1);
+    stack = (char *)calloc(stack_size, 1);
     if (!stack) {
         return;
     }
-    stack_top = (unsigned long *)(((uintptr_t)stack + (stack_size - 1)) & ~0x0f);
-    
-    if (argc) {
-        stack_top -= argc;
-        stack_top = (unsigned long *)((uintptr_t)stack_top & ~0x0f);
 
+    stack_top = ((long *)(&stack[stack_size])) - argc - 1;
+
+    *(uintptr_t *)&stack_top &= ~0x0f;
+
+    if (argc) {
         va_start(ap, argc);
         for (i = 0; i < argc; ++i) {
-            stack_top[i] = (unsigned long)va_arg(ap, void *);
+            stack_top[i] = va_arg(ap, long);
         }
         va_end(ap);
     }
@@ -150,6 +151,7 @@ void call_with_custom_stack(void *func, int *retval, size_t stack_size, int argc
         : "eax", "ebx", "memory"
     );
 #endif
+
     if (stack) {
         free(stack);
     }
