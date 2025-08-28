@@ -905,6 +905,14 @@ SOURCE=..\ancmp\android_sched.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\ancmp\android_semaphore.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ancmp\android_semaphore.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\ancmp\android_socket.c
 # End Source File
 # Begin Source File

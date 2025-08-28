@@ -157,9 +157,9 @@ FLOAT_ABI_FIX float android_asinf(float x) {
 }
 
 FLOAT_ABI_FIX float android_exp2f(float x) {
-    return (float)exp2((double)x);
+    return (float)pow(2.0, (double)x);
 }
 
 FLOAT_ABI_FIX double android_exp2(double x) {
-    return exp2(x);
+    return pow(2.0, x);
 }
