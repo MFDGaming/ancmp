@@ -1071,7 +1071,7 @@ int android_listen(int sockfd, int backlog) {
 int android_close(int fd) {
     if (is_socket(fd)) {
         return closesocket(fd);
-    } else {
+    } else if (fd >= 0 && fd < _getmaxstdio()) {
         return close(fd);
     }
 }
@@ -1079,7 +1079,7 @@ int android_close(int fd) {
 long android_read(int fd, void *buf, size_t count) {
     if (is_socket(fd)) {
         return recv(fd, buf, count, 0);
-    } else {
+    } else if (fd >= 0 && fd < _getmaxstdio()) {
         return _read(fd, buf, count);
     }
 }
@@ -1087,7 +1087,7 @@ long android_read(int fd, void *buf, size_t count) {
 long android_write(int fd, void *buf, size_t count) {
     if (is_socket(fd)) {
         return send(fd, buf, count, 0);
-    } else {
+    } else if (fd >= 0 && fd < _getmaxstdio()) {
         return _write(fd, buf, count);
     }
 }
