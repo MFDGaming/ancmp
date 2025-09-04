@@ -41,6 +41,11 @@ custom_file_t *android_fopen(const char *filename, const char *mode) {
     } else if (strcmp(mode, "a+") == 0) {
         real_mode = "a+b";
     }
+#ifdef _WIN32
+    if ((!strcmp(filename, "/dev/random")) || (!strcmp(filename, "/dev/urandom"))) {
+        filename = "\\\\.\\pipe\\ancmp\\random";
+    }
+#endif
     file = fopen(filename, real_mode);
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));

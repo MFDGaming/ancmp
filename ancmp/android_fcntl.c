@@ -175,6 +175,12 @@ int android_open(const char *pathname, int flags, ...) {
         real_flags |= _O_WRONLY;
     }
 
+#ifdef _WIN32
+    if ((!strcmp(pathname, "/dev/random")) || (!strcmp(pathname, "/dev/urandom"))) {
+        pathname = "\\\\.\\pipe\\ancmp\\random";
+    }
+#endif
+
     va_start(args, flags);
     
     if (flags & ANDROID_O_CREAT) {
