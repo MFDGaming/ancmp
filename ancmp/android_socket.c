@@ -1,6 +1,7 @@
 #include "android_socket.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "android_posix_types.h"
 #include "android_fcntl.h"
 
