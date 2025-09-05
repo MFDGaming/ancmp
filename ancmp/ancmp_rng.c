@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <time.h>
+#include "ancmp_stdint.h"
 
 static DWORD WINAPI ancmp_rng_task(LPVOID lpParameter) {
     HANDLE hw = (HANDLE)lpParameter;

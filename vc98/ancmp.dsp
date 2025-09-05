@@ -681,6 +681,14 @@ SOURCE=..\ancmp\abi_fix.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\ancmp\ancmp_rng.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ancmp\ancmp_rng.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\ancmp\ancmp_stdint.h
 # End Source File
 # Begin Source File
