@@ -1075,6 +1075,7 @@ int android_close(int fd) {
     } else if (fd >= 0 && fd < _getmaxstdio()) {
         return close(fd);
     }
+    return -1;
 }
 
 long android_read(int fd, void *buf, size_t count) {
@@ -1083,6 +1084,7 @@ long android_read(int fd, void *buf, size_t count) {
     } else if (fd >= 0 && fd < _getmaxstdio()) {
         return _read(fd, buf, count);
     }
+    return -1;
 }
 
 long android_write(int fd, void *buf, size_t count) {
@@ -1091,5 +1093,6 @@ long android_write(int fd, void *buf, size_t count) {
     } else if (fd >= 0 && fd < _getmaxstdio()) {
         return _write(fd, buf, count);
     }
+    return -1;
 }
 #endif
