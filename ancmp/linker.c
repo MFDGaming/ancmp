@@ -62,7 +62,6 @@
 #include "android_futex.h"
 #include "android_errno.h"
 #include "android_thread_id.h"
-#include "ancmp_rng.h"
 
 #define ALLOW_SYMBOLS_FROM_MAIN 1
 #define SO_MAX 128
@@ -2174,10 +2173,6 @@ void android_linker_init(void) {
     }
     if (!android_threads_init()) {
         puts("android_threads_init failed");
-        exit(1);
-    }
-    if (!ancmp_init_rng()) {
-        puts("ancmp_init_rng failed");
         exit(1);
     }
 

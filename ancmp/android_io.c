@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include "linker_format.h"
+#include "ancmp_rng.h"
 
 /* stdin, stdout, stderr */
 android_file_t android_sf[3];
@@ -43,10 +44,13 @@ custom_file_t *android_fopen(const char *filename, const char *mode) {
     }
 #ifdef _WIN32
     if ((!strcmp(filename, "/dev/random")) || (!strcmp(filename, "/dev/urandom"))) {
-        filename = "\\\\.\\pipe\\ancmp\\random";
-    }
+        file = fdopen(ancmp_open_rng(), "rb");
+    } else {
 #endif
     file = fopen(filename, real_mode);
+#ifdef _WIN32
+    }
+#endif
     if (file) {
         custom_file_t *cfile = (custom_file_t *)malloc(sizeof(custom_file_t));
         if (cfile == NULL) {

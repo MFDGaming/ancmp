@@ -7,6 +7,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include "android_stat.h"
+#include "ancmp_rng.h"
 #include <sys/stat.h>
 
 int is_socket(int fd) {
@@ -177,7 +178,7 @@ int android_open(const char *pathname, int flags, ...) {
 
 #ifdef _WIN32
     if ((!strcmp(pathname, "/dev/random")) || (!strcmp(pathname, "/dev/urandom"))) {
-        pathname = "\\\\.\\pipe\\ancmp\\random";
+        return ancmp_open_rng();
     }
 #endif
 
